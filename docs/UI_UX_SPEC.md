@@ -4,7 +4,18 @@
 
 Dieses Dokument definiert die UI/UX-Regeln für den MVP.
 
-Die App soll klein, schnell, verständlich und unaufdringlich sein. Sie darf nicht wie Spyware, Werbung oder ein schwerer Chatbot wirken.
+Die App soll klein, schnell, verständlich und unaufdringlich sein.
+
+---
+
+## Entscheidungen aus dem Audit
+
+Für den MVP gilt:
+
+- MainActivity wird mit Jetpack Compose gebaut.
+- Floating Button und ReplyPanel im Overlay werden als klassische Android Views gebaut.
+- Das ReplyPanel muss immer eine Möglichkeit bieten, Text manuell einzufügen.
+- Clipboard ist Komfortfunktion, aber keine Pflichtabhängigkeit.
 
 ---
 
@@ -19,8 +30,6 @@ Zielgefühl:
 - klar
 - schnell
 - nicht störend
-- nicht wie Spyware
-- nicht wie ein Bot
 
 Nicht-Ziel:
 
@@ -45,7 +54,7 @@ Mini-Fenster öffnet
 ↓
 Modus wählen
 ↓
-optional Clipboard verwenden
+optional Clipboard verwenden oder Text manuell einfügen
 ↓
 Absicht eingeben
 ↓
@@ -58,8 +67,6 @@ Vorschlag kopieren
 manuell in WhatsApp einfügen
 ```
 
-Der Flow soll in wenigen Sekunden nutzbar sein.
-
 ---
 
 ## MainActivity / Setup
@@ -71,21 +78,6 @@ Die MainActivity ist nur für Einrichtung gedacht:
 - Overlay aktivieren/deaktivieren
 - Test-Overlay
 - kurze Erklärung
-
-Abschnitte:
-
-1. Titelbereich
-2. Statuskarten
-3. API-Key-Bereich
-4. Overlay-Steuerung
-5. Datenschutzhinweise
-6. bekannte Einschränkungen
-
-Statuskarten zeigen:
-
-- Status: OK / fehlt / optional
-- kurze Erklärung
-- Button zur Aktion
 
 ---
 
@@ -103,11 +95,6 @@ Anforderungen:
 - Drag löst keinen Tap aus
 - Position wird gespeichert
 
-Default-Position:
-
-- rechter Bildschirmrand
-- mittlere Höhe
-
 ---
 
 ## ReplyPanel
@@ -122,29 +109,18 @@ Empfehlung:
 - nicht Vollbild
 - einfach schließbar
 
-Grundlayout:
+Pflichtfelder:
 
-```text
-Antworthelfer        X
-[Antworten] [Formulieren] [Umschreiben]
-
-Kopierter Text erkannt
-„Vorschau...“
-[Verwenden] [Ignorieren]
-
-Was willst du sagen?
-[ Eingabe ]
-
-Ton
-[kurz] [freundlich] [direkt]
-[entschuldigend] [deeskalierend] [klare Grenze] [flirtend]
-
-[Vorschläge erstellen]
-
-1. Vorschlag ... [Kopieren]
-2. Vorschlag ... [Kopieren]
-3. Vorschlag ... [Kopieren]
-```
+- Modusauswahl
+- optional Clipboard-Vorschau
+- Textfeld für manuelles Einfügen
+- Eingabefeld für Nutzerabsicht
+- Ton-Auswahl
+- Generate-Button
+- Ladezustand
+- Fehlerzustand
+- 3 Vorschlagskarten
+- Kopieren-Button pro Vorschlag
 
 ---
 
@@ -161,11 +137,9 @@ Default:
 - Clipboard erkannt → Antworten
 - kein Clipboard → Formulieren
 
-Umschreiben muss klar anzeigen, dass ein Originaltext gebraucht wird.
-
 ---
 
-## Clipboard-UX
+## Clipboard-UX und manueller Fallback
 
 Wenn Clipboard-Text vorhanden ist:
 
@@ -175,12 +149,22 @@ Kopierter Text erkannt
 [Verwenden] [Ignorieren]
 ```
 
+Wenn Clipboard nicht lesbar oder leer ist:
+
+```text
+Keine kopierte Nachricht erkannt.
+Du kannst den Text auch manuell einfügen.
+[Textfeld]
+```
+
 Regeln:
 
 - Vorschau maximal 2–3 Zeilen
 - langen Text kürzen
 - Text erst nach „Verwenden“ übernehmen
 - „Ignorieren“ sichtbar anbieten
+- manuelles Einfügen immer ermöglichen
+- Clipboard-Probleme nicht als harten Fehler behandeln
 
 ---
 
@@ -189,13 +173,11 @@ Regeln:
 Antworten-Modus:
 
 ```text
-Was willst du ausdrücken?
+Nachricht, auf die du antworten willst
 ```
 
-Placeholder:
-
 ```text
-z. B. entschuldigen, aber nicht unterwürfig klingen
+Was willst du ausdrücken?
 ```
 
 Formulieren-Modus:
@@ -230,7 +212,6 @@ Regeln:
 - genau ein Ton aktiv
 - Default: freundlich
 - letzter Ton darf gespeichert werden
-- keine zu vielen Tonoptionen im MVP
 
 ---
 
@@ -242,24 +223,7 @@ Während Anfrage:
 - Ladehinweis anzeigen
 - keine parallele Anfrage
 
-Text:
-
-```text
-Vorschläge werden erstellt ...
-```
-
-Fehlertexte:
-
-| Fall | Text |
-|---|---|
-| API-Key fehlt | API-Key fehlt. Bitte in der App eintragen. |
-| Internet fehlt | Keine Verbindung. Bitte Internet prüfen. |
-| KI-Fehler | Vorschläge konnten nicht erstellt werden. |
-| Clipboard leer | Keine kopierte Nachricht erkannt. |
-| Overlay fehlt | Overlay-Berechtigung fehlt. |
-| Usage Access fehlt | Nutzungsdatenzugriff fehlt. |
-
-Keine Stacktraces in der UI.
+Fehlertexte müssen kurz und verständlich sein. Keine Stacktraces in der UI.
 
 ---
 
@@ -279,31 +243,6 @@ Nach Kopieren kurz anzeigen:
 Kopiert
 ```
 
-Regeln:
-
-- 3 Plätze vorsehen
-- vorhandene Vorschläge anzeigen, wenn weniger als 3 extrahierbar sind
-- keine Analyse anzeigen
-- keine unbrauchbare Rohantwort anzeigen
-
----
-
-## Visuelle Richtung
-
-- dunkles Design bevorzugt
-- ruhige Flächen
-- hohe Lesbarkeit
-- klare Buttons
-- keine grellen Farben
-- keine schweren Glassmorphism-Effekte
-- keine unnötigen Animationen
-
-Symbolideen:
-
-- Stift
-- kleine Sprechblase
-- dezenter Zauberstab
-
 ---
 
 ## Anti-Nerv-Regeln
@@ -319,38 +258,6 @@ Symbolideen:
 
 ---
 
-## MVP-Pflichtumfang
-
-Pflicht:
-
-- Setup-Screen
-- Statuskarten
-- API-Key-Eingabe
-- Overlay aktiv/inaktiv
-- Floating Button
-- Drag-Verhalten
-- ReplyPanel
-- Modusauswahl
-- Ton-Auswahl
-- Clipboard-Vorschau
-- Generate-Button
-- Ladezustand
-- Fehlerzustand
-- 3 Vorschlagskarten
-- Kopieren pro Vorschlag
-
-Nicht Pflicht:
-
-- Animationen
-- Onboarding-Slides
-- Verlauf
-- Account
-- Modellauswahl
-- Themes
-- Sound/Vibration
-
----
-
 ## Akzeptanzkriterien
 
 UI/UX ist akzeptabel, wenn:
@@ -361,6 +268,6 @@ UI/UX ist akzeptabel, wenn:
 - Panel ist schnell bedienbar
 - Modi sind klar
 - Clipboard-Nutzung ist freiwillig
+- manuelles Einfügen funktioniert, wenn Clipboard leer/blockiert ist
 - Vorschläge sind leicht kopierbar
 - Fehler sind verständlich
-- nichts wirkt heimlich oder invasiv
