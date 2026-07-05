@@ -6,19 +6,24 @@ Dieses Dokument ist die Quelle für Android-spezifische Einschränkungen.
 
 Es verhindert alte oder riskante Android-Patterns bei Overlay, Foreground Service, UsageStats, Clipboard und Android 15/16.
 
+Verbindliche Entscheidungen stehen zusätzlich in `docs/DECISIONS.md`.
+
 ---
 
 ## SDK-Strategie
 
 | Einstellung | MVP-Default |
 |---|---|
+| `applicationId` | `de.disaai.chathilfe` |
 | `compileSdk` | 36 |
 | `targetSdk` | 35 für ersten stabilen MVP |
 | späteres Ziel | targetSdk 36 nach Stabilisierung |
-| `minSdk` | 29 oder höher |
+| `minSdk` | 29 |
 | Testgerät | Samsung Galaxy S25 |
 
 `targetSdk` darf nicht nebenbei geändert werden. Jede Änderung muss dokumentiert und auf echtem Gerät getestet werden.
+
+AGP-/Gradle-/Kotlin-/Compose-Versionen müssen beim Scaffolden anhand aktueller offizieller Release- und Kompatibilitätsinformationen gepinnt werden.
 
 ---
 
@@ -52,10 +57,11 @@ Regeln:
 
 ## Foreground Service
 
-Grundregel:
+Entscheidung:
 
-- keinen versteckten, ungefragten Hintergrundstart bauen
-- Overlay-Runtime aus sichtbarer Nutzeraktion starten
+- Die Overlay-Laufzeit läuft in einem Foreground Service.
+- Der Service wird ausschließlich aus sichtbarer Nutzeraktion gestartet.
+- `startForeground()` wird zeitnah aufgerufen.
 
 Erlaubter Flow:
 
@@ -66,21 +72,29 @@ Nutzer aktiviert Overlay
 ↓
 App prüft Berechtigungen
 ↓
-Overlay-Runtime startet
+Foreground Service startet
+↓
+Overlay-Runtime läuft
 ```
 
-Falls ein Foreground Service verwendet wird:
+Manifest-Regeln:
 
-- `FOREGROUND_SERVICE` nur dann deklarieren
-- bei targetSdk 34+ passenden Service-Typ prüfen
-- `startForeground()` zeitnah aufrufen
-- klare Notification anzeigen
-- keine KI-Dauerjobs im Service
-- keine Clipboard-Abfragen im Hintergrund
+- `FOREGROUND_SERVICE` ist für die Overlay-Laufzeit erforderlich.
+- `POST_NOTIFICATIONS` ist erforderlich, wenn die Ziel-Android-Version eine sichtbare Service-Notification absichert.
+- Der konkrete Foreground-Service-Typ muss beim Scaffolden/Implementieren gegen aktuelle Android-Doku geprüft werden.
+- Wenn `specialUse` verwendet wird, muss eine klare Manifest-Begründung ergänzt und dokumentiert werden.
+
+Nicht erlaubt:
+
+- versteckter Background-Start
+- Autostart-Hack
+- WorkManager-/JobScheduler-Ketten aus dem Overlay-Service
+- KI-Dauerjobs im Service
+- Clipboard-Abfragen im Hintergrund
 
 Android 15: Nicht darauf verlassen, dass `SYSTEM_ALERT_WINDOW` allein Background-Starts erlaubt.
 
-Android 16: Keine Job-/WorkManager-Ketten aus dem Overlay-Service starten.
+Android 16: Keine Background-Job-Ketten aus dem Overlay-Service starten.
 
 ---
 
@@ -125,10 +139,11 @@ UsageStats ist nicht perfekte Echtzeit. Verzögerungen dokumentieren, nicht mit 
 
 Erlaubt:
 
-- Lesen beim Öffnen des Panels
-- Vorschau anzeigen
+- Lesen beim Öffnen des Panels oder durch explizite Nutzeraktion im Panel
+- Vorschau anzeigen, wenn Text verfügbar ist
 - Text erst nach Nutzerbestätigung verwenden
 - Vorschlag per Button kopieren
+- manueller Fallback: Nutzer kann Text selbst ins Panel einfügen
 
 Verboten:
 
@@ -138,23 +153,34 @@ Verboten:
 - Logging von Clipboard-Inhalten
 - automatische KI-Anfrage bei Clipboard-Änderung
 
+Wichtig:
+
+- Clipboard-Lesen kann auf modernen Android-Versionen leer oder blockiert sein, wenn die App nicht fokussiert ist.
+- Der MVP darf deshalb nicht davon abhängen, dass Clipboard-Lesen immer funktioniert.
+- Der manuelle Einfügen-Fallback ist Pflicht.
+
 ---
 
 ## Manifest-Regeln
 
-Erlaubt:
+Erlaubt / benötigt:
 
 ```xml
 <uses-permission android:name="android.permission.INTERNET" />
 <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
 <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS" />
+<uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 ```
 
-Optional nur bei tatsächlicher Nutzung:
+Wichtig zu `PACKAGE_USAGE_STATS`:
+
+- Es ist ein Sonderzugriff und wird vom Nutzer über Android-Einstellungen freigegeben.
+- Beim Manifest kann je nach Tooling ein `tools:ignore="ProtectedPermissions"` nötig sein.
+
+Optional je nach Ziel-Android und Service-Notification:
 
 ```xml
 <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-<uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 ```
 
 Verboten im MVP:
