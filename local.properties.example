@@ -1,0 +1,3 @@
+# Kopiere diese Datei zu "local.properties" (bleibt lokal, wird nie committed).
+sdk.dir=/absolute/path/to/Android/sdk
+OPENROUTER_API_KEY=replace_me_locally

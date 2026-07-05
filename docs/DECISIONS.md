@@ -97,7 +97,7 @@ OverlayController + ForegroundAppDetector laufen innerhalb dieser Overlay-Laufze
 
 ## D-004 — Application ID und SDK-Basis
 
-**Status:** teilweise entschieden
+**Status:** entschieden
 
 | Punkt | Wert |
 |---|---|
@@ -108,12 +108,16 @@ OverlayController + ForegroundAppDetector laufen innerhalb dieser Overlay-Laufze
 | späteres Ziel | targetSdk 36 nach Stabilisierung |
 | `minSdk` | 29 |
 
-**Noch vor Phase 1 zu pinnen:**
+**Toolchain (gepinnt in Phase 1, Stand Juli 2026 gegen offizielle Quellen geprüft):**
 
-- Android Gradle Plugin Version
-- Gradle Wrapper Version
-- Kotlin Version
-- Compose BOM Version
+| Komponente | Version |
+|---|---|
+| Android Gradle Plugin (AGP) | 9.2.0 |
+| Gradle Wrapper | 9.6.1 |
+| Kotlin (Compose-Compiler-Plugin-Version = Kotlin-Version) | 2.4.0 |
+| Compose BOM | 2026.06.01 |
+
+Hinweis: AGP 9.x bringt Kotlin-Unterstützung "built-in" mit — das separate Plugin `org.jetbrains.kotlin.android` wird nicht mehr angewendet, nur noch `org.jetbrains.kotlin.plugin.compose` für den Compose-Compiler.
 
 ---
 
@@ -197,7 +201,6 @@ Für eine rein private APK ist eine feste Build-Time-Konfiguration einfacher als
 Diese Punkte bleiben bewusst offen, bis sie für Code relevant werden:
 
 - konkretes OpenRouter-Default-Modell für Phase 7
-- exakte AGP-/Gradle-/Kotlin-/Compose-Versionen für Phase 1
 - konkreter Foreground-Service-Typ nach finaler Manifest-Prüfung
 
 Offen heißt hier nicht beliebig: Ein Agent muss sie vor der jeweiligen Phase entscheiden, dokumentieren und gegen `AGENTS.md` sowie `docs/ANDROID_CONSTRAINTS.md` prüfen.

@@ -1,0 +1,6 @@
+<resources>
+    <color name="chathilfe_background">#FF121212</color>
+    <color name="chathilfe_surface">#FF1E1E1E</color>
+    <color name="chathilfe_primary">#FF8AB4F8</color>
+    <color name="chathilfe_on_background">#FFE3E3E3</color>
+</resources>

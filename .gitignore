@@ -1,0 +1,21 @@
+# Gradle
+.gradle/
+build/
+
+# Local configuration (secrets, SDK path)
+local.properties
+secrets.properties
+.env
+
+# Android Studio / IntelliJ
+.idea/
+*.iml
+.DS_Store
+
+# Native build artifacts
+.cxx/
+captures/
+
+# Build outputs
+*.apk
+*.aab
