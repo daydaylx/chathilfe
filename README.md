@@ -42,6 +42,7 @@ Beim Antippen öffnet sich ein kompaktes Mini-Fenster. Dort kann der Nutzer:
 | [`Konzept.md`](Konzept.md) | Produktziel, Scope, Modi, Risiken und Abschlusskriterien |
 | [`Arbeitsauftrag.md`](Arbeitsauftrag.md) | ausführlicher Startauftrag für externe Coding-Agenten |
 | [`docs/DECISIONS.md`](docs/DECISIONS.md) | angenommene technische Entscheidungen aus dem Audit |
+| [`docs/API_KEY_STRATEGY.md`](docs/API_KEY_STRATEGY.md) | lokale API-Key-Strategie für private Builds |
 | [`docs/PLAN_AUDIT.md`](docs/PLAN_AUDIT.md) | Plan-Audit, Risiken und erste Umsetzungstickets |
 | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | technische Architektur und Komponenten |
 | [`docs/ANDROID_CONSTRAINTS.md`](docs/ANDROID_CONSTRAINTS.md) | Android 15/16, Overlay, Services und Berechtigungen |
@@ -79,11 +80,28 @@ Nicht alle Dokumente pauschal laden. Das reduziert Kontext-Bloat.
 | Overlay-Typ | `TYPE_APPLICATION_OVERLAY` |
 | WhatsApp-Erkennung | `UsageStatsManager.queryEvents()` |
 | Laufzeit | Foreground Service, aus sichtbarer Nutzeraktion gestartet |
-| Lokale Einstellungen | DataStore |
+| Lokale Einstellungen | DataStore für UI-/Overlay-Settings |
 | KI-Anbieter | OpenRouter, ein Provider im MVP |
+| API-Key | lokaler Build-Time-Key, nicht im Repo |
 | Distribution | private APK |
 
-Details stehen in [`docs/DECISIONS.md`](docs/DECISIONS.md).
+Details stehen in [`docs/DECISIONS.md`](docs/DECISIONS.md) und [`docs/API_KEY_STRATEGY.md`](docs/API_KEY_STRATEGY.md).
+
+---
+
+## API-Key-Regel
+
+Der echte OpenRouter-Key darf nie ins Repository.
+
+Für private Builds wird er lokal bereitgestellt, z. B. über:
+
+```text
+local.properties
+secrets.properties
+OPENROUTER_API_KEY
+```
+
+Dokumentation und Beispielcode dürfen nur Platzhalter enthalten.
 
 ---
 
@@ -117,6 +135,7 @@ Der MVP gilt erst als fertig, wenn:
 - kein Accessibility Service verwendet wurde
 - keine unnötigen Berechtigungen verwendet wurden
 - keine Nutzertexte oder API-Keys geloggt werden
+- kein echter API-Key im Repo steht
 - Code klein und wartbar bleibt
 
 ---
