@@ -21,10 +21,6 @@ Wenn Entscheidungen hier einer älteren Formulierung in anderen Dateien widerspr
 - Kein Multi-Provider-System im MVP.
 - Das konkrete Default-Modell wird nicht dauerhaft in Konzeptdokumenten geraten, sondern vor Phase 7 nach aktueller OpenRouter-Verfügbarkeit in `AiConfig` gepinnt.
 
-**Grund:**
-
-OpenRouter passt besser zum privaten MVP, weil Modellwechsel später möglich bleibt, ohne mehrere Anbieter-Clients im MVP zu bauen.
-
 **Konsequenz:**
 
 - `AiClient` implementiert zuerst nur OpenRouter.
@@ -65,10 +61,6 @@ startForeground() wird zeitnah aufgerufen
 OverlayController + ForegroundAppDetector laufen innerhalb dieser Overlay-Laufzeit
 ```
 
-**Grund:**
-
-Overlay + UsageStats-Polling sind auf Samsung/modernem Android ohne Foreground Service zu instabil. Der Service darf aber nicht heimlich aus dem Hintergrund starten.
-
 **Konsequenz:**
 
 - `FOREGROUND_SERVICE` wird für die Overlay-Laufzeit benötigt.
@@ -95,10 +87,6 @@ Overlay + UsageStats-Polling sind auf Samsung/modernem Android ohne Foreground S
 - MainActivity / Setup: **Jetpack Compose**
 - Floating Bubble + ReplyPanel im Overlay: **klassische Android Views** für den MVP
 
-**Grund:**
-
-`WindowManager` arbeitet direkt mit Views. `ComposeView` im Overlay ist möglich, braucht aber korrekt gesetzte Lifecycle-/SavedState-/ViewModel-Owner und erhöht die Crash-Gefahr. Für den MVP sind klassische Views robuster und einfacher zu debuggen.
-
 **Konsequenz:**
 
 - Klassen wie `FloatingBubbleView` und `ReplyPanelView` werden als klassische Views gebaut.
@@ -110,8 +98,6 @@ Overlay + UsageStats-Polling sind auf Samsung/modernem Android ohne Foreground S
 ## D-004 — Application ID und SDK-Basis
 
 **Status:** teilweise entschieden
-
-**Entscheidung:**
 
 | Punkt | Wert |
 |---|---|
@@ -129,10 +115,6 @@ Overlay + UsageStats-Polling sind auf Samsung/modernem Android ohne Foreground S
 - Kotlin Version
 - Compose BOM Version
 
-**Regel:**
-
-Diese Toolchain-Versionen müssen direkt beim Scaffolden anhand aktueller offizieller Release-/Kompatibilitätsinformationen festgelegt werden. Keine alten Beispielversionen verwenden.
-
 ---
 
 ## D-005 — Clipboard-Fallback
@@ -142,10 +124,6 @@ Diese Toolchain-Versionen müssen direkt beim Scaffolden anhand aktueller offizi
 **Entscheidung:**
 
 Clipboard-Nutzung bleibt optional. Wenn Android das Lesen der Zwischenablage aus Overlay-/Service-Kontext verhindert oder leer liefert, muss der Nutzer den Text manuell ins Panel einfügen können.
-
-**Grund:**
-
-Moderne Android-Versionen beschränken Clipboard-Zugriffe, wenn die App nicht fokussiert ist. Der MVP darf deshalb nicht davon abhängen, dass Clipboard-Lesen immer funktioniert.
 
 **Konsequenz:**
 
@@ -171,9 +149,46 @@ Gerätetests werden nicht erst am Ende gesammelt, sondern früh nach Overlay und
 - nach Phase 4: WhatsApp-Erkennung auf echtem Gerät testen
 - nach Phase 5: Clipboard/ReplyPanel auf echtem Gerät testen
 
+---
+
+## D-007 — API-Key-Strategie für private APK
+
+**Status:** entschieden
+
+**Entscheidung:**
+
+Für die private APK wird der OpenRouter-API-Key **fest in den lokalen Build eingebettet**, aber **niemals ins GitHub-Repo committed**.
+
+Der Key kommt aus einer lokalen, ignorierten Datei oder aus einer lokalen Environment-Variable, z. B.:
+
+```text
+local.properties
+secrets.properties
+OPENROUTER_API_KEY
+```
+
+Der Build schreibt den Wert in `BuildConfig` oder eine vergleichbare Build-Time-Konfiguration. Die App zeigt im MVP keine API-Key-Eingabe und speichert keinen API-Key per DataStore.
+
 **Grund:**
 
-Overlay, UsageStats, Clipboard und Samsung-Hintergrundverhalten sind nicht zuverlässig durch reine Unit-Tests prüfbar.
+Für eine rein private APK ist eine feste Build-Time-Konfiguration einfacher als eine API-Key-Eingabe in der App. Ein Key in einer APK ist trotzdem nicht geheim, weil APKs dekompiliert werden können. Das Risiko ist für private Verteilung akzeptabel, wenn der Key Kostenlimit hat und nicht öffentlich geteilt wird.
+
+**Konsequenz:**
+
+- Keine API-Key-Eingabe im MVP.
+- `SettingsStore` speichert keinen API-Key.
+- `AiClient` liest den Key aus BuildConfig/Build-Time-Konfiguration.
+- `.gitignore` muss lokale Secret-Dateien ausschließen.
+- README darf nur Platzhalter zeigen, niemals einen echten Key.
+- Der OpenRouter-Key sollte ein niedriges Credit-/Usage-Limit haben.
+
+**Nicht erlaubt:**
+
+- echten API-Key in GitHub committen
+- echten API-Key in Dokumentation schreiben
+- echten API-Key in Logs ausgeben
+- Key im UI anzeigen
+- Key in Crashreports senden
 
 ---
 
