@@ -23,10 +23,11 @@ Before implementation work, read in this order:
 1. `README.md`
 2. `AGENTS.md`
 3. `Konzept.md`
-4. `docs/ARCHITECTURE.md`
-5. `docs/ANDROID_CONSTRAINTS.md`
-6. `docs/IMPLEMENTATION_PLAN.md`
-7. task-relevant docs from the source-of-truth table below
+4. `docs/DECISIONS.md`
+5. `docs/ARCHITECTURE.md`
+6. `docs/ANDROID_CONSTRAINTS.md`
+7. `docs/IMPLEMENTATION_PLAN.md`
+8. task-relevant docs from the source-of-truth table below
 
 Do not load every document unless needed for the current task.
 
@@ -38,6 +39,8 @@ Do not load every document unless needed for the current task.
 |---|---|
 | Product goal and MVP scope | `Konzept.md` |
 | Agent rules and stop conditions | `AGENTS.md` |
+| Accepted technical decisions | `docs/DECISIONS.md` |
+| Plan/audit context | `docs/PLAN_AUDIT.md` |
 | External implementation prompt | `Arbeitsauftrag.md` |
 | Technical architecture | `docs/ARCHITECTURE.md` |
 | Android 15/16, overlay, services, permissions | `docs/ANDROID_CONSTRAINTS.md` |
@@ -52,8 +55,9 @@ If documents conflict, use this priority:
 1. `AGENTS.md`
 2. `docs/PRIVACY_SECURITY.md`
 3. `docs/ANDROID_CONSTRAINTS.md`
-4. `Konzept.md`
-5. task-specific docs
+4. `docs/DECISIONS.md`
+5. `Konzept.md`
+6. task-specific docs
 
 ---
 
@@ -92,11 +96,13 @@ If a requested implementation appears to require any forbidden item, stop and ex
 | Platform | Android |
 | Language | Kotlin |
 | Main app UI | Jetpack Compose |
+| Overlay UI | classic Android Views for MVP |
 | Overlay | Android `WindowManager` |
 | Overlay type | `TYPE_APPLICATION_OVERLAY` |
 | WhatsApp detection | `UsageStatsManager.queryEvents()` |
+| Runtime host | Foreground Service started from visible user action |
 | Settings | DataStore |
-| AI provider | one provider only for MVP |
+| AI provider | OpenRouter only for MVP |
 | Distribution | private APK |
 | Primary test device | Samsung Galaxy S25 / Android 15 or 16 |
 
