@@ -8,10 +8,11 @@ Für dauerhafte Repo-Regeln gelten vorrangig:
 
 1. [`AGENTS.md`](AGENTS.md)
 2. [`Konzept.md`](Konzept.md)
-3. [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
-4. [`docs/ANDROID_CONSTRAINTS.md`](docs/ANDROID_CONSTRAINTS.md)
-5. [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md)
-6. taskrelevante Fachdocs in [`docs/`](docs/)
+3. [`docs/DECISIONS.md`](docs/DECISIONS.md)
+4. [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
+5. [`docs/ANDROID_CONSTRAINTS.md`](docs/ANDROID_CONSTRAINTS.md)
+6. [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md)
+7. taskrelevante Fachdocs in [`docs/`](docs/)
 
 Wenn dieser Arbeitsauftrag einer Fachdatei widerspricht, gilt die Fachdatei.
 
@@ -38,6 +39,7 @@ Die App soll über WhatsApp als schwebender Formulierungshelfer funktionieren:
   - Formulieren
   - Umschreiben
 - Optional kann eine kopierte Nachricht aus der Zwischenablage verwendet werden.
+- Falls Clipboard nicht lesbar ist, kann der Nutzer Text manuell ins Panel einfügen.
 - Der Nutzer beschreibt grob, was er sagen möchte.
 - Der Nutzer wählt einen Ton.
 - Die KI erzeugt 3 Antwortvorschläge.
@@ -68,18 +70,19 @@ Wenn eine Funktion eines dieser Themen benötigt, stoppe und erkläre die Konseq
 
 ---
 
-## Annahmen
+## Technische Entscheidungen
 
-- Zielgerät: Samsung Galaxy S25 oder modernes Android-Gerät
-- Distribution: private APK
-- Sprache: Kotlin
-- Haupt-UI: Jetpack Compose
-- Overlay: Android `WindowManager`
-- Overlay-Typ: `TYPE_APPLICATION_OVERLAY`
-- WhatsApp-Erkennung: `UsageStatsManager.queryEvents()`
-- Einstellungen: DataStore
-- KI-Anbieter: ein Provider im MVP, z. B. OpenRouter oder OpenAI
-- WhatsApp-Paketname: `com.whatsapp`
+Übernehme `docs/DECISIONS.md` verbindlich.
+
+Kurzfassung:
+
+- Provider: OpenRouter im MVP
+- Overlay-Laufzeit: Foreground Service aus sichtbarer Nutzeraktion
+- MainActivity: Jetpack Compose
+- Overlay Bubble + ReplyPanel: klassische Android Views
+- `applicationId`: `de.disaai.chathilfe`
+- SDK-Basis: `compileSdk 36`, `targetSdk 35`, `minSdk 29`
+- Clipboard-Fallback: manuelles Einfügen ins Panel
 
 ---
 
@@ -90,15 +93,16 @@ Arbeite strikt nach [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md)
 Kurzfassung:
 
 1. Repo prüfen
-2. Android-Projektbasis anlegen
-3. Settings und Berechtigungen bauen
-4. manuelles Overlay bauen
-5. WhatsApp-Erkennung bauen
-6. ReplyPanel ohne KI bauen
-7. PromptBuilder und Parser bauen
-8. KI-Anbindung bauen
-9. Gerätetests und Stabilisierung
-10. README und Teststatus aktualisieren
+2. offene Toolchain-Details pinnen
+3. Android-Projektbasis anlegen
+4. Settings und Berechtigungen bauen
+5. Foreground Service + manuelles Overlay bauen
+6. WhatsApp-Erkennung bauen
+7. ReplyPanel ohne KI bauen
+8. PromptBuilder und Parser bauen
+9. KI-Anbindung bauen
+10. Gerätetests und Stabilisierung
+11. README und Teststatus aktualisieren
 
 Keine Phase überspringen, wenn dadurch ungetestete Grundfunktionalität verdeckt wird.
 
