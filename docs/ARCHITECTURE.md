@@ -8,6 +8,25 @@ Ziel ist eine kleine native Android-App mit Floating Button über WhatsApp, Mini
 
 Die Architektur bleibt absichtlich klein. Overengineering ist hier ein reales Risiko.
 
+Technische Grundentscheidungen stehen verbindlich in `docs/DECISIONS.md`.
+
+---
+
+## Festgelegte Architekturentscheidungen
+
+| Thema | Entscheidung |
+|---|---|
+| MainActivity | Jetpack Compose |
+| Overlay Bubble | klassische Android View |
+| ReplyPanel im Overlay | klassische Android View |
+| Overlay-API | `WindowManager` + `TYPE_APPLICATION_OVERLAY` |
+| Runtime | Foreground Service, aus sichtbarer Nutzeraktion gestartet |
+| App-Erkennung | `UsageStatsManager.queryEvents()` |
+| KI-Provider | OpenRouter, ein Provider im MVP |
+| Einstellungen | DataStore |
+
+Kein ComposeView im Overlay-MVP. ComposeView im `WindowManager` ist erst nach stabilem MVP erlaubt und braucht eine eigene Entscheidung.
+
 ---
 
 ## Architekturziele
@@ -85,7 +104,9 @@ Nutzer gewährt Berechtigungen
 ↓
 Nutzer aktiviert Overlay bewusst
 ↓
-OverlayRuntime startet aus sichtbarer Nutzeraktion
+Foreground Service startet
+↓
+startForeground() wird zeitnah aufgerufen
 ↓
 ForegroundAppDetector prüft Vordergrund-App
 ↓
@@ -126,6 +147,24 @@ Nicht Aufgabe:
 - Chatverlauf
 - KI-Konversation
 - komplexe Navigation
+
+---
+
+## OverlayService
+
+Aufgaben:
+
+- Foreground Service für die Overlay-Laufzeit hosten
+- aus sichtbarer Nutzeraktion starten
+- `startForeground()` zeitnah aufrufen
+- OverlayController und ForegroundAppDetector koordinieren
+- bei Stop alle Overlay-Views entfernen lassen
+
+Nicht Aufgabe:
+
+- KI-Dauerjobs
+- Clipboard-Lesen im Hintergrund
+- automatische App-Starts aus dem Hintergrund
 
 ---
 
@@ -190,8 +229,8 @@ Kein Accessibility-Fallback.
 
 Erlaubt:
 
-- Clipboard lesen, wenn Nutzer das Panel aktiv öffnet
-- Vorschau anzeigen
+- Clipboard lesen, wenn Nutzer das Panel aktiv öffnet oder im Panel eine entsprechende Aktion auslöst
+- Vorschau anzeigen, wenn Text verfügbar ist
 - Text erst nach Bestätigung verwenden
 - generierte Vorschläge kopieren
 
@@ -201,14 +240,18 @@ Verboten:
 - Clipboard-Historie
 - Logging von Clipboard-Inhalten
 
+Fallback:
+
+- Wenn Clipboard-Lesen leer oder blockiert ist, muss der Nutzer Text manuell ins Panel einfügen können.
+
 ---
 
 ## AiClient
 
 MVP-Regel:
 
-- ein Provider
-- keine Multi-Provider-Abstraktion vor stabilem MVP
+- OpenRouter als einziger Provider
+- kein Multi-Provider-System vor stabilem MVP
 - API-Key nie loggen
 - Nutzertexte nie loggen
 
@@ -227,7 +270,7 @@ Die UI entscheidet den Modus. Die KI soll nicht raten.
 
 Modi:
 
-- `Reply`: auf kopierte Nachricht antworten
+- `Reply`: auf kopierte oder manuell eingefügte Nachricht antworten
 - `Compose`: neue Nachricht aus Absicht formulieren
 - `Rewrite`: vorhandenen Text umschreiben
 
@@ -281,11 +324,11 @@ Automatisierbar:
 
 Gerätetest nötig:
 
-- Overlay
+- Foreground Service + Overlay
 - Usage Access
 - WhatsApp-Erkennung
 - Dragging
-- Clipboard-Zugriff
+- Clipboard-Zugriff und manueller Fallback
 - Sperren/Entsperren
 - Samsung-Akkuverhalten
 
@@ -296,10 +339,11 @@ Gerätetest nötig:
 Architektur ist ausreichend, wenn:
 
 - App baut als APK
+- Foreground Service startet aus sichtbarer Nutzeraktion
 - OverlayController verwaltet alle Overlay-Views zentral
 - Floating Button erscheint nur bei WhatsApp
 - ReplyPanel funktioniert kompakt
-- Clipboard wird nur nach Nutzeraktion gelesen
+- Clipboard wird nur nach Nutzeraktion gelesen oder manueller Fallback funktioniert
 - KI liefert 3 Vorschläge oder saubere Fehler
 - keine WhatsApp-Automation vorhanden ist
 - kein Accessibility Service vorhanden ist
