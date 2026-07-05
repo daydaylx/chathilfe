@@ -4,7 +4,7 @@
 
 This is the primary instruction file for coding agents working on ChatHilfe.
 
-Keep this file short. Detailed rules live in the linked project documents. When in doubt, follow the most restrictive rule regarding privacy, permissions, automation, and scope.
+Keep this file short. Detailed rules live in the linked project documents. When in doubt, follow the most restrictive rule regarding privacy, permissions, automation, secrets, and scope.
 
 ---
 
@@ -101,10 +101,22 @@ If a requested implementation appears to require any forbidden item, stop and ex
 | Overlay type | `TYPE_APPLICATION_OVERLAY` |
 | WhatsApp detection | `UsageStatsManager.queryEvents()` |
 | Runtime host | Foreground Service started from visible user action |
-| Settings | DataStore |
+| Settings | DataStore for UI/overlay settings only |
 | AI provider | OpenRouter only for MVP |
+| API key | Build-time local secret, never committed |
 | Distribution | private APK |
 | Primary test device | Samsung Galaxy S25 / Android 15 or 16 |
+
+---
+
+## Secret rules
+
+- Never commit a real API key.
+- Never write a real API key into docs.
+- Never print a real API key in logs.
+- Use a local ignored file or local environment variable for `OPENROUTER_API_KEY`.
+- The app may embed the key into the private APK at build time.
+- There is no API-key entry UI in the MVP.
 
 ---
 
@@ -136,6 +148,7 @@ For every implementation task, validate as much as practical:
 - no WhatsApp automation was added
 - no background clipboard monitoring was added
 - no API keys, user text, clipboard text, or generated replies are logged
+- no real API key is committed
 - overlay lifecycle avoids duplicate views
 - missing permissions show clear UI
 
@@ -222,3 +235,4 @@ Stop and ask for explicit approval before:
 - introducing a large architecture rewrite
 - changing targetSdk strategy
 - adding paid APIs or subscriptions
+- committing a real API key
