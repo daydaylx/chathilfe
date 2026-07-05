@@ -1,0 +1,8 @@
+<resources>
+    <style name="Theme.ChatHilfe" parent="android:Theme.Material.NoActionBar">
+        <item name="android:colorBackground">@color/chathilfe_background</item>
+        <item name="android:windowBackground">@color/chathilfe_background</item>
+        <item name="android:statusBarColor">@color/chathilfe_background</item>
+        <item name="android:navigationBarColor">@color/chathilfe_background</item>
+    </style>
+</resources>
