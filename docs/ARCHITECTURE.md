@@ -23,7 +23,8 @@ Technische Grundentscheidungen stehen verbindlich in `docs/DECISIONS.md`.
 | Runtime | Foreground Service, aus sichtbarer Nutzeraktion gestartet |
 | App-Erkennung | `UsageStatsManager.queryEvents()` |
 | KI-Provider | OpenRouter, ein Provider im MVP |
-| Einstellungen | DataStore |
+| API-Key | Build-Time-Konfiguration, nicht im Repo |
+| Einstellungen | DataStore für UI-/Overlay-Settings, nicht für API-Key |
 
 Kein ComposeView im Overlay-MVP. ComposeView im `WindowManager` ist erst nach stabilem MVP erlaubt und braucht eine eigene Entscheidung.
 
@@ -57,6 +58,7 @@ Nicht bauen:
 - Backend
 - Analytics
 - große Clean Architecture
+- API-Key-Eingabe im MVP
 
 ---
 
@@ -137,7 +139,6 @@ Nutzer fügt manuell in WhatsApp ein
 Aufgaben:
 
 - Berechtigungsstatus anzeigen
-- API-Key speichern
 - Overlay aktivieren/deaktivieren
 - Test-Overlay starten
 - kurze Hinweise anzeigen
@@ -147,6 +148,7 @@ Nicht Aufgabe:
 - Chatverlauf
 - KI-Konversation
 - komplexe Navigation
+- API-Key-Eingabe
 
 ---
 
@@ -172,7 +174,6 @@ Nicht Aufgabe:
 
 Speichern:
 
-- API-Key
 - Overlay aktiv/inaktiv
 - bevorzugter Ton
 - letzter Modus optional
@@ -180,6 +181,7 @@ Speichern:
 
 Nicht speichern:
 
+- API-Key
 - kopierte WhatsApp-Nachrichten
 - Nutzerabsichten
 - generierte Vorschläge
@@ -246,18 +248,36 @@ Fallback:
 
 ---
 
+## AiConfig
+
+Aufgaben:
+
+- OpenRouter Endpoint definieren
+- Modell-ID definieren
+- API-Key aus Build-Time-Konfiguration bereitstellen
+
+Regeln:
+
+- echter API-Key darf nicht im Repo stehen
+- lokale Secret-Dateien müssen ignoriert werden
+- kein API-Key im UI
+- kein API-Key in DataStore
+
+---
+
 ## AiClient
 
 MVP-Regel:
 
 - OpenRouter als einziger Provider
 - kein Multi-Provider-System vor stabilem MVP
+- API-Key aus `AiConfig` / BuildConfig lesen
 - API-Key nie loggen
 - Nutzertexte nie loggen
 
 Fehlerfälle:
 
-- API-Key fehlt
+- API-Key fehlt im lokalen Build
 - Netzwerkfehler
 - Rate Limit
 - leere/ungültige Antwort
@@ -294,7 +314,6 @@ Pflichten:
 Erlaubt:
 
 ```text
-apiKey
 isOverlayEnabled
 preferredTone
 lastMode optional
@@ -305,6 +324,7 @@ bubbleY
 Nicht erlaubt:
 
 ```text
+apiKey
 clipboardPreview
 confirmedClipboardText
 currentUserIntent
@@ -345,6 +365,7 @@ Architektur ist ausreichend, wenn:
 - ReplyPanel funktioniert kompakt
 - Clipboard wird nur nach Nutzeraktion gelesen oder manueller Fallback funktioniert
 - KI liefert 3 Vorschläge oder saubere Fehler
+- API-Key kommt aus lokaler Build-Time-Konfiguration und steht nicht im Repo
 - keine WhatsApp-Automation vorhanden ist
 - kein Accessibility Service vorhanden ist
 - keine unnötigen Berechtigungen im Manifest stehen
