@@ -2,27 +2,23 @@
 
 Private Android-App als MVP für einen schwebenden KI-Formulierungshelfer über WhatsApp.
 
-Die App soll kein Messenger-Ersatz und keine WhatsApp-Automation werden. Sie soll nur dabei helfen, schwierige oder unklare Chatnachrichten besser zu formulieren.
+Die App ist kein Messenger-Ersatz und keine WhatsApp-Automation. Sie hilft nur beim Formulieren, Umschreiben und Beantworten von Chatnachrichten. Der Nutzer kopiert, fügt ein und sendet immer selbst.
 
 ---
 
-## Projektstatus
+## Status
 
-**Status:** Konzept- und Vorbereitungsphase  
-**Ziel:** private Android-APK  
-**Primäres Gerät:** Samsung Galaxy S25 / moderne Android-Version  
-**Hauptplattform:** Android 15/16  
-**Veröffentlichung:** zunächst nicht Play Store
-
-Aktuell enthält das Repository vor allem Projektvorgaben für Coding-Agenten:
-
-- [`AGENTS.md`](AGENTS.md) — verbindliche Arbeitsregeln für Coding-Agenten
-- [`Konzept.md`](Konzept.md) — Produktidee, Scope, Modi, Risiken und Abschlusskriterien
-- [`Arbeitsauftrag.md`](Arbeitsauftrag.md) — konkreter Arbeitsauftrag für die MVP-Umsetzung
+| Punkt | Stand |
+|---|---|
+| Projektphase | Konzept- und Vorbereitungsphase |
+| Ziel | private Android-APK |
+| Primäres Gerät | Samsung Galaxy S25 |
+| Zielplattform | Android 15/16 |
+| Release-Ziel | zunächst nicht Play Store |
 
 ---
 
-## Ziel des MVP
+## MVP-Ziel
 
 Wenn WhatsApp geöffnet ist, erscheint ein kleiner Floating Button am Bildschirmrand.
 
@@ -41,9 +37,9 @@ Beim Antippen öffnet sich ein kompaktes Mini-Fenster. Dort kann der Nutzer:
 
 ---
 
-## Nicht-Ziele
+## Harte Nicht-Ziele
 
-Diese Punkte sind bewusst nicht Teil des MVP:
+Nicht Teil des MVP:
 
 - kein automatisches Auslesen von WhatsApp-Chats
 - kein Lesen vollständiger Chatverläufe
@@ -61,7 +57,39 @@ Diese Punkte sind bewusst nicht Teil des MVP:
 - kein Play-Store-Release als erstes Ziel
 - kein Multi-App-Support für Telegram, Instagram, SMS usw.
 
-Wenn eine Umsetzung eines dieser Themen benötigen würde, ist sie außerhalb des aktuellen Scopes.
+Wenn eine Umsetzung eines dieser Themen benötigt, ist sie außerhalb des aktuellen Scopes.
+
+---
+
+## Dokumentenübersicht
+
+| Dokument | Zweck |
+|---|---|
+| [`AGENTS.md`](AGENTS.md) | verbindliche Kurzregeln für Coding-Agenten |
+| [`Konzept.md`](Konzept.md) | Produktziel, Scope, Modi, Risiken und Abschlusskriterien |
+| [`Arbeitsauftrag.md`](Arbeitsauftrag.md) | ausführlicher Startauftrag für externe Coding-Agenten |
+| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | technische Architektur und Komponenten |
+| [`docs/ANDROID_CONSTRAINTS.md`](docs/ANDROID_CONSTRAINTS.md) | Android 15/16, Overlay, Services und Berechtigungen |
+| [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md) | phasenweiser Umsetzungsplan |
+| [`docs/TEST_PLAN.md`](docs/TEST_PLAN.md) | Build-, Geräte-, Overlay-, Clipboard- und KI-Tests |
+| [`docs/PRIVACY_SECURITY.md`](docs/PRIVACY_SECURITY.md) | Datenschutz- und Sicherheitsgrenzen |
+| [`docs/PROMPTS.md`](docs/PROMPTS.md) | KI-Prompts und Parser-Regeln |
+| [`docs/UI_UX_SPEC.md`](docs/UI_UX_SPEC.md) | UI/UX-Regeln für Button, Panel und Fehlerzustände |
+
+---
+
+## Empfohlene Lesereihenfolge für Agenten
+
+Für Implementierungsaufgaben:
+
+1. [`AGENTS.md`](AGENTS.md)
+2. [`Konzept.md`](Konzept.md)
+3. [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
+4. [`docs/ANDROID_CONSTRAINTS.md`](docs/ANDROID_CONSTRAINTS.md)
+5. [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md)
+6. nur die zusätzlich relevanten Fachdocs
+
+Nicht alle Dokumente pauschal laden. Das reduziert Kontext-Bloat.
 
 ---
 
@@ -76,223 +104,29 @@ Wenn eine Umsetzung eines dieser Themen benötigen würde, ist sie außerhalb de
 | Overlay-Typ | `TYPE_APPLICATION_OVERLAY` |
 | WhatsApp-Erkennung | `UsageStatsManager.queryEvents()` |
 | Lokale Einstellungen | DataStore |
-| KI-Anbindung | OpenRouter oder OpenAI |
+| KI-Anbindung | OpenRouter oder OpenAI, ein Provider im MVP |
 | Distribution | private APK |
 
 ---
 
 ## Grundprinzip der App
 
-Die App soll WhatsApp nicht steuern. Sie soll nur ein Hilfsfenster über WhatsApp bereitstellen.
+Die App steuert WhatsApp nicht. Sie stellt nur ein Hilfsfenster über WhatsApp bereit.
 
-Der Nutzer bleibt immer selbst verantwortlich:
+Der Nutzer bleibt verantwortlich für:
 
 - Text prüfen
 - Vorschlag kopieren
 - in WhatsApp einfügen
 - Nachricht senden
 
-Die App soll keine automatischen Aktionen innerhalb von WhatsApp durchführen.
-
----
-
-## Modi
-
-## 1. Antworten
-
-Für Situationen, in denen der Nutzer auf eine konkrete kopierte Nachricht reagieren möchte.
-
-Beispiel:
-
-```text
-Kopierte Nachricht:
-Warum meldest du dich erst jetzt?
-
-Nutzerabsicht:
-Ich will mich entschuldigen, aber nicht unterwürfig klingen.
-
-Ton:
-ruhig, ehrlich, kurz
-```
-
-Die KI erzeugt drei passende Antwortvorschläge.
-
----
-
-## 2. Formulieren
-
-Für Situationen, in denen der Nutzer selbst etwas sagen möchte, aber die richtige Formulierung fehlt.
-
-Beispiel:
-
-```text
-Ich will sagen, dass ich heute Ruhe brauche, aber nicht kalt klingen.
-```
-
-Die KI erzeugt drei sendbare Chatnachrichten.
-
----
-
-## 3. Umschreiben
-
-Für Situationen, in denen ein vorhandener Text verbessert werden soll.
-
-Beispiel:
-
-```text
-Original:
-Keine Ahnung, mach halt was du willst.
-
-Gewünschte Änderung:
-weniger passiv-aggressiv
-```
-
-Die KI erzeugt drei bessere Varianten.
-
----
-
-## Benötigte Android-Berechtigungen
-
-| Berechtigung | Zweck |
-|---|---|
-| `SYSTEM_ALERT_WINDOW` | Floating Button und Mini-Fenster über WhatsApp anzeigen |
-| `PACKAGE_USAGE_STATS` | erkennen, ob WhatsApp im Vordergrund ist |
-| `INTERNET` | Anfrage an den KI-Anbieter senden |
-| `POST_NOTIFICATIONS` | optional, falls ein Foreground Service verwendet wird |
-| `FOREGROUND_SERVICE` | optional, falls ein Foreground Service verwendet wird |
-
-Nicht verwenden:
-
-- Kontakte
-- SMS
-- Kamera
-- Mikrofon
-- Standort
-- Medienzugriff
-- Accessibility Service
-
----
-
-## Datenschutzregeln
-
-Die App verarbeitet nur Inhalte, die der Nutzer aktiv eingibt oder bewusst bestätigt.
-
-Erlaubt:
-
-- Nutzer gibt eine Absicht ein
-- Nutzer bestätigt eine kopierte Nachricht aus der Zwischenablage
-- KI bekommt Modus, Ton, Absicht und optional bestätigten kopierten Text
-- Nutzer kopiert einen generierten Vorschlag
-
-Nicht erlaubt:
-
-- WhatsApp-Chats automatisch lesen
-- Clipboard dauerhaft überwachen
-- kopierte Nachrichten speichern
-- generierte Antworten speichern
-- Nutzertexte loggen
-- API-Keys loggen
-- Kontakte oder Gerätekennungen senden
-
----
-
-## Geplante Architektur
-
-Kleine, feature-nahe Struktur ohne unnötige Clean-Architecture-Schichten:
-
-```text
-app/
-├── MainActivity.kt
-├── settings/
-│   ├── SettingsScreen.kt
-│   ├── SettingsStore.kt
-│   └── PermissionStatus.kt
-├── overlay/
-│   ├── OverlayService.kt
-│   ├── OverlayController.kt
-│   ├── FloatingBubbleView.kt
-│   ├── ReplyPanelView.kt
-│   └── OverlayPositionStore.kt
-├── detection/
-│   └── ForegroundAppDetector.kt
-├── clipboard/
-│   └── ClipboardHelper.kt
-├── ai/
-│   ├── AiClient.kt
-│   ├── PromptBuilder.kt
-│   ├── AiResponseParser.kt
-│   └── AiConfig.kt
-└── model/
-    ├── ReplyMode.kt
-    ├── ToneOption.kt
-    ├── ReplyRequest.kt
-    └── ReplySuggestion.kt
-```
-
-Wichtig: `addView`, `removeView` und `updateViewLayout` sollen zentral in einem Overlay-Controller verwaltet werden, damit keine doppelten oder hängenden Overlays entstehen.
-
----
-
-## Vorgesehene Entwicklungsphasen
-
-### Phase 1: Projektbasis
-
-- Android-Projekt erstellen
-- Kotlin und Jetpack Compose einrichten
-- Startscreen bauen
-- DataStore vorbereiten
-- API-Key lokal speichern
-
-### Phase 2: Berechtigungen
-
-- Overlay-Berechtigung prüfen
-- Nutzungsdatenzugriff prüfen
-- passende Android-Einstellungsseiten öffnen
-- verständliche Statusanzeige bauen
-
-### Phase 3: Manuelles Overlay
-
-- Floating Button über `WindowManager` anzeigen
-- Button verschiebbar machen
-- Position speichern
-- Test-Overlay aus der App starten
-
-### Phase 4: WhatsApp-Erkennung
-
-- aktive Vordergrund-App über `UsageStatsManager.queryEvents()` erkennen
-- Button nur bei `com.whatsapp` anzeigen
-- Button außerhalb von WhatsApp ausblenden
-
-### Phase 5: Mini-Fenster
-
-- Modusauswahl bauen
-- Eingabefeld bauen
-- Ton-Auswahl bauen
-- Clipboard-Vorschau nur nach Nutzeraktion
-- Ergebnisbereich und Kopierbuttons bauen
-
-### Phase 6: KI-Anbindung
-
-- `AiClient` bauen
-- `PromptBuilder` für drei Modi bauen
-- Fehlerbehandlung
-- Ladezustand
-- 3 Vorschläge parsen und anzeigen
-
-### Phase 7: Stabilisierung
-
-- echtes Android-Gerät testen
-- Sperren/Entsperren prüfen
-- App-Wechsel prüfen
-- Internetfehler prüfen
-- fehlende Berechtigungen prüfen
-- Samsung-Akkuoptimierung dokumentieren
-
 ---
 
 ## Build-Hinweise
 
-Das eigentliche Android-Projekt ist noch nicht angelegt. Sobald Gradle-Dateien vorhanden sind, sollten typische Befehle ergänzt und geprüft werden:
+Das eigentliche Android-Projekt ist noch nicht angelegt.
+
+Sobald Gradle-Dateien vorhanden sind, sollen diese Befehle geprüft und bei Bedarf angepasst werden:
 
 ```bash
 ./gradlew assembleDebug
@@ -300,52 +134,22 @@ Das eigentliche Android-Projekt ist noch nicht angelegt. Sobald Gradle-Dateien v
 ./gradlew lint
 ```
 
-Agenten sollen keine erfolgreichen Builds oder Tests behaupten, wenn sie nicht ausgeführt wurden.
+Agenten dürfen keine erfolgreichen Builds oder Tests behaupten, wenn sie nicht ausgeführt wurden.
 
 ---
 
-## Manuelle Testcheckliste
-
-Vor einem brauchbaren MVP muss mindestens Folgendes auf einem echten Android-Gerät geprüft werden:
-
-- APK installieren
-- App öffnen
-- Overlay-Berechtigung setzen
-- Nutzungsdatenzugriff setzen
-- API-Key speichern
-- Overlay aktivieren
-- WhatsApp öffnen → Floating Button erscheint
-- WhatsApp verlassen → Floating Button verschwindet
-- Button verschieben
-- Button-Position bleibt erhalten
-- Button antippen → Mini-Fenster öffnet
-- kopierte Nachricht verwenden
-- Modus **Antworten** testen
-- Modus **Formulieren** testen
-- Modus **Umschreiben** testen
-- KI-Vorschläge generieren
-- Vorschlag kopieren
-- Vorschlag manuell in WhatsApp einfügen
-- Bildschirm sperren/entsperren
-- prüfen, dass kein doppeltes Overlay entsteht
-- Internet deaktivieren und Fehlermeldung prüfen
-- API-Key entfernen und Fehlermeldung prüfen
-
----
-
-## Abschlusskriterien für den MVP
+## MVP-Abschlusskriterien
 
 Der MVP gilt erst als fertig, wenn:
 
 - die App als APK installierbar ist
-- die Berechtigungsseite verständlich ist
-- Overlay-Berechtigung und Nutzungsdatenzugriff korrekt geprüft werden
+- Berechtigungen verständlich erklärt und geprüft werden
 - Floating Button nur bei WhatsApp erscheint
 - Floating Button außerhalb von WhatsApp verschwindet
 - Mini-Fenster stabil funktioniert
 - alle drei Modi funktionieren
-- Zwischenablage nur bewusst übernommen wird
-- KI genau drei Vorschläge erzeugt
+- Clipboard nur bewusst übernommen wird
+- KI genau drei Vorschläge erzeugt, soweit möglich
 - Vorschläge kopierbar sind
 - keine WhatsApp-Automation eingebaut wurde
 - kein Accessibility Service verwendet wurde
@@ -355,25 +159,8 @@ Der MVP gilt erst als fertig, wenn:
 
 ---
 
-## Agenten-Hinweis
-
-Vor jeder größeren Änderung muss [`AGENTS.md`](AGENTS.md) gelesen werden.
-
-Wenn Anweisungen kollidieren, gilt die strengere Regel bezüglich Datenschutz, Automatisierung und Scope-Begrenzung.
-
----
-
-## Projekturteil
+## Kurzurteil
 
 Der Scope ist realistisch und als privater Android-MVP gut machbar.
 
-Die Hauptschwierigkeit liegt nicht in der KI, sondern in:
-
-- Android-Overlay-Verhalten
-- Berechtigungen
-- Vordergrund-App-Erkennung
-- Service-Lifecycle
-- Samsung-/Android-Hintergrundlimits
-- sauberer, unaufdringlicher UX
-
-Der MVP soll klein bleiben: Floating Button, Mini-Fenster, Moduswahl, KI-Vorschläge, Kopieren. Alles darüber hinaus erhöht Risiko und Entwicklungsaufwand deutlich.
+Die Hauptschwierigkeit liegt nicht in der KI, sondern in Android-Overlay-Verhalten, Berechtigungen, Vordergrund-App-Erkennung, Service-Lifecycle, Samsung-/Android-Hintergrundlimits und einer unaufdringlichen UX.
