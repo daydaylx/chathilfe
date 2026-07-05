@@ -13,9 +13,10 @@ Agenten sollen phasenweise arbeiten und keine späteren Features vorziehen.
 1. `AGENTS.md`
 2. `README.md`
 3. `Konzept.md`
-4. `docs/ARCHITECTURE.md`
-5. `docs/ANDROID_CONSTRAINTS.md`
-6. dieses Dokument
+4. `docs/DECISIONS.md`
+5. `docs/ARCHITECTURE.md`
+6. `docs/ANDROID_CONSTRAINTS.md`
+7. dieses Dokument
 
 Task-spezifisch zusätzlich:
 
@@ -26,9 +27,9 @@ Task-spezifisch zusätzlich:
 
 ---
 
-## Phase 0 — Projektprüfung
+## Phase 0 — Projektprüfung und Entscheidungs-Gate
 
-Ziel: Repo verstehen.
+Ziel: Repo verstehen und offene technische Grundsatzentscheidungen vor Code klären.
 
 Aufgaben:
 
@@ -36,11 +37,39 @@ Aufgaben:
 - prüfen, ob Android-/Gradle-Projekt existiert
 - Branch und Status prüfen
 - keine Nutzeränderungen überschreiben
+- `docs/DECISIONS.md` prüfen
+- fehlende Entscheidungen ergänzen, bevor betroffene Phase startet
+
+Bereits entschieden:
+
+- Provider: OpenRouter im MVP
+- Overlay-Laufzeit: Foreground Service aus sichtbarer Nutzeraktion
+- Overlay-UI: klassische Android Views
+- `applicationId`: `de.disaai.chathilfe`
+- SDK-Basis: `compileSdk 36`, `targetSdk 35`, `minSdk 29`
+- Clipboard-Fallback: manuelles Einfügen ins Panel
+
+Vor Code-Scaffold noch zu pinnen:
+
+- Android Gradle Plugin Version
+- Gradle Wrapper Version
+- Kotlin Version
+- Compose BOM Version
+
+Vor Phase 7 zu pinnen:
+
+- konkretes OpenRouter-Default-Modell in `AiConfig`
 
 Nicht tun:
 
 - kein Code generieren, bevor die Projektbasis klar ist
-- keine Dependencies hinzufügen
+- keine Dependencies hinzufügen, bevor Toolchain festgelegt ist
+- keine Architekturentscheidungen ohne Update von `docs/DECISIONS.md`
+
+Akzeptanz:
+
+- Entscheidungen sind in `docs/DECISIONS.md` aktuell
+- kein Widerspruch zu `AGENTS.md` oder `docs/ANDROID_CONSTRAINTS.md`
 
 ---
 
@@ -54,6 +83,9 @@ Aufgaben:
 - Jetpack Compose für MainActivity einrichten
 - Package-Struktur vorbereiten
 - App-Name: ChatHilfe
+- `applicationId`: `de.disaai.chathilfe`
+- `compileSdk 36`, `targetSdk 35`, `minSdk 29`
+- aktuelle kompatible AGP-/Gradle-/Kotlin-/Compose-Versionen pinnen
 - dunkles Basis-Theme
 - Gradle-Setup minimal halten
 
@@ -81,6 +113,7 @@ Aufgaben:
 - `PermissionStatus`
 - Overlay-Berechtigung prüfen
 - Usage Access prüfen
+- Foreground-Service-/Notification-Anforderungen als Status vorbereiten
 - Einstellungsseiten öffnen
 - `SettingsStore` mit DataStore
 - API-Key speichern
@@ -91,6 +124,7 @@ Akzeptanz:
 - Status wird korrekt angezeigt
 - API-Key kann gespeichert werden
 - keine API-Keys werden geloggt
+- Status aktualisiert sich nach Rückkehr aus Android-Einstellungen
 
 ---
 
@@ -101,13 +135,16 @@ Ziel: Floating Button manuell testbar.
 Aufgaben:
 
 - `OverlayController`
-- `OverlayService` oder Overlay-Runtime
-- `FloatingBubbleView`
+- `OverlayService` als Foreground Service
+- `FloatingBubbleView` als klassische Android View
 - `TYPE_APPLICATION_OVERLAY`
+- Service-Start nur aus sichtbarer Nutzeraktion
+- `startForeground()` zeitnah aufrufen
 - Button anzeigen/entfernen
 - Dragging
 - Tap-vs-Drag trennen
 - Position speichern
+- sauberes Entfernen bei Stop
 
 Akzeptanz:
 
@@ -115,6 +152,11 @@ Akzeptanz:
 - Button ist verschiebbar
 - keine doppelten Buttons
 - Button kann deaktiviert werden
+- Service-Notification ist verständlich
+
+Validierung:
+
+- Gerätetest Pflicht
 
 Nicht tun:
 
@@ -136,12 +178,19 @@ Aufgaben:
 - Polling 1000 ms
 - Button zeigen/verstecken
 - fehlenden Usage Access sauber melden
+- Foreground-Service-Typ und Manifest final prüfen
 
 Akzeptanz:
 
 - WhatsApp öffnen → Button erscheint
 - WhatsApp verlassen → Button verschwindet
 - keine doppelten Views
+
+Validierung:
+
+- Gerätetest Pflicht
+- mehrfacher App-Wechsel
+- Sperren/Entsperren kurz prüfen
 
 Nicht tun:
 
@@ -156,12 +205,13 @@ Ziel: UI funktioniert mit Dummy-Daten.
 
 Aufgaben:
 
-- `ReplyPanelView`
+- `ReplyPanelView` als klassische Android View
 - Modi: Antworten, Formulieren, Umschreiben
 - Ton-Auswahl
 - Eingabefelder
-- Clipboard-Vorschau nur nach Panel-Öffnung
+- Clipboard-Vorschau nur nach Panel-Öffnung oder explizitem Tap
 - Clipboard erst nach Bestätigung übernehmen
+- manuellen Einfügen-Fallback anbieten
 - Dummy-Vorschläge anzeigen
 - Kopieren testen
 
@@ -170,7 +220,12 @@ Akzeptanz:
 - Panel öffnet/schließt
 - Modus und Ton wählbar
 - Clipboard wird nicht heimlich gelesen
+- manuelles Einfügen funktioniert auch ohne Clipboard-Zugriff
 - Vorschläge kopierbar
+
+Validierung:
+
+- Gerätetest Pflicht, besonders Clipboard-Fokusverhalten
 
 ---
 
@@ -192,6 +247,10 @@ Akzeptanz:
 - Parser extrahiert Vorschläge robust
 - kein Crash bei schlechter Modellantwort
 
+Validierung:
+
+- `./gradlew test` für relevante Tests
+
 ---
 
 ## Phase 7 — KI-Anbindung
@@ -200,8 +259,9 @@ Ziel: echte Vorschläge erzeugen.
 
 Aufgaben:
 
+- konkretes OpenRouter-Default-Modell nach aktueller Verfügbarkeit in `AiConfig` pinnen
 - `AiClient`
-- ein Provider, z. B. OpenRouter oder OpenAI
+- OpenRouter als einziger Provider
 - API-Key aus DataStore
 - Ladezustand
 - Fehlerbehandlung
@@ -214,6 +274,7 @@ Akzeptanz:
 - kein Internet → klare Meldung
 - gültige Anfrage → Vorschläge
 - keine Nutzertexte/API-Keys in Logs
+- Anfrage nur nach Button-Klick
 
 Nicht tun:
 
@@ -233,7 +294,10 @@ Aufgaben:
 - Samsung S25 testen
 - Overlay Permission testen
 - Usage Access testen
+- Foreground Service testen
 - WhatsApp-Appwechsel testen
+- ReplyPanel testen
+- Clipboard und manuellen Fallback testen
 - Sperren/Entsperren testen
 - Internetfehler testen
 - fehlende Berechtigungen testen
@@ -258,6 +322,7 @@ Aufgaben:
 - Build-Befehle ergänzen
 - bekannte Einschränkungen dokumentieren
 - Teststatus dokumentieren
+- `docs/DECISIONS.md` aktualisieren, falls technische Entscheidungen während der Umsetzung geändert wurden
 
 Agenten-Abschlussformat steht in `AGENTS.md`.
 
@@ -269,12 +334,13 @@ Muss zuerst funktionieren:
 
 1. App startet
 2. Berechtigungen sichtbar
-3. Overlay manuell testbar
-4. Button nur bei WhatsApp
-5. Panel öffnet
-6. Clipboard bewusst übernehmen
-7. KI-Vorschläge erzeugen
-8. Kopieren
+3. Foreground Service startet aus Nutzeraktion
+4. Overlay manuell testbar
+5. Button nur bei WhatsApp
+6. Panel öffnet
+7. Clipboard bewusst übernehmen oder manuell einfügen
+8. KI-Vorschläge erzeugen
+9. Kopieren
 
 Darf warten:
 
