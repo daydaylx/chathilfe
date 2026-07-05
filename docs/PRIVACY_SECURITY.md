@@ -31,11 +31,31 @@ Nicht erlaubt:
 
 ---
 
+## API-Key-Strategie
+
+Für die private APK wird der OpenRouter-Key lokal beim Build eingebettet.
+
+Regeln:
+
+- echter API-Key niemals ins GitHub-Repo
+- echter API-Key niemals in Dokumentation
+- echter API-Key niemals in Logs
+- echter API-Key nicht im UI anzeigen
+- kein API-Key-Feld im MVP
+- kein API-Key in DataStore
+- lokale Secret-Dateien müssen in `.gitignore` stehen
+- Build-Doku darf nur Platzhalter verwenden
+
+Wichtig:
+
+Ein in die APK eingebetteter Key ist nicht wirklich geheim. APKs können dekompiliert werden. Für private Nutzung ist das akzeptabel, wenn die APK nicht öffentlich verteilt wird und der Key ein niedriges Credit-/Usage-Limit hat.
+
+---
+
 ## Datenkategorien
 
 Lokal speichern erlaubt:
 
-- API-Key
 - Overlay aktiv/inaktiv
 - bevorzugter Ton
 - letzter Modus optional
@@ -51,6 +71,7 @@ Nur flüchtig im Speicher erlaubt:
 
 Verboten:
 
+- API-Key in DataStore
 - vollständige WhatsApp-Chats
 - Kontakte
 - Telefonnummern aus Kontaktbuch
@@ -73,8 +94,8 @@ Erlaubt:
 | `INTERNET` | KI-Anfrage |
 | `SYSTEM_ALERT_WINDOW` | Overlay |
 | `PACKAGE_USAGE_STATS` | WhatsApp-Vordergrund erkennen |
-| `POST_NOTIFICATIONS` | optional bei Foreground Service |
-| `FOREGROUND_SERVICE` | optional bei Foreground Service |
+| `POST_NOTIFICATIONS` | Service-Notification, wenn erforderlich |
+| `FOREGROUND_SERVICE` | Overlay-Laufzeit |
 
 Verboten:
 
@@ -98,6 +119,7 @@ Erlaubt:
 - Vorschau anzeigen
 - Text erst nach „Verwenden“ nutzen
 - Vorschlag per Button kopieren
+- manueller Einfügen-Fallback
 
 Verboten:
 
@@ -107,13 +129,6 @@ Verboten:
 - Logging
 - automatische KI-Anfrage bei Clipboard-Änderung
 
-UI-Pflicht:
-
-```text
-Kopierter Text erkannt. Verwenden?
-[Verwenden] [Ignorieren]
-```
-
 ---
 
 ## KI-Anfragen
@@ -121,7 +136,7 @@ Kopierter Text erkannt. Verwenden?
 Eine KI-Anfrage darf enthalten:
 
 - gewählter Modus
-- bestätigter kopierter Text optional
+- bestätigter kopierter oder manuell eingefügter Text optional
 - Nutzerabsicht
 - Ton
 - Sprache
@@ -138,23 +153,6 @@ Nicht senden:
 - Logs
 
 KI-Anfragen dürfen nur nach Tippen auf „Vorschläge erstellen“ entstehen.
-
----
-
-## API-Key
-
-Regeln:
-
-- lokal speichern
-- nicht committen
-- nicht loggen
-- nicht in Fehlermeldungen anzeigen
-- nicht in Crashreports senden
-- nicht hart im Code hinterlegen
-
-MVP: DataStore ist akzeptabel.
-
-Später prüfen: Android Keystore oder verschlüsselte Speicherung.
 
 ---
 
@@ -180,43 +178,6 @@ ai_request_failed=http_429
 
 ---
 
-## Threat Model
-
-Risiko: App wirkt wie Spyware.
-
-Gegenmaßnahmen:
-
-- minimale Berechtigungen
-- keine Accessibility
-- Clipboard nur nach Bestätigung
-- klare UI-Hinweise
-
-Risiko: sensible Nachricht wird versehentlich an KI gesendet.
-
-Gegenmaßnahmen:
-
-- Vorschau
-- explizites „Verwenden“
-- KI-Anfrage nur per Button
-
-Risiko: API-Key leakt.
-
-Gegenmaßnahmen:
-
-- nicht loggen
-- nicht committen
-- später Keystore prüfen
-
-Risiko: KI schreibt unpassend.
-
-Gegenmaßnahmen:
-
-- Nutzer kopiert und sendet selbst
-- drei Varianten
-- keine automatische WhatsApp-Aktion
-
----
-
 ## Akzeptanzkriterien
 
 Datenschutz ist für den MVP akzeptabel, wenn:
@@ -224,9 +185,11 @@ Datenschutz ist für den MVP akzeptabel, wenn:
 - keine verbotenen Berechtigungen vorhanden sind
 - kein Accessibility Service vorhanden ist
 - Clipboard nur nach Nutzeraktion gelesen wird
+- manueller Fallback funktioniert
 - Nutzertexte nicht gespeichert werden
 - Nutzertexte nicht geloggt werden
 - API-Key nicht geloggt wird
+- API-Key nicht im Repo steht
 - KI-Anfragen nur nach Button-Klick erfolgen
 - nur bestätigte Inhalte an KI gesendet werden
 - keine automatische WhatsApp-Aktion möglich ist
