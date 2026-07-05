@@ -10,11 +10,13 @@ Die App ist kein Messenger-Ersatz. Sie hilft nur beim Formulieren, Umschreiben u
 
 | Punkt | Stand |
 |---|---|
-| Projektphase | Konzept- und Vorbereitungsphase |
+| Projektphase | Phase 0/1 abgeschlossen, Phase 2 als nächster Schritt |
 | Ziel | private Android-APK |
 | Primäres Gerät | Samsung Galaxy S25 |
 | Zielplattform | Android 15/16 |
 | Release-Ziel | zunächst nicht Play Store |
+| Android-Projektbasis | angelegt |
+| Buildstatus | Gradle-Projekt vorhanden; aktueller Build muss lokal/CI verifiziert werden |
 
 ---
 
@@ -41,6 +43,7 @@ Beim Antippen öffnet sich ein kompaktes Mini-Fenster. Dort kann der Nutzer:
 | [`AGENTS.md`](AGENTS.md) | verbindliche Kurzregeln für Coding-Agenten |
 | [`Konzept.md`](Konzept.md) | Produktziel, Scope, Modi, Risiken und Abschlusskriterien |
 | [`Arbeitsauftrag.md`](Arbeitsauftrag.md) | ausführlicher Startauftrag für externe Coding-Agenten |
+| [`docs/PHASE_0_1_REPORT.md`](docs/PHASE_0_1_REPORT.md) | Abschlussbericht zu Phase 0/1 |
 | [`docs/DECISIONS.md`](docs/DECISIONS.md) | angenommene technische Entscheidungen aus dem Audit |
 | [`docs/API_KEY_STRATEGY.md`](docs/API_KEY_STRATEGY.md) | lokale API-Key-Strategie für private Builds |
 | [`docs/PLAN_AUDIT.md`](docs/PLAN_AUDIT.md) | Plan-Audit, Risiken und erste Umsetzungstickets |
@@ -89,6 +92,21 @@ Details stehen in [`docs/DECISIONS.md`](docs/DECISIONS.md) und [`docs/API_KEY_ST
 
 ---
 
+## Toolchain Stand Phase 1
+
+| Komponente | Version |
+|---|---|
+| Android Gradle Plugin | 9.2.0 |
+| Gradle Wrapper | 9.6.1 |
+| Kotlin / Compose Compiler Plugin | 2.4.0 |
+| Compose BOM | 2026.06.01 |
+| `compileSdk` | 36 |
+| `targetSdk` | 35 |
+| `minSdk` | 29 |
+| `applicationId` | `de.disaai.chathilfe` |
+
+---
+
 ## API-Key-Regel
 
 Der echte OpenRouter-Key darf nie ins Repository.
@@ -107,9 +125,9 @@ Dokumentation und Beispielcode dürfen nur Platzhalter enthalten.
 
 ## Build-Hinweise
 
-Das eigentliche Android-Projekt ist noch nicht angelegt.
+Das Android-Projekt ist angelegt.
 
-Sobald Gradle-Dateien vorhanden sind, sollen diese Befehle geprüft und bei Bedarf angepasst werden:
+Standardbefehle:
 
 ```bash
 ./gradlew assembleDebug
@@ -117,7 +135,21 @@ Sobald Gradle-Dateien vorhanden sind, sollen diese Befehle geprüft und bei Beda
 ./gradlew lint
 ```
 
-Agenten dürfen keine erfolgreichen Builds oder Tests behaupten, wenn sie nicht ausgeführt wurden.
+Aktueller Hinweis: In der GitHub-Prüfung ist kein CI-/Build-Run sichtbar. Ein Agent darf erfolgreiche Builds oder Tests nur behaupten, wenn sie tatsächlich ausgeführt wurden.
+
+---
+
+## Aktueller nächster Schritt
+
+Nächster sinnvoller Schritt ist **Phase 2 — Settings und Berechtigungen**:
+
+- `SettingsScreen`
+- `PermissionStatus`
+- Overlay-Berechtigung prüfen
+- Usage Access prüfen
+- Foreground-Service-/Notification-Anforderungen vorbereiten
+- DataStore nur für UI-/Overlay-Einstellungen
+- keine API-Key-Eingabe im UI
 
 ---
 
