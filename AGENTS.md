@@ -40,6 +40,7 @@ Do not load every document unless needed for the current task.
 | Product goal and MVP scope | `Konzept.md` |
 | Agent rules and stop conditions | `AGENTS.md` |
 | Accepted technical decisions | `docs/DECISIONS.md` |
+| API key handling for private builds | `docs/API_KEY_STRATEGY.md` |
 | Plan/audit context | `docs/PLAN_AUDIT.md` |
 | External implementation prompt | `Arbeitsauftrag.md` |
 | Technical architecture | `docs/ARCHITECTURE.md` |
@@ -56,8 +57,9 @@ If documents conflict, use this priority:
 2. `docs/PRIVACY_SECURITY.md`
 3. `docs/ANDROID_CONSTRAINTS.md`
 4. `docs/DECISIONS.md`
-5. `Konzept.md`
-6. task-specific docs
+5. `docs/API_KEY_STRATEGY.md`
+6. `Konzept.md`
+7. task-specific docs
 
 ---
 
