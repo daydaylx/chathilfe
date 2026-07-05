@@ -31,18 +31,10 @@ Task-spezifisch zusätzlich:
 
 Ziel: Repo verstehen und offene technische Grundsatzentscheidungen vor Code klären.
 
-Aufgaben:
-
-- vorhandene Dateien lesen
-- prüfen, ob Android-/Gradle-Projekt existiert
-- Branch und Status prüfen
-- keine Nutzeränderungen überschreiben
-- `docs/DECISIONS.md` prüfen
-- fehlende Entscheidungen ergänzen, bevor betroffene Phase startet
-
 Bereits entschieden:
 
 - Provider: OpenRouter im MVP
+- API-Key: lokal beim Build einbetten, niemals committen
 - Overlay-Laufzeit: Foreground Service aus sichtbarer Nutzeraktion
 - Overlay-UI: klassische Android Views
 - `applicationId`: `de.disaai.chathilfe`
@@ -55,6 +47,8 @@ Vor Code-Scaffold noch zu pinnen:
 - Gradle Wrapper Version
 - Kotlin Version
 - Compose BOM Version
+- Mechanismus für lokalen API-Key: `local.properties`, `secrets.properties` oder Environment-Variable
+- `.gitignore` für lokale Secret-Dateien
 
 Vor Phase 7 zu pinnen:
 
@@ -65,6 +59,7 @@ Nicht tun:
 - kein Code generieren, bevor die Projektbasis klar ist
 - keine Dependencies hinzufügen, bevor Toolchain festgelegt ist
 - keine Architekturentscheidungen ohne Update von `docs/DECISIONS.md`
+- keinen echten API-Key ins Repo schreiben
 
 Akzeptanz:
 
@@ -86,6 +81,8 @@ Aufgaben:
 - `applicationId`: `de.disaai.chathilfe`
 - `compileSdk 36`, `targetSdk 35`, `minSdk 29`
 - aktuelle kompatible AGP-/Gradle-/Kotlin-/Compose-Versionen pinnen
+- lokalen API-Key-Mechanismus vorbereiten, aber nur mit Platzhalter dokumentieren
+- `.gitignore` für lokale Secret-Dateien ergänzen
 - dunkles Basis-Theme
 - Gradle-Setup minimal halten
 
@@ -94,12 +91,14 @@ Akzeptanz:
 - `./gradlew assembleDebug` erfolgreich
 - App startet
 - MainActivity zeigt einfache Setup-Seite
+- kein echter API-Key im Repo
 
 Nicht tun:
 
 - kein Overlay
 - keine KI
 - kein Service
+- keine API-Key-Eingabe im UI
 
 ---
 
@@ -115,14 +114,14 @@ Aufgaben:
 - Usage Access prüfen
 - Foreground-Service-/Notification-Anforderungen als Status vorbereiten
 - Einstellungsseiten öffnen
-- `SettingsStore` mit DataStore
-- API-Key speichern
+- `SettingsStore` mit DataStore für UI-/Overlay-Einstellungen
 - Overlay aktiv/inaktiv speichern
+- bevorzugten Ton und Position speichern
 
 Akzeptanz:
 
 - Status wird korrekt angezeigt
-- API-Key kann gespeichert werden
+- kein API-Key-Feld im UI
 - keine API-Keys werden geloggt
 - Status aktualisiert sich nach Rückkehr aus Android-Einstellungen
 
@@ -260,9 +259,9 @@ Ziel: echte Vorschläge erzeugen.
 Aufgaben:
 
 - konkretes OpenRouter-Default-Modell nach aktueller Verfügbarkeit in `AiConfig` pinnen
+- API-Key aus lokaler Build-Time-Konfiguration lesen
 - `AiClient`
 - OpenRouter als einziger Provider
-- API-Key aus DataStore
 - Ladezustand
 - Fehlerbehandlung
 - Antwort parsen
@@ -270,17 +269,19 @@ Aufgaben:
 
 Akzeptanz:
 
-- fehlender API-Key → klare Meldung
+- fehlender Build-Time-Key → klarer Build- oder Laufzeitfehler ohne Secret-Ausgabe
 - kein Internet → klare Meldung
 - gültige Anfrage → Vorschläge
 - keine Nutzertexte/API-Keys in Logs
 - Anfrage nur nach Button-Klick
+- echter API-Key steht nicht im Repo
 
 Nicht tun:
 
 - kein Multi-Provider-System
 - kein Verlauf
 - keine automatische Anfrage
+- keine API-Key-Eingabe im UI
 
 ---
 
@@ -291,6 +292,7 @@ Ziel: private APK ist real nutzbar.
 Aufgaben:
 
 - APK bauen
+- prüfen, dass API-Key nur lokal eingebettet wurde
 - Samsung S25 testen
 - Overlay Permission testen
 - Usage Access testen
@@ -320,6 +322,7 @@ Aufgaben:
 
 - README aktualisieren
 - Build-Befehle ergänzen
+- lokale Secret-Konfiguration mit Platzhalter dokumentieren
 - bekannte Einschränkungen dokumentieren
 - Teststatus dokumentieren
 - `docs/DECISIONS.md` aktualisieren, falls technische Entscheidungen während der Umsetzung geändert wurden
@@ -339,7 +342,7 @@ Muss zuerst funktionieren:
 5. Button nur bei WhatsApp
 6. Panel öffnet
 7. Clipboard bewusst übernehmen oder manuell einfügen
-8. KI-Vorschläge erzeugen
+8. KI-Vorschläge über lokalen Build-Time-Key erzeugen
 9. Kopieren
 
 Darf warten:
