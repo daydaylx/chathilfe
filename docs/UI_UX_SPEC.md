@@ -215,6 +215,37 @@ Regeln:
 
 ---
 
+## Interne Modell- und Qualitätslogik
+
+Die normale Overlay-UI bleibt bewusst einfach. Der Nutzer soll im ReplyPanel nur diese Dinge bedienen:
+
+- Modus
+- optional Clipboard oder manuelle Texteingabe
+- Nutzerabsicht
+- Ton-Auswahl
+- Vorschläge erstellen
+- Vorschläge kopieren
+
+Nicht im ReplyPanel anzeigen:
+
+- Modell-Auswahl
+- Provider-Auswahl
+- Temperature
+- `max_tokens`
+- Reasoning-/Thinking-Einstellungen
+- Prompt-Profile
+- Rollen-System
+- Qualitäts-Dashboard
+- technische Fallback-Regeln
+
+Modelle, Provider, Tokenlimits, Temperatur, Fallbacks und mögliche Tonfall-zu-Modell-Zuordnungen sind interne technische Details.
+
+Wenn mehrere Modelle genutzt werden, entscheidet die App intern anhand von Modus, Tonfall und Verfügbarkeit. Der Nutzer sieht weiterhin nur verständliche Ton-Chips wie `freundlich`, `direkt` oder `deeskalierend`.
+
+Eine sichtbare Qualitätsauswahl wie `Schnell`, `Sehr gut` oder `Beste Qualität` ist kein MVP-Bestandteil. Falls sie später ergänzt wird, muss sie als optionales Post-MVP-Feature behandelt werden und darf das ReplyPanel nicht überladen.
+
+---
+
 ## Lade- und Fehlerzustände
 
 Während Anfrage:
@@ -255,6 +286,7 @@ Kopiert
 - Panel nie automatisch öffnen
 - keine Popups ohne Nutzeraktion
 - keine KI-Anfrage ohne Nutzeraktion
+- keine Modell-, Provider- oder Prompt-Einstellungen im Overlay anzeigen
 
 ---
 
@@ -271,3 +303,4 @@ UI/UX ist akzeptabel, wenn:
 - manuelles Einfügen funktioniert, wenn Clipboard leer/blockiert ist
 - Vorschläge sind leicht kopierbar
 - Fehler sind verständlich
+- ReplyPanel bleibt frei von Modell-, Provider-, Token-, Reasoning- und Prompt-Einstellungen
