@@ -13,11 +13,15 @@
     <string name="permission_usage_title">Nutzungszugriff</string>
     <string name="permission_usage_description">Wird benötigt, um zu erkennen, wann WhatsApp im Vordergrund ist.</string>
 
+    <string name="permission_notification_title">Benachrichtigungen</string>
+    <string name="permission_notification_description">Zeigt an, dass ChatHilfe aktiv ist. Ohne diese Berechtigung läuft der Floating Button trotzdem, nur ohne sichtbare Benachrichtigung.</string>
+
     <string name="action_open_settings">Einstellungen öffnen</string>
 
-    <string name="foreground_service_title">Hintergrund-Dienst (später)</string>
-    <string name="foreground_service_description">Ab Phase 3 läuft der Floating Button in einem Hintergrund-Dienst. Dafür wird möglicherweise eine Benachrichtigungs-Berechtigung benötigt. Das ist hier noch nicht aktiv.</string>
-    <string name="foreground_service_state">Vorbereitet</string>
+    <string name="foreground_service_title">Hintergrund-Dienst</string>
+    <string name="foreground_service_description">Der Floating Button läuft in einem Hintergrund-Dienst, solange das Overlay aktiviert ist. Eine Benachrichtigung zeigt das an.</string>
+    <string name="foreground_service_state_active">Aktiv</string>
+    <string name="foreground_service_state_inactive">Inaktiv</string>
 
     <string name="api_key_title">API-Key-Konfiguration</string>
     <string name="api_key_configured">Konfiguriert</string>
@@ -25,5 +29,11 @@
     <string name="api_key_description">Build-Zeit-Konfiguration. Kein Eingabefeld in der App.</string>
 
     <string name="overlay_toggle_title">Overlay aktivieren</string>
-    <string name="overlay_toggle_description">Legt nur fest, ob der Floating Button grundsätzlich aktiv sein soll. Startet noch keinen Dienst.</string>
+    <string name="overlay_toggle_description">Aktiviert den Floating-Button-Dienst, sobald die Anzeige-Berechtigung erteilt ist.</string>
+    <string name="overlay_permission_required_toast">Bitte zuerst \"Anzeige über anderen Apps\" erlauben.</string>
+
+    <string name="notification_channel_name">ChatHilfe Overlay</string>
+    <string name="notification_title">ChatHilfe ist aktiv</string>
+    <string name="notification_text">Der Floating Button läuft. Zum Beenden in den Einstellungen deaktivieren.</string>
+    <string name="bubble_tap_toast">ChatHilfe – noch keine Aktion in Phase 3</string>
 </resources>

@@ -64,9 +64,8 @@ OverlayController + ForegroundAppDetector laufen innerhalb dieser Overlay-Laufze
 **Konsequenz:**
 
 - `FOREGROUND_SERVICE` wird für die Overlay-Laufzeit benötigt.
-- `POST_NOTIFICATIONS` wird benötigt, falls die Android-Version für die sichtbare Service-Notification danach fragt.
-- Der passende Foreground-Service-Typ muss in Phase 1/3 gegen aktuelle Android-Doku geprüft und im Manifest dokumentiert werden.
-- Falls `specialUse` verwendet wird, muss die Begründung im Manifest und in der Doku stehen.
+- `POST_NOTIFICATIONS` wird ab API 33 zur Laufzeit angefragt. Eine Ablehnung blockiert den Service nicht: `SYSTEM_ALERT_WINDOW` bleibt die für den Bubble maßgebliche Berechtigung, ohne `POST_NOTIFICATIONS` läuft der Foreground Service weiter, nur die Notification bleibt unsichtbar.
+- **Foreground-Service-Typ (Phase 3, entschieden): `specialUse`.** Ein manuell gestarteter, verschiebbarer Floating-Bubble-Overlay-Dienst ist exakt das in der aktuellen Android-Dokumentation genannte Referenzbeispiel für `specialUse` (kein Fit für `mediaPlayback`, `location`, `dataSync` etc.). Dafür zusätzlich nötig: `FOREGROUND_SERVICE_SPECIAL_USE`-Permission sowie eine `<property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE" .../>` im `<service>`-Element mit kurzer, ehrlicher Begründung (siehe `AndroidManifest.xml`, Service `.overlay.OverlayService`).
 
 **Nicht erlaubt:**
 
@@ -201,6 +200,5 @@ Für eine rein private APK ist eine feste Build-Time-Konfiguration einfacher als
 Diese Punkte bleiben bewusst offen, bis sie für Code relevant werden:
 
 - konkretes OpenRouter-Default-Modell für Phase 7
-- konkreter Foreground-Service-Typ nach finaler Manifest-Prüfung
 
 Offen heißt hier nicht beliebig: Ein Agent muss sie vor der jeweiligen Phase entscheiden, dokumentieren und gegen `AGENTS.md` sowie `docs/ANDROID_CONSTRAINTS.md` prüfen.

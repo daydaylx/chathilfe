@@ -3,22 +3,19 @@ package de.disaai.chathilfe.settings
 import android.app.AppOpsManager
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import android.os.Process
 import android.provider.Settings
+import androidx.core.content.ContextCompat
 
 enum class PermissionState { GRANTED, MISSING }
-
-/**
- * No foreground service exists yet in Phase 2, so this is always PLANNED.
- * It only exists so the UI has a typed value instead of a hardcoded string.
- */
-enum class FutureRequirementStatus { PLANNED }
 
 data class PermissionStatus(
     val overlay: PermissionState,
     val usageAccess: PermissionState,
-    val foregroundServiceNotification: FutureRequirementStatus = FutureRequirementStatus.PLANNED,
+    val notification: PermissionState,
 )
 
 fun checkOverlayPermission(context: Context): PermissionState =
@@ -34,9 +31,21 @@ fun checkUsageAccessPermission(context: Context): PermissionState {
     return if (mode == AppOpsManager.MODE_ALLOWED) PermissionState.GRANTED else PermissionState.MISSING
 }
 
+// POST_NOTIFICATIONS only exists as a runtime permission from API 33+; below that,
+// notifications are implicitly allowed.
+fun checkNotificationPermission(context: Context): PermissionState {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return PermissionState.GRANTED
+    val granted = ContextCompat.checkSelfPermission(
+        context,
+        android.Manifest.permission.POST_NOTIFICATIONS,
+    ) == PackageManager.PERMISSION_GRANTED
+    return if (granted) PermissionState.GRANTED else PermissionState.MISSING
+}
+
 fun currentPermissionStatus(context: Context): PermissionStatus = PermissionStatus(
     overlay = checkOverlayPermission(context),
     usageAccess = checkUsageAccessPermission(context),
+    notification = checkNotificationPermission(context),
 )
 
 fun overlayPermissionSettingsIntent(context: Context): Intent =

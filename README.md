@@ -10,13 +10,13 @@ Die App ist kein Messenger-Ersatz. Sie hilft nur beim Formulieren, Umschreiben u
 
 | Punkt | Stand |
 |---|---|
-| Projektphase | Phase 2 code-seitig abgeschlossen, Phase 3 als nächster Schritt |
+| Projektphase | Phase 3 code-seitig abgeschlossen, Gerätetest + Build-Verifikation als nächster Schritt |
 | Ziel | private Android-APK |
 | Primäres Gerät | Samsung Galaxy S25 |
 | Zielplattform | Android 15/16 |
 | Release-Ziel | zunächst nicht Play Store |
 | Android-Projektbasis | angelegt |
-| Buildstatus | Gradle-Projekt vorhanden; `assembleDebug` in dieser Session nicht ausführbar (siehe `docs/PHASE_2_REPORT.md`), muss lokal/CI verifiziert werden |
+| Buildstatus | Gradle-Projekt vorhanden; `assembleDebug` in dieser Session weiterhin nicht ausführbar (siehe `docs/PHASE_3_REPORT.md`), muss lokal/CI mit Android SDK verifiziert werden |
 
 ---
 
@@ -45,6 +45,7 @@ Beim Antippen öffnet sich ein kompaktes Mini-Fenster. Dort kann der Nutzer:
 | [`Arbeitsauftrag.md`](Arbeitsauftrag.md) | ausführlicher Startauftrag für externe Coding-Agenten |
 | [`docs/PHASE_0_1_REPORT.md`](docs/PHASE_0_1_REPORT.md) | Abschlussbericht zu Phase 0/1 |
 | [`docs/PHASE_2_REPORT.md`](docs/PHASE_2_REPORT.md) | Abschlussbericht zu Phase 2 |
+| [`docs/PHASE_3_REPORT.md`](docs/PHASE_3_REPORT.md) | Abschlussbericht zu Phase 3 |
 | [`docs/DECISIONS.md`](docs/DECISIONS.md) | angenommene technische Entscheidungen aus dem Audit |
 | [`docs/API_KEY_STRATEGY.md`](docs/API_KEY_STRATEGY.md) | lokale API-Key-Strategie für private Builds |
 | [`docs/PLAN_AUDIT.md`](docs/PLAN_AUDIT.md) | Plan-Audit, Risiken und erste Umsetzungstickets |
@@ -142,9 +143,9 @@ Aktueller Hinweis: In der GitHub-Prüfung ist kein CI-/Build-Run sichtbar. Ein A
 
 ## Aktueller nächster Schritt
 
-Phase 2 (Settings und Berechtigungen) ist code-seitig umgesetzt; Details in [`docs/PHASE_2_REPORT.md`](docs/PHASE_2_REPORT.md). Vor Phase 3 sollte einmal lokal mit Android SDK `./gradlew assembleDebug` verifiziert werden.
+Phase 3 (manuelles Overlay und Floating Button) ist code-seitig umgesetzt; Details in [`docs/PHASE_3_REPORT.md`](docs/PHASE_3_REPORT.md). Build (`./gradlew assembleDebug`/`test`/`lint`) und der Pflicht-Gerätetest (siehe Checkliste im Phase-3-Report) stehen noch aus, da dieser Sandbox weder ein Android SDK noch Zugriff auf die gepinnte Gradle-Distribution zur Verfügung steht.
 
-Nächster sinnvoller Schritt ist **Phase 3 — Overlay und Floating Button** (`OverlayService`, `OverlayController`, `FloatingBubbleView`) gemäß `docs/IMPLEMENTATION_PLAN.md`.
+Nächster sinnvoller Schritt: Gerätetest + Build-Verifikation nachholen, danach **Phase 4 — WhatsApp-Erkennung** (`ForegroundAppDetector`) gemäß `docs/IMPLEMENTATION_PLAN.md`.
 
 ---
 
