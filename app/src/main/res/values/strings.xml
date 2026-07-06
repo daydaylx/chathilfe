@@ -1,4 +1,29 @@
 <resources>
     <string name="app_name">ChatHilfe</string>
-    <string name="setup_placeholder">ChatHilfe – Setup folgt</string>
+
+    <string name="settings_title">ChatHilfe</string>
+    <string name="settings_intro">Diese Übersicht zeigt, welche Berechtigungen ChatHilfe benötigt und wie die App aktuell eingerichtet ist.</string>
+
+    <string name="permission_state_granted">Erlaubt</string>
+    <string name="permission_state_missing">Nicht erlaubt</string>
+
+    <string name="permission_overlay_title">Anzeige über anderen Apps</string>
+    <string name="permission_overlay_description">ChatHilfe braucht diese Berechtigung, um den Floating Button über WhatsApp anzuzeigen.</string>
+
+    <string name="permission_usage_title">Nutzungszugriff</string>
+    <string name="permission_usage_description">Wird benötigt, um zu erkennen, wann WhatsApp im Vordergrund ist.</string>
+
+    <string name="action_open_settings">Einstellungen öffnen</string>
+
+    <string name="foreground_service_title">Hintergrund-Dienst (später)</string>
+    <string name="foreground_service_description">Ab Phase 3 läuft der Floating Button in einem Hintergrund-Dienst. Dafür wird möglicherweise eine Benachrichtigungs-Berechtigung benötigt. Das ist hier noch nicht aktiv.</string>
+    <string name="foreground_service_state">Vorbereitet</string>
+
+    <string name="api_key_title">API-Key-Konfiguration</string>
+    <string name="api_key_configured">Konfiguriert</string>
+    <string name="api_key_not_configured">Noch nicht konfiguriert</string>
+    <string name="api_key_description">Build-Zeit-Konfiguration. Kein Eingabefeld in der App.</string>
+
+    <string name="overlay_toggle_title">Overlay aktivieren</string>
+    <string name="overlay_toggle_description">Legt nur fest, ob der Floating Button grundsätzlich aktiv sein soll. Startet noch keinen Dienst.</string>
 </resources>
