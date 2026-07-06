@@ -13,8 +13,8 @@ Die App soll klein, schnell, verständlich und unaufdringlich sein.
 Für den MVP gilt:
 
 - MainActivity wird mit Jetpack Compose gebaut.
-- Floating Button und ReplyPanel im Overlay werden als klassische Android Views gebaut.
-- Das ReplyPanel muss immer eine Möglichkeit bieten, Text manuell einzufügen.
+- Floating Button und Overlay-UI werden als klassische Android Views gebaut.
+- Das Overlay muss immer eine Möglichkeit bieten, Text manuell einzugeben oder einzufügen.
 - Clipboard ist Komfortfunktion, aber keine Pflichtabhängigkeit.
 
 ---
@@ -38,6 +38,7 @@ Nicht-Ziel:
 - kein Chatbot-Verlauf
 - kein Dashboard
 - keine unnötigen Animationen
+- kein großes Formular als Startzustand
 
 ---
 
@@ -50,20 +51,22 @@ Floating Button erscheint am Rand
 ↓
 Button antippen
 ↓
-Mini-Fenster öffnet
+schmaler Eingabebalken öffnet
 ↓
-Modus wählen
+Ton prüfen oder ändern
 ↓
-optional Clipboard verwenden oder Text manuell einfügen
-↓
-Absicht eingeben
-↓
-Ton wählen
+Text eingeben oder einfügen
 ↓
 Vorschläge erstellen
 ↓
+Overlay erweitert sich zum Ergebnis-Panel
+↓
+einen Vorschlag ansehen
+↓
+zwischen 3 Vorschlägen wechseln
+↓
 Vorschlag kopieren
-oder bei unpassenden Vorschlägen einmal gezielt neu versuchen
+oder bei unpassenden Vorschlägen gezielt neu versuchen
 ↓
 manuell in WhatsApp einfügen
 ```
@@ -101,197 +104,156 @@ Anforderungen:
 - Rand-Andocken nach Drag
 - nicht über WhatsApp-Sendebutton defaulten
 - sichtbar nur bei WhatsApp
-- Tap öffnet Panel
+- Tap öffnet den Eingabebalken
 - Drag löst keinen Tap aus
 - Position wird gespeichert
 
 ---
 
-## ReplyPanel
+## Overlay-Zustände
 
-Das ReplyPanel ist ein kleines Formular, kein Chatfenster.
+Das Overlay hat im MVP zwei visuelle Zustände:
 
-Empfehlung:
+1. **Input-Bar / Eingabebalken**
+2. **Result-Panel / Ergebnis-Panel**
 
-- Breite: 88–94 % Displaybreite
-- maximale Höhe: 70–80 % Displayhöhe
-- Inhalt scrollbar
-- nicht Vollbild
-- einfach schließbar
-
-Pflichtfelder:
-
-- Modusauswahl
-- optional Clipboard-Vorschau
-- Textfeld für manuelles Einfügen
-- Eingabefeld für Nutzerabsicht
-- Ton-Auswahl
-- Generate-Button
-- Ladezustand
-- Fehlerzustand
-- 3 Vorschlagskarten
-- Kopieren-Button pro Vorschlag
-- kompakter Retry-Bereich nach erzeugten Vorschlägen
+Der Startzustand ist immer der schmale Eingabebalken. Das größere Ergebnis-Panel erscheint erst nach einer KI-Antwort.
 
 ---
 
-## Modusauswahl
+## Zustand 1: Eingabebalken
 
-Modi:
+Der Eingabebalken ist der primäre Startzustand nach dem Öffnen über den Floating Button.
 
-- Antworten
-- Formulieren
-- Umschreiben
-
-Default:
-
-- Clipboard erkannt → Antworten
-- kein Clipboard → Formulieren
-
----
-
-## Clipboard-UX und manueller Fallback
-
-Wenn Clipboard-Text vorhanden ist:
+Beispielstruktur:
 
 ```text
-Kopierter Text erkannt
-„<Vorschau>“
-[Verwenden] [Ignorieren]
+[Ton]  Was willst du sagen?  [Einfügen] [Los]
 ```
 
-Wenn Clipboard nicht lesbar oder leer ist:
+Alternativ ist ein Icon-Button für Start erlaubt:
 
 ```text
-Keine kopierte Nachricht erkannt.
-Du kannst den Text auch manuell einfügen.
-[Textfeld]
+[Ton]  Was willst du sagen?  [Einfügen] [>]
 ```
+
+Pflichtelemente:
+
+- Ton-/Stil-Button links
+- einzeiliges oder kompakt wachsendes Texteingabefeld
+- Einfügen-Button
+- Start-Button für KI-Vorschläge
 
 Regeln:
 
-- Vorschau maximal 2–3 Zeilen
-- langen Text kürzen
-- Text erst nach „Verwenden“ übernehmen
-- „Ignorieren“ sichtbar anbieten
-- manuelles Einfügen immer ermöglichen
-- Clipboard-Probleme nicht als harten Fehler behandeln
+- Der Eingabebalken bleibt schmal und verdeckt WhatsApp möglichst wenig.
+- Kein Ergebnisbereich vor der ersten KI-Antwort.
+- Kein großes Formular als Startzustand.
+- Der Start-Button darf nicht „Senden“ heißen, weil die App nichts in WhatsApp sendet.
+- Erlaubte Start-Labels: `Los`, `Erstellen` oder ein schlichtes Pfeil-Icon.
+- Wenn das Textfeld mehr Platz braucht, darf der Balken moderat wachsen, aber nicht zum Vollbild werden.
 
 ---
 
-## Eingaben
+## Ton-/Stil-Button
 
-Antworten-Modus:
+Der Ton-/Stil-Button sitzt links im Eingabebalken.
 
-```text
-Nachricht, auf die du antworten willst
-```
+Empfohlene sichtbare Labels:
 
-```text
-Was willst du ausdrücken?
-```
-
-Formulieren-Modus:
-
-```text
-Was willst du sagen?
-```
-
-Umschreiben-Modus:
-
-```text
-Originaltext
-Wie soll er klingen?
-```
-
----
-
-## Ton-Auswahl
-
-Chips:
-
-- kurz
-- freundlich
-- direkt
-- entschuldigend
-- deeskalierend
-- klare Grenze
-- flirtend
+| Intern | Sichtbar |
+|---|---|
+| kurz | Kurz |
+| freundlich | Freundlich |
+| direkt | Direkt |
+| entschuldigend | Sorry |
+| deeskalierend | Sanft |
+| klare Grenze | Grenze |
+| flirtend | Flirtend |
 
 Regeln:
 
 - genau ein Ton aktiv
-- Default: freundlich
+- Default: Freundlich
 - letzter Ton darf gespeichert werden
+- Button zeigt den aktuell aktiven Ton kompakt an
+- Tap öffnet eine kleine Chip-Zeile oder ein kleines Popover
+- keine große Einstellungsansicht
 
 ---
 
-## Interne Modell- und Qualitätslogik
+## Einfügen-Option
 
-Die normale Overlay-UI bleibt bewusst einfach. Der Nutzer soll im ReplyPanel nur diese Dinge bedienen:
+Der Einfügen-Button ist eine kleine Komfortfunktion im Eingabebalken.
 
-- Modus
-- optional Clipboard oder manuelle Texteingabe
-- Nutzerabsicht
-- Ton-Auswahl
-- Vorschläge erstellen
-- Vorschläge kopieren
-- Vorschläge bei Bedarf gezielt neu erzeugen
+Regeln:
 
-Nicht im ReplyPanel anzeigen:
-
-- Modell-Auswahl
-- Provider-Auswahl
-- Temperature
-- `max_tokens`
-- Reasoning-/Thinking-Einstellungen
-- Prompt-Profile
-- Rollen-System
-- Qualitäts-Dashboard
-- technische Fallback-Regeln
-
-Im MVP nutzt die App genau ein OpenRouter-Default-Modell. Modelle, Provider, Tokenlimits und Temperatur bleiben technische Details in `AiConfig` und erscheinen nicht im Overlay.
-
-Ton-Chips und Retry-Chips ändern im MVP nur den Prompt, nicht die Modellwahl.
-
-Nicht im MVP:
-
-- Modellrouting nach Tonfall
-- automatische Modell-Fallbacks
-- mehrere Modelle pro Stil
-- sichtbare Qualitätsauswahl wie `Schnell`, `Sehr gut` oder `Beste Qualität`
-
-Diese Punkte sind höchstens Post-MVP und brauchen eine eigene Entscheidung.
+- Clipboard wird nur nach Nutzeraktion gelesen.
+- Falls Clipboard-Text verfügbar ist, kann er in das Textfeld übernommen werden.
+- Falls Clipboard leer oder blockiert ist, bleibt manuelle Texteingabe möglich.
+- Clipboard-Probleme sind kein harter Fehler.
+- Es gibt kein dauerhaftes Clipboard-Monitoring.
 
 ---
 
-## Lade- und Fehlerzustände
+## Zustand 2: Ergebnis-Panel
 
-Während Anfrage:
+Nach einer KI-Antwort erweitert sich das Overlay zu einem kompakten Ergebnis-Panel.
 
-- Generate-Button deaktivieren
-- Ladehinweis anzeigen
-- keine parallele Anfrage
+Ziel:
 
-Fehlertexte müssen kurz und verständlich sein. Keine Stacktraces in der UI.
+- etwas größer als der Eingabebalken
+- weiterhin kein Vollbild
+- WhatsApp bleibt sichtbar
+- eine Antwort steht im Fokus
 
----
-
-## Ergebnisse
-
-Jeder Vorschlag als eigene kleine Karte:
+Beispielstruktur:
 
 ```text
-1.
-Text...
+1 / 3                         [x]
+
+Aktueller Vorschlag
+
 [Kopieren]
+[Nicht passend?] [Nochmal]
+[Kürzer] [Direkter] [Sanfter]
 ```
 
-Nach Kopieren kurz anzeigen:
+Regeln:
+
+- Es ist immer nur ein Vorschlag sichtbar.
+- Die 3 Vorschläge werden nicht untereinander angezeigt.
+- Wechsel per Swipe ist erwünscht.
+- Als MVP-Fallback sind einfache Navigationselemente erlaubt, zum Beispiel `‹ 1/3 ›`.
+- Kleine Punkte wie `● ○ ○` sind optional.
+- Kopieren bezieht sich immer auf den aktuell sichtbaren Vorschlag.
+- Schließen führt zurück zum WhatsApp-Kontext, ohne Verlauf zu speichern.
+
+---
+
+## Ergebnis-Navigation
+
+Die Vorschläge werden als Carousel / Pager dargestellt.
+
+MVP-Regel:
 
 ```text
-Kopiert
+[‹] 1/3 [›]
 ```
+
+oder:
+
+```text
+● ○ ○
+```
+
+Regeln:
+
+- Swipe darf zusätzlich unterstützt werden.
+- Pfeile oder Indikator müssen sichtbar genug sein, damit der Nutzer erkennt, dass es 3 Varianten gibt.
+- Keine drei großen Karten untereinander als Standardansicht.
+- Kein Verlauf der Vorschläge.
+- Keine Bewertung pro Vorschlag.
 
 ---
 
@@ -299,7 +261,7 @@ Kopiert
 
 Wenn die 3 Vorschläge nicht passen, soll der Nutzer direkt und ohne neues Menü neu versuchen können.
 
-Anzeige erst nach erzeugten Vorschlägen:
+Anzeige im Ergebnis-Panel:
 
 ```text
 Nicht passend?
@@ -335,6 +297,62 @@ Zulässige Änderungs-Chips:
 
 ---
 
+## Interne Modell- und Qualitätslogik
+
+Die normale Overlay-UI bleibt bewusst einfach. Der Nutzer soll im Overlay nur diese Dinge bedienen:
+
+- Ton/Stil
+- Texteingabe oder Einfügen
+- Vorschläge erstellen
+- Vorschlag wechseln
+- Vorschlag kopieren
+- Vorschläge bei Bedarf gezielt neu erzeugen
+
+Nicht im Overlay anzeigen:
+
+- Modell-Auswahl
+- Provider-Auswahl
+- Temperature
+- `max_tokens`
+- Reasoning-/Thinking-Einstellungen
+- Prompt-Profile
+- Rollen-System
+- Qualitäts-Dashboard
+- technische Fallback-Regeln
+
+Im MVP nutzt die App genau ein OpenRouter-Default-Modell. Modelle, Provider, Tokenlimits und Temperatur bleiben technische Details in `AiConfig` und erscheinen nicht im Overlay.
+
+Ton-Chips und Retry-Chips ändern im MVP nur den Prompt, nicht die Modellwahl.
+
+Nicht im MVP:
+
+- Modellrouting nach Tonfall
+- automatische Modell-Fallbacks
+- mehrere Modelle pro Stil
+- sichtbare Qualitätsauswahl wie `Schnell`, `Sehr gut` oder `Beste Qualität`
+
+Diese Punkte sind höchstens Post-MVP und brauchen eine eigene Entscheidung.
+
+---
+
+## Lade- und Fehlerzustände
+
+Während Anfrage:
+
+- Start-Button deaktivieren
+- kompakter Ladehinweis im Eingabebalken oder Ergebnis-Panel
+- keine parallele Anfrage
+
+Fehlertexte müssen kurz und verständlich sein. Keine Stacktraces in der UI.
+
+Bei Retry-Fehler:
+
+- bisherige Vorschläge sichtbar lassen
+- kurze Fehlermeldung anzeigen
+- keinen Verlauf erzeugen
+
+---
+
 ## Anti-Nerv-Regeln
 
 - Button nur bei WhatsApp anzeigen
@@ -342,7 +360,9 @@ Zulässige Änderungs-Chips:
 - Button verschiebbar machen
 - Overlay deaktivierbar machen
 - Position speichern
-- Panel nie automatisch öffnen
+- Overlay nie automatisch öffnen
+- Eingabebalken statt großem Formular als Startzustand
+- Ergebnis-Panel erst nach KI-Antwort öffnen
 - keine Popups ohne Nutzeraktion
 - keine KI-Anfrage ohne Nutzeraktion
 - keine Modell-, Provider- oder Prompt-Einstellungen im Overlay anzeigen
@@ -358,14 +378,19 @@ UI/UX ist akzeptabel, wenn:
 - Nutzer versteht, wofür die App ist
 - Berechtigungen verständlich erklärt werden
 - MainActivity keinen API-Key entgegennimmt, sondern höchstens Build-Time-Key-Status zeigt
-- Button stört nicht beim Tippen
-- Panel ist schnell bedienbar
-- Modi sind klar
+- Floating Button stört nicht beim Tippen
+- Startzustand ist ein schmaler Eingabebalken
+- Eingabebalken enthält Ton, Text, Einfügen und Start
+- Start-Button heißt nicht „Senden“
+- Ergebnis-Panel erscheint erst nach KI-Antwort
+- immer nur ein Vorschlag sichtbar ist
+- Nutzer erkennt, dass es 3 Vorschläge gibt
+- Wechsel zwischen Vorschlägen per Swipe oder einfacher Navigation möglich ist
+- Kopieren bezieht sich eindeutig auf den sichtbaren Vorschlag
 - Clipboard-Nutzung ist freiwillig
-- manuelles Einfügen funktioniert, wenn Clipboard leer/blockiert ist
-- Vorschläge sind leicht kopierbar
+- manuelles Eingeben funktioniert, wenn Clipboard leer/blockiert ist
 - Nutzer kann bei unpassenden Vorschlägen gezielt neu versuchen
 - Retry-Optionen bleiben kompakt und erscheinen erst nach Ergebnissen
 - Fehler sind verständlich
-- ReplyPanel bleibt frei von Modell-, Provider-, Token-, Reasoning- und Prompt-Einstellungen
-- ReplyPanel bleibt frei von Verlauf, Bewertung, Stiltraining und Gedächtnis
+- Overlay bleibt frei von Modell-, Provider-, Token-, Reasoning- und Prompt-Einstellungen
+- Overlay bleibt frei von Verlauf, Bewertung, Stiltraining und Gedächtnis
