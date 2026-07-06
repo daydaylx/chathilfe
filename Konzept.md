@@ -47,6 +47,9 @@ Folgende Punkte gehören nicht in den MVP:
 - Personen-, Kontakt- oder Beziehungsprofile
 - automatische Lernfunktion aus Nutzertexten
 - Bewertungs- oder Feedbacksystem für einzelne Vorschläge
+- API-Key-Eingabe in der App
+- Modell- oder Provider-Auswahl im Overlay
+- Modellrouting nach Tonfall im MVP
 - Play-Store-Veröffentlichung
 - Social-Media-App oder Messenger-Ersatz
 
@@ -71,8 +74,10 @@ Diese Einschränkungen sind wichtig, damit der MVP klein, testbar und technisch 
 | Overlay | Android `WindowManager` mit `TYPE_APPLICATION_OVERLAY` |
 | Hintergrunddienst | Foreground Service, falls nötig |
 | App-Erkennung | `UsageStatsManager` |
-| KI-Anbieter | OpenRouter oder OpenAI |
-| Lokale Speicherung | DataStore |
+| KI-Anbieter | OpenRouter |
+| KI-Modell | ein OpenRouter-Default-Modell, vor KI-Phase pinnen |
+| API-Key | lokale Build-Time-Konfiguration, kein UI-Feld |
+| Lokale Speicherung | DataStore nur für UI-/Overlay-Präferenzen |
 | Distribution | lokale/private APK |
 
 ---
@@ -271,12 +276,13 @@ Das Mini-Fenster soll kompakt sein und WhatsApp nicht komplett verdecken.
 | Über anderen Apps anzeigen | Floating Button und Mini-Fenster anzeigen |
 | Nutzungsdatenzugriff | erkennen, ob WhatsApp aktiv ist |
 | Internet | KI-Anfrage senden |
+| Foreground Service | Overlay-Laufzeit stabil halten |
 
 ## 8.2 Optional
 
 | Berechtigung | Zweck |
 |---|---|
-| Benachrichtigung | stabilerer Hintergrunddienst |
+| Benachrichtigung | sichtbare Service-Notification, abhängig von Android-Version |
 | Autostart-Hinweis | abhängig von Hersteller/Batterieoptimierung |
 
 ## 8.3 Nicht verwenden im MVP
@@ -288,6 +294,8 @@ Das Mini-Fenster soll kompakt sein und WhatsApp nicht komplett verdecken.
 - Standort
 - Speicherzugriff
 - Accessibility Service
+- Notification Listener
+- Screen Capture
 
 Accessibility soll im MVP bewusst nicht verwendet werden, weil die App keine Chat-Inhalte automatisch lesen oder WhatsApp steuern soll.
 
@@ -309,7 +317,7 @@ Die App verarbeitet nur Text, den der Nutzer aktiv eingibt oder bewusst aus der 
 - keine automatische Lernfunktion aus Nutzertexten
 - keine Analyse vollständiger Verläufe
 - keine versteckte Zwischenablage-Überwachung
-- API-Key lokal speichern
+- API-Key nur lokal beim Build bereitstellen, niemals in der App eingeben oder in DataStore speichern
 - nur notwendige Anfrage an KI-Anbieter senden
 
 ### KI-Anfrage enthält maximal
@@ -442,7 +450,7 @@ Ausgabeformat:
 ReplyOverlayApp
 ├── MainActivity
 │   ├── zeigt Berechtigungsstatus
-│   ├── API-Key-Eingabe
+│   ├── zeigt optional Build-Time-API-Key-Status, kein Eingabefeld
 │   ├── Overlay starten/stoppen
 │   └── Testbereich
 │
@@ -461,7 +469,8 @@ ReplyOverlayApp
 │   └── kopiert generierte Vorschläge
 │
 ├── AiClient
-│   ├── sendet Anfrage an KI-Anbieter
+│   ├── sendet Anfrage an OpenRouter
+│   ├── nutzt ein Default-Modell aus AiConfig
 │   ├── verarbeitet Fehler
 │   └── liefert Antwortvarianten zurück
 │
@@ -472,8 +481,8 @@ ReplyOverlayApp
 │   └── ergänzt temporäre Retry-Anweisung, falls vorhanden
 │
 ├── SettingsStore
-│   ├── API-Key
 │   ├── bevorzugter Ton
+│   ├── letzter Modus optional
 │   ├── Overlay aktiv/inaktiv
 │   └── Button-Position
 │
@@ -485,6 +494,8 @@ ReplyOverlayApp
     └── AiSuggestion
 ```
 
+SettingsStore speichert keinen API-Key, keine Nutzertexte, keine Vorschläge, keine Retry-Anweisungen und keinen Verlauf.
+
 ---
 
 ## 12. Fehlerfälle
@@ -495,13 +506,13 @@ Die App muss folgende Fälle sauber behandeln:
 |---|---|
 | Overlay-Berechtigung fehlt | Hinweis mit Button zu Einstellungen |
 | Nutzungsdatenzugriff fehlt | Hinweis mit Button zu Einstellungen |
-| API-Key fehlt | KI-Funktion deaktiviert, Eingabe anbieten |
+| API-Key fehlt im lokalen Build | klare Fehlermeldung ohne Secret-Ausgabe |
 | WhatsApp nicht aktiv | Floating Button ausblenden |
 | Zwischenablage leer | Modus „Formulieren“ vorschlagen |
 | KI-Anfrage schlägt fehl | verständliche Fehlermeldung |
+| Retry schlägt fehl | bisherige Vorschläge sichtbar lassen und Fehler kurz anzeigen |
 | Internet fehlt | Offline-Hinweis |
 | Antwort leer/ungültig | erneute Anfrage anbieten |
-| Retry schlägt fehl | bisherige Vorschläge sichtbar lassen und Fehler kurz anzeigen |
 | Bildschirm gesperrt/entsperrt | Overlay stabil wiederherstellen |
 | App wird vom System beendet | Dienst sauber neu startbar machen |
 
@@ -515,7 +526,8 @@ Der MVP gilt als fertig, wenn:
 - Startscreen zeigt alle notwendigen Berechtigungen.
 - Nutzer kann Overlay-Berechtigung öffnen.
 - Nutzer kann Nutzungsdatenzugriff öffnen.
-- Nutzer kann API-Key speichern.
+- App hat keine API-Key-Eingabe und keinen API-Key in DataStore.
+- lokaler Build-Time-API-Key funktioniert für private APK.
 - WhatsApp öffnen führt zum Anzeigen des Floating Buttons.
 - WhatsApp schließen führt zum Ausblenden des Floating Buttons.
 - Button ist verschiebbar.
@@ -546,8 +558,8 @@ Der MVP gilt als fertig, wenn:
 - Android-Projekt mit Kotlin und Jetpack Compose erstellen
 - Paketstruktur sauber anlegen
 - MainActivity mit Grundscreen bauen
-- DataStore vorbereiten
-- API-Key lokal speicherbar machen
+- DataStore für UI-/Overlay-Präferenzen vorbereiten
+- lokalen Build-Time-API-Key-Mechanismus vorbereiten, kein UI-Feld
 
 ## Phase 2: Berechtigungen
 
@@ -585,7 +597,8 @@ Der MVP gilt als fertig, wenn:
 
 - AiClient bauen
 - PromptBuilder bauen
-- temporäre Retry-Anweisung optional unterstützen
+- RetryInstruction optional unterstützen
+- ein OpenRouter-Default-Modell in AiConfig nutzen
 - Fehlerbehandlung
 - Ladezustand
 - 3 Vorschläge parsen und anzeigen
@@ -607,10 +620,11 @@ Der MVP gilt als fertig, wenn:
 | Overlay wird als störend empfunden | mittel | klein, transparent, verschiebbar, abschaltbar |
 | UsageStats-Erkennung ist nicht perfekt | mittel | Intervall sauber wählen, manuelle Overlay-Aktivierung optional |
 | Samsung beendet Hintergrunddienst | mittel | Foreground Service optional, Hinweise zur Akkuoptimierung |
-| API-Key unsicher gespeichert | mittel | lokal speichern, keine Logs mit Key |
+| API-Key in APK ist nicht wirklich geheim | mittel | nur private APK, Key-Limit setzen, Key nicht veröffentlichen |
+| API-Key versehentlich im UI oder DataStore | hoch | Build-Time-Konfiguration, kein Eingabefeld, Tests |
 | KI-Ausgabe klingt künstlich | mittel | klare Prompts, kurze Varianten, Ton-Auswahl, Retry-Chip „Weniger künstlich“ |
 | Retry-Bereich überlädt UI | mittel | erst nach Ergebnissen anzeigen, global statt pro Vorschlag, maximal 6 Chips |
-| Scope wächst zu stark | hoch | kein Auto-Senden, kein Chat-Auslesen, kein Multi-App-Support, kein Gedächtnis |
+| Scope wächst zu stark | hoch | kein Auto-Senden, kein Chat-Auslesen, kein Multi-App-Support, kein Gedächtnis, kein Modellrouting |
 | Gedächtnis/Verlauf erzeugt Datenschutz- und UX-Bloat | hoch | im MVP nicht umsetzen; nur einfache Komfort-Präferenzen speichern |
 
 ---
@@ -625,6 +639,7 @@ Nicht im MVP, aber später möglich:
 - Favorisierte Tonprofile
 - eigene Standardformulierung des Nutzers
 - KI-Modellauswahl
+- Modellrouting nach Tonfall
 - Kostenlimit pro Tag
 - Export/Import der Einstellungen
 - eigenes Keyboard als Alternative zum Overlay
