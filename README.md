@@ -10,13 +10,13 @@ Die App ist kein Messenger-Ersatz. Sie hilft nur beim Formulieren, Umschreiben u
 
 | Punkt | Stand |
 |---|---|
-| Projektphase | Phase 0/1 abgeschlossen, Phase 2 als nächster Schritt |
+| Projektphase | Phase 2 code-seitig abgeschlossen, Phase 3 als nächster Schritt |
 | Ziel | private Android-APK |
 | Primäres Gerät | Samsung Galaxy S25 |
 | Zielplattform | Android 15/16 |
 | Release-Ziel | zunächst nicht Play Store |
 | Android-Projektbasis | angelegt |
-| Buildstatus | Gradle-Projekt vorhanden; aktueller Build muss lokal/CI verifiziert werden |
+| Buildstatus | Gradle-Projekt vorhanden; `assembleDebug` in dieser Session nicht ausführbar (siehe `docs/PHASE_2_REPORT.md`), muss lokal/CI verifiziert werden |
 
 ---
 
@@ -44,6 +44,7 @@ Beim Antippen öffnet sich ein kompaktes Mini-Fenster. Dort kann der Nutzer:
 | [`Konzept.md`](Konzept.md) | Produktziel, Scope, Modi, Risiken und Abschlusskriterien |
 | [`Arbeitsauftrag.md`](Arbeitsauftrag.md) | ausführlicher Startauftrag für externe Coding-Agenten |
 | [`docs/PHASE_0_1_REPORT.md`](docs/PHASE_0_1_REPORT.md) | Abschlussbericht zu Phase 0/1 |
+| [`docs/PHASE_2_REPORT.md`](docs/PHASE_2_REPORT.md) | Abschlussbericht zu Phase 2 |
 | [`docs/DECISIONS.md`](docs/DECISIONS.md) | angenommene technische Entscheidungen aus dem Audit |
 | [`docs/API_KEY_STRATEGY.md`](docs/API_KEY_STRATEGY.md) | lokale API-Key-Strategie für private Builds |
 | [`docs/PLAN_AUDIT.md`](docs/PLAN_AUDIT.md) | Plan-Audit, Risiken und erste Umsetzungstickets |
@@ -141,15 +142,9 @@ Aktueller Hinweis: In der GitHub-Prüfung ist kein CI-/Build-Run sichtbar. Ein A
 
 ## Aktueller nächster Schritt
 
-Nächster sinnvoller Schritt ist **Phase 2 — Settings und Berechtigungen**:
+Phase 2 (Settings und Berechtigungen) ist code-seitig umgesetzt; Details in [`docs/PHASE_2_REPORT.md`](docs/PHASE_2_REPORT.md). Vor Phase 3 sollte einmal lokal mit Android SDK `./gradlew assembleDebug` verifiziert werden.
 
-- `SettingsScreen`
-- `PermissionStatus`
-- Overlay-Berechtigung prüfen
-- Usage Access prüfen
-- Foreground-Service-/Notification-Anforderungen vorbereiten
-- DataStore nur für UI-/Overlay-Einstellungen
-- keine API-Key-Eingabe im UI
+Nächster sinnvoller Schritt ist **Phase 3 — Overlay und Floating Button** (`OverlayService`, `OverlayController`, `FloatingBubbleView`) gemäß `docs/IMPLEMENTATION_PLAN.md`.
 
 ---
 
