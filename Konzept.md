@@ -6,6 +6,8 @@ Die App ist ein privater Android-MVP, der als schwebender Formulierungshelfer ü
 
 Wenn WhatsApp geöffnet ist, erscheint ein kleiner Floating Button am Bildschirmrand. Beim Antippen öffnet sich ein kompaktes Eingabefenster. Der Nutzer kann grob beschreiben, was er sagen möchte, optional eine kopierte WhatsApp-Nachricht verwenden und einen gewünschten Ton auswählen. Die KI erzeugt mehrere Antwortvorschläge. Der Nutzer kopiert einen Vorschlag und fügt ihn selbst in WhatsApp ein.
 
+Wenn die Vorschläge nicht passen, kann der Nutzer einmal gezielt neu versuchen: entweder unverändert mit „Nochmal“ oder mit kleinen Änderungs-Chips wie „Kürzer“, „Direkter“ oder „Weniger künstlich“. Das bleibt ein temporärer neuer Versuch und erzeugt kein Gedächtnis.
+
 Die App liest keine WhatsApp-Chats automatisch aus und sendet keine Nachrichten selbst.
 
 ---
@@ -21,6 +23,7 @@ Die App soll helfen, schwierige oder unklare Chatnachrichten besser zu formulier
 - Nutzer weiß ungefähr, was er sagen will, aber nicht wie.
 - Nutzer kann auf kopierte Nachrichten passend antworten.
 - Nutzer kann eigene Texte freundlicher, direkter, kürzer oder deeskalierender formulieren lassen.
+- Nutzer kann schlechte Vorschläge schnell neu erzeugen lassen, ohne ein großes Feedback- oder Verlaufssystem zu öffnen.
 - Nutzer bleibt immer selbst verantwortlich: prüfen, kopieren, einfügen, senden.
 
 ---
@@ -43,6 +46,7 @@ Folgende Punkte gehören nicht in den MVP:
 - gespeicherter Antwort- oder Vorschlagsverlauf
 - Personen-, Kontakt- oder Beziehungsprofile
 - automatische Lernfunktion aus Nutzertexten
+- Bewertungs- oder Feedbacksystem für einzelne Vorschläge
 - Play-Store-Veröffentlichung
 - Social-Media-App oder Messenger-Ersatz
 
@@ -92,8 +96,8 @@ Die App soll nicht versuchen, WhatsApp zu steuern. Sie soll nur ein Hilfsfenster
 8. Nutzer beschreibt, was er ausdrücken möchte.
 9. Nutzer wählt Ton/Stil.
 10. KI erzeugt 3 Vorschläge.
-11. Nutzer kopiert einen Vorschlag.
-12. Nutzer fügt ihn selbst in WhatsApp ein und sendet selbst.
+11. Nutzer kopiert einen Vorschlag oder erzeugt bei unpassenden Vorschlägen gezielt neue Varianten.
+12. Nutzer fügt einen Vorschlag selbst in WhatsApp ein und sendet selbst.
 
 ---
 
@@ -109,6 +113,7 @@ Dieser Modus wird genutzt, wenn der Nutzer auf eine konkrete Nachricht antworten
 - Nutzerabsicht
 - gewünschter Ton
 - gewünschte Länge optional
+- Retry-Anweisung optional und nur temporär
 
 ### Beispiel
 
@@ -139,6 +144,7 @@ Dieser Modus wird genutzt, wenn der Nutzer keinen konkreten Eingangstext hat, so
 - Nutzerabsicht
 - gewünschter Ton
 - gewünschte Länge optional
+- Retry-Anweisung optional und nur temporär
 
 ### Beispiel
 
@@ -161,6 +167,7 @@ Dieser Modus wird genutzt, wenn der Nutzer schon einen Text hat, dieser aber fal
 - Originaltext
 - gewünschte Änderung
 - gewünschter Ton
+- Retry-Anweisung optional und nur temporär
 
 ### Beispiel
 
@@ -234,7 +241,24 @@ Das Mini-Fenster soll kompakt sein und WhatsApp nicht komplett verdecken.
   - Vorschlag 3
 - je Vorschlag:
   - „Kopieren“
-  - optional später: „Kürzer“, „Direkter“, „Freundlicher“
+- globaler Retry-Bereich nach Ergebnissen:
+  - „Nochmal“
+  - „Kürzer“
+  - „Lockerer“
+  - „Direkter“
+  - „Sanfter“
+  - „Klarer“
+  - „Weniger künstlich“
+
+### Retry-Regeln
+
+- Retry-Optionen erscheinen erst nach erzeugten Vorschlägen.
+- „Nochmal“ erzeugt 3 neue Vorschläge mit denselben Eingaben.
+- Änderungs-Chips gelten global für die nächste Anfrage, nicht pro Vorschlag.
+- Maximal 1–2 Änderungs-Chips gleichzeitig aktiv.
+- Keine freie Feedback-Texteingabe im MVP.
+- Keine Bewertung einzelner Vorschläge.
+- Keine Speicherung von Retry-Auswahl, Vorschlägen oder Verlauf.
 
 ---
 
@@ -280,6 +304,7 @@ Die App verarbeitet nur Text, den der Nutzer aktiv eingibt oder bewusst aus der 
 - keine Speicherung von Chatinhalten
 - keine Speicherung von Nutzertexten als Gedächtnis
 - keine Speicherung generierter Vorschläge als Verlauf
+- keine Speicherung von Retry-Anweisungen
 - keine Personen-, Kontakt- oder Beziehungsprofile
 - keine automatische Lernfunktion aus Nutzertexten
 - keine Analyse vollständiger Verläufe
@@ -295,6 +320,7 @@ Die App verarbeitet nur Text, den der Nutzer aktiv eingibt oder bewusst aus der 
 - Ton
 - gewünschte Sprache
 - gewünschte Anzahl an Vorschlägen
+- temporäre Retry-Anweisung optional
 
 ---
 
@@ -319,6 +345,8 @@ Regeln:
 - Keine Nachricht automatisch senden.
 - Erzeuge genau 3 Varianten.
 - Jede Variante soll direkt kopierbar sein.
+- Berücksichtige Retry-Anweisungen still, falls vorhanden.
+- Erkläre nicht, was geändert wurde.
 
 Kopierte Nachricht:
 {{copied_message}}
@@ -328,6 +356,9 @@ Was der Nutzer ausdrücken will:
 
 Gewünschter Ton:
 {{tone}}
+
+Änderungswunsch für neuen Versuch, falls vorhanden:
+{{retry_instruction}}
 
 Ausgabeformat:
 1. ...
@@ -350,12 +381,17 @@ Regeln:
 - Keine übertriebene Höflichkeit.
 - Keine künstliche Therapiesprache.
 - Jede Variante soll direkt kopierbar sein.
+- Berücksichtige Retry-Anweisungen still, falls vorhanden.
+- Erkläre nicht, was geändert wurde.
 
 Nutzerwunsch:
 {{user_intent}}
 
 Gewünschter Ton:
 {{tone}}
+
+Änderungswunsch für neuen Versuch, falls vorhanden:
+{{retry_instruction}}
 
 Ausgabeformat:
 1. ...
@@ -377,6 +413,8 @@ Regeln:
 - 3 Varianten erzeugen.
 - Keine Erklärung ausgeben.
 - Jede Variante soll direkt kopierbar sein.
+- Berücksichtige Retry-Anweisungen still, falls vorhanden.
+- Erkläre nicht, was geändert wurde.
 
 Originaltext:
 {{original_text}}
@@ -386,6 +424,9 @@ Gewünschte Änderung:
 
 Gewünschter Ton:
 {{tone}}
+
+Änderungswunsch für neuen Versuch, falls vorhanden:
+{{retry_instruction}}
 
 Ausgabeformat:
 1. ...
@@ -427,7 +468,8 @@ ReplyOverlayApp
 ├── PromptBuilder
 │   ├── baut Prompt für Antworten
 │   ├── baut Prompt für Formulieren
-│   └── baut Prompt für Umschreiben
+│   ├── baut Prompt für Umschreiben
+│   └── ergänzt temporäre Retry-Anweisung, falls vorhanden
 │
 ├── SettingsStore
 │   ├── API-Key
@@ -438,6 +480,7 @@ ReplyOverlayApp
 └── Domain
     ├── Mode
     ├── Tone
+    ├── RetryInstruction
     ├── AiRequest
     └── AiSuggestion
 ```
@@ -458,6 +501,7 @@ Die App muss folgende Fälle sauber behandeln:
 | KI-Anfrage schlägt fehl | verständliche Fehlermeldung |
 | Internet fehlt | Offline-Hinweis |
 | Antwort leer/ungültig | erneute Anfrage anbieten |
+| Retry schlägt fehl | bisherige Vorschläge sichtbar lassen und Fehler kurz anzeigen |
 | Bildschirm gesperrt/entsperrt | Overlay stabil wiederherstellen |
 | App wird vom System beendet | Dienst sauber neu startbar machen |
 
@@ -483,6 +527,8 @@ Der MVP gilt als fertig, wenn:
 - Nutzer kann Ton auswählen.
 - KI erzeugt genau 3 Vorschläge.
 - Vorschläge können einzeln kopiert werden.
+- Nutzer kann unpassende Vorschläge mit „Nochmal“ oder kompakten Änderungs-Chips neu erzeugen.
+- Retry erzeugt keinen Verlauf und kein Gedächtnis.
 - App liest keine WhatsApp-Chats automatisch.
 - App speichert keine Nutzertexte, Vorschläge oder Chatverläufe als Gedächtnis.
 - App besitzt kein Memory-/Verlaufssystem.
@@ -533,11 +579,13 @@ Der MVP gilt als fertig, wenn:
 - Zwischenablage auf aktive Nutzeraktion lesen
 - Ergebnisbereich bauen
 - Kopierfunktion einbauen
+- kompakten Retry-Bereich nach Ergebnissen einbauen
 
 ## Phase 6: KI-Anbindung
 
 - AiClient bauen
 - PromptBuilder bauen
+- temporäre Retry-Anweisung optional unterstützen
 - Fehlerbehandlung
 - Ladezustand
 - 3 Vorschläge parsen und anzeigen
@@ -560,7 +608,8 @@ Der MVP gilt als fertig, wenn:
 | UsageStats-Erkennung ist nicht perfekt | mittel | Intervall sauber wählen, manuelle Overlay-Aktivierung optional |
 | Samsung beendet Hintergrunddienst | mittel | Foreground Service optional, Hinweise zur Akkuoptimierung |
 | API-Key unsicher gespeichert | mittel | lokal speichern, keine Logs mit Key |
-| KI-Ausgabe klingt künstlich | mittel | klare Prompts, kurze Varianten, Ton-Auswahl |
+| KI-Ausgabe klingt künstlich | mittel | klare Prompts, kurze Varianten, Ton-Auswahl, Retry-Chip „Weniger künstlich“ |
+| Retry-Bereich überlädt UI | mittel | erst nach Ergebnissen anzeigen, global statt pro Vorschlag, maximal 6 Chips |
 | Scope wächst zu stark | hoch | kein Auto-Senden, kein Chat-Auslesen, kein Multi-App-Support, kein Gedächtnis |
 | Gedächtnis/Verlauf erzeugt Datenschutz- und UX-Bloat | hoch | im MVP nicht umsetzen; nur einfache Komfort-Präferenzen speichern |
 
@@ -572,7 +621,7 @@ Nicht im MVP, aber später möglich:
 
 - Unterstützung für Telegram
 - Unterstützung für Instagram DMs
-- Quick-Actions: „kürzer“, „wärmer“, „direkter“
+- weitere Retry-Chips, falls echte Nutzung zeigt, dass sie fehlen
 - Favorisierte Tonprofile
 - eigene Standardformulierung des Nutzers
 - KI-Modellauswahl
@@ -586,6 +635,7 @@ Bewusst nicht als spätere Standarderweiterung vormerken:
 - automatisches Gedächtnis
 - Personen-, Kontakt- oder Beziehungsprofile
 - automatische Lernfunktion aus Nutzertexten
+- Bewertungs- oder Feedbacksystem für einzelne Vorschläge
 
 ---
 
@@ -596,6 +646,6 @@ Der Scope ist technisch sinnvoll und als privater Android-MVP gut machbar.
 Die größte Schwierigkeit liegt nicht in der KI, sondern in Android-Overlay, Berechtigungen, Hintergrundverhalten und sauberem UX-Verhalten.
 
 Die App sollte bewusst klein bleiben:
-Floating Button, Mini-Fenster, Moduswahl, KI-Vorschläge, Kopieren.
+Floating Button, Mini-Fenster, Moduswahl, KI-Vorschläge, kompakter Retry, Kopieren.
 
 Alles darüber hinaus erhöht Risiko und Entwicklungsaufwand deutlich.
