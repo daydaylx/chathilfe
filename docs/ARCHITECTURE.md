@@ -4,11 +4,11 @@
 
 Dieses Dokument ist die technische Architekturquelle für den ChatHilfe-MVP.
 
-Ziel ist eine kleine native Android-App mit Floating Button über WhatsApp, Mini-Fenster, drei Modi, KI-Vorschlägen, kompaktem Retry und manueller Kopierfunktion.
+Ziel ist eine kleine native Android-App mit Floating Button über WhatsApp, schmalem Eingabebalken, kompaktem Ergebnis-Panel, KI-Vorschlägen, kompaktem Retry und manueller Kopierfunktion.
 
 Die Architektur bleibt absichtlich klein. Overengineering ist hier ein reales Risiko.
 
-Technische Grundentscheidungen stehen verbindlich in `docs/DECISIONS.md`.
+Technische Grundentscheidungen stehen verbindlich in `docs/DECISIONS.md`. Der visuelle Scope steht zusätzlich in `docs/VISUAL_SCOPE.md`.
 
 ---
 
@@ -18,7 +18,8 @@ Technische Grundentscheidungen stehen verbindlich in `docs/DECISIONS.md`.
 |---|---|
 | MainActivity | Jetpack Compose |
 | Overlay Bubble | klassische Android View |
-| ReplyPanel im Overlay | klassische Android View |
+| Input-Bar im Overlay | klassische Android View |
+| Result-Panel im Overlay | klassische Android View |
 | Overlay-API | `WindowManager` + `TYPE_APPLICATION_OVERLAY` |
 | Runtime | Foreground Service, aus sichtbarer Nutzeraktion gestartet |
 | App-Erkennung | `UsageStatsManager.queryEvents()` |
@@ -28,6 +29,7 @@ Technische Grundentscheidungen stehen verbindlich in `docs/DECISIONS.md`.
 | API-Key | Build-Time-Konfiguration, nicht im Repo, nicht im UI |
 | Einstellungen | DataStore für UI-/Overlay-Settings, nicht für API-Key oder Texte |
 | Retry | temporäre `RetryInstruction`, nicht persistent |
+| Vorschlagsanzeige | ein sichtbarer Vorschlag, Wechsel per Swipe, Pfeil oder Pager |
 
 Kein ComposeView im Overlay-MVP. ComposeView im `WindowManager` ist erst nach stabilem MVP erlaubt und braucht eine eigene Entscheidung.
 
@@ -39,6 +41,9 @@ Kein ComposeView im Overlay-MVP. ComposeView im `WindowManager` ist erst nach st
 - klare Trennung zwischen Setup, Overlay, App-Erkennung, Clipboard, KI und Settings
 - Overlay-Verwaltung zentral über einen Controller
 - keine doppelten oder hängenden Overlay-Views
+- schmaler Eingabebalken als Startzustand
+- Ergebnis-Panel erst nach KI-Antwort
+- immer nur ein sichtbarer Vorschlag im Ergebnis-Panel
 - keine WhatsApp-Automation
 - keine automatische Chat-Auslesung
 - keine Speicherung von Nutzertexten, Vorschlägen, Retry-Anweisungen oder Verläufen
@@ -68,6 +73,8 @@ Nicht bauen:
 - Personen-, Kontakt-, Beziehungs- oder Stilprofile
 - große Clean Architecture
 - API-Key-Eingabe im MVP
+- großes Formular als Startzustand
+- drei Vorschläge untereinander als Standardansicht
 
 ---
 
@@ -75,32 +82,34 @@ Nicht bauen:
 
 ```text
 app/
-├── MainActivity.kt
-├── settings/
-│   ├── SettingsScreen.kt
-│   ├── SettingsStore.kt
-│   └── PermissionStatus.kt
-├── overlay/
-│   ├── OverlayService.kt
-│   ├── OverlayController.kt
-│   ├── FloatingBubbleView.kt
-│   ├── ReplyPanelView.kt
-│   └── OverlayPositionStore.kt
-├── detection/
-│   └── ForegroundAppDetector.kt
-├── clipboard/
-│   └── ClipboardHelper.kt
-├── ai/
-│   ├── AiClient.kt
-│   ├── PromptBuilder.kt
-│   ├── AiResponseParser.kt
-│   └── AiConfig.kt
-└── model/
-    ├── ReplyMode.kt
-    ├── ToneOption.kt
-    ├── RetryInstruction.kt
-    ├── ReplyRequest.kt
-    └── ReplySuggestion.kt
+  MainActivity.kt
+  settings/
+    SettingsScreen.kt
+    SettingsStore.kt
+    PermissionStatus.kt
+  overlay/
+    OverlayService.kt
+    OverlayController.kt
+    FloatingBubbleView.kt
+    InputBarView.kt
+    ResultPanelView.kt
+    SuggestionPager.kt
+    OverlayPositionStore.kt
+  detection/
+    ForegroundAppDetector.kt
+  clipboard/
+    ClipboardHelper.kt
+  ai/
+    AiClient.kt
+    PromptBuilder.kt
+    AiResponseParser.kt
+    AiConfig.kt
+  model/
+    ReplyMode.kt
+    ToneOption.kt
+    RetryInstruction.kt
+    ReplyRequest.kt
+    ReplySuggestion.kt
 ```
 
 Keine Repository-/UseCase-/Interactor-Schicht einführen, solange kein konkreter Nutzen entsteht.
@@ -111,33 +120,18 @@ Keine Repository-/UseCase-/Interactor-Schicht einführen, solange kein konkreter
 
 ```text
 Nutzer öffnet MainActivity
-↓
 Nutzer gewährt Berechtigungen
-↓
 Nutzer aktiviert Overlay bewusst
-↓
 Foreground Service startet
-↓
-startForeground() wird zeitnah aufgerufen
-↓
 ForegroundAppDetector prüft Vordergrund-App
-↓
-Wenn com.whatsapp aktiv:
-    Floating Button anzeigen
-Sonst:
-    Floating Button ausblenden
-↓
+Wenn com.whatsapp aktiv ist, erscheint der Floating Button
 Nutzer tippt Floating Button
-↓
-ReplyPanel öffnet sich
-↓
-Nutzer wählt Modus, Ton und Eingabe
-↓
+InputBar öffnet sich
+Nutzer wählt Ton, gibt Text ein oder nutzt Einfügen
 AiClient erzeugt 3 Vorschläge
-↓
-Nutzer kopiert Vorschlag
-oder nutzt einen bewussten Retry mit optionaler RetryInstruction
-↓
+ResultPanel zeigt Vorschlag 1 von 3
+Nutzer wechselt Vorschlag per Pager, Swipe oder Pfeilnavigation
+Nutzer kopiert den sichtbaren Vorschlag oder nutzt Retry
 Nutzer fügt manuell in WhatsApp ein
 ```
 
@@ -226,28 +220,52 @@ Pflichten:
 - vor `removeView` Attached-State prüfen
 - beim Stop alle Views entfernen
 - Drag/Tap sauber trennen
+- InputBar und ResultPanel kontrolliert anzeigen, ersetzen oder größenmäßig aktualisieren
 
 ---
 
-## ReplyPanelView
+## InputBarView
+
+Startzustand des Overlays nach Tap auf die Bubble.
 
 Aufgaben:
 
-- Modusauswahl anzeigen
-- Ton-Auswahl anzeigen
-- Eingabefelder anzeigen
-- Clipboard-Vorschau nur nach Nutzeraktion ermöglichen
-- 3 Vorschlagskarten anzeigen
-- Kopieren pro Vorschlag ermöglichen
-- kompakten Retry-Bereich nach Ergebnissen anzeigen
+- Ton-/Stil-Button anzeigen
+- kompaktes Texteingabefeld anzeigen
+- Einfügen-Button anzeigen
+- Start-Button anzeigen
+- Ladezustand kompakt anzeigen
 
-Retry-Regeln:
+Regeln:
 
-- Retry-Bereich erst nach Vorschlägen anzeigen
-- `Nochmal` ohne zusätzliche RetryInstruction senden
-- Änderungs-Chips als temporäre `RetryInstruction` für die nächste Anfrage setzen
-- maximal 1–2 Retry-Chips gleichzeitig aktiv
-- RetryInstruction nach neuer Anfrage oder Panel-Schließen verwerfen
+- schmal bleiben
+- kein Ergebnisbereich vor KI-Antwort
+- Start-Button nicht `Senden` nennen
+- erlaubte Start-Labels: `Los`, `Erstellen` oder schlichtes Pfeil-Icon
+- bei leerem/blockiertem Clipboard weiter manuell nutzbar bleiben
+
+---
+
+## ResultPanelView
+
+Ergebniszustand nach erfolgreicher oder teilweise erfolgreicher KI-Antwort.
+
+Aufgaben:
+
+- genau einen aktuellen Vorschlag anzeigen
+- aktuelle Position anzeigen, zum Beispiel `1/3`
+- Wechsel zwischen Vorschlägen anbieten
+- Kopieren des sichtbaren Vorschlags ermöglichen
+- kompakten Retry-Bereich anzeigen
+- Schließen ermöglichen
+
+Regeln:
+
+- keine drei Vorschlagskarten untereinander als Standardansicht
+- Swipe ist erlaubt und gewünscht
+- Pfeilnavigation oder einfacher Pager ist als MVP-Fallback erlaubt
+- Kopieren bezieht sich eindeutig auf den aktuell sichtbaren Vorschlag
+- Retry-Bereich bleibt global und klein
 
 Nicht Aufgabe:
 
@@ -257,6 +275,26 @@ Nicht Aufgabe:
 - Stiltraining
 - Memory/Profile
 - Modell- oder Provider-Auswahl
+
+---
+
+## SuggestionPager
+
+Kleine Logik für die Anzeige der drei Vorschläge.
+
+Aufgaben:
+
+- aktuellen Index halten
+- `1/3`, `2/3`, `3/3` anzeigen
+- Wechsel nach links/rechts ermöglichen
+- optional Swipe unterstützen
+- sichtbaren Vorschlag für Kopieren bereitstellen
+
+Nicht speichern:
+
+- Vorschlagsverlauf
+- Retry-Verlauf
+- Nutzungsverhalten
 
 ---
 
@@ -281,9 +319,8 @@ Kein Accessibility-Fallback.
 
 Erlaubt:
 
-- Clipboard lesen, wenn Nutzer das Panel aktiv öffnet oder im Panel eine entsprechende Aktion auslöst
-- Vorschau anzeigen, wenn Text verfügbar ist
-- Text erst nach Bestätigung verwenden
+- Clipboard lesen, wenn Nutzer das Overlay aktiv öffnet oder eine entsprechende Aktion auslöst
+- Text übernehmen, wenn verfügbar
 - generierte Vorschläge kopieren
 
 Verboten:
@@ -294,7 +331,7 @@ Verboten:
 
 Fallback:
 
-- Wenn Clipboard-Lesen leer oder blockiert ist, muss der Nutzer Text manuell ins Panel einfügen können.
+- Wenn Clipboard-Lesen leer oder blockiert ist, muss der Nutzer Text manuell ins Overlay eingeben oder einfügen können.
 
 ---
 
@@ -404,6 +441,7 @@ Automatisierbar:
 - PromptBuilder
 - AiResponseParser
 - ReplyMode-/ToneOption-/RetryInstruction-Mapping
+- SuggestionPager-Indexlogik
 
 Gerätetest nötig:
 
@@ -412,7 +450,9 @@ Gerätetest nötig:
 - WhatsApp-Erkennung
 - Dragging
 - Clipboard-Zugriff und manueller Fallback
-- ReplyPanel + Retry-Bereich
+- InputBar + ResultPanel
+- Vorschlagswechsel per Swipe, Pfeil oder Pager
+- Retry-Bereich
 - Sperren/Entsperren
 - Samsung-Akkuverhalten
 
@@ -426,7 +466,10 @@ Architektur ist ausreichend, wenn:
 - Foreground Service startet aus sichtbarer Nutzeraktion
 - OverlayController verwaltet alle Overlay-Views zentral
 - Floating Button erscheint nur bei WhatsApp
-- ReplyPanel funktioniert kompakt
+- InputBar öffnet kompakt
+- ResultPanel erscheint erst nach KI-Antwort
+- genau ein Vorschlag sichtbar ist und zwischen 3 Vorschlägen gewechselt werden kann
+- Kopieren den aktuell sichtbaren Vorschlag kopiert
 - Retry-Bereich funktioniert ohne Verlauf, Bewertung, Profil oder Gedächtnis
 - Clipboard wird nur nach Nutzeraktion gelesen oder manueller Fallback funktioniert
 - KI liefert 3 Vorschläge oder saubere Fehler
