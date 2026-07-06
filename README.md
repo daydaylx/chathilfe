@@ -24,15 +24,15 @@ Die App ist kein Messenger-Ersatz. Sie hilft nur beim Formulieren, Umschreiben u
 
 Wenn WhatsApp geöffnet ist, erscheint ein kleiner Floating Button am Bildschirmrand.
 
-Beim Antippen öffnet sich ein kompaktes Mini-Fenster. Dort kann der Nutzer:
+Beim Antippen öffnet sich zuerst ein schmaler Eingabebalken. Dort kann der Nutzer:
 
-1. einen Modus wählen: **Antworten**, **Formulieren** oder **Umschreiben**,
-2. optional eine kopierte Nachricht aus der Zwischenablage verwenden,
-3. grob beschreiben, was er sagen möchte,
-4. einen Ton auswählen,
-5. von der KI drei direkt kopierbare Vorschläge erzeugen lassen,
+1. einen Ton/Stil wählen,
+2. Text eingeben oder bewusst einfügen,
+3. KI-Vorschläge starten,
+4. nach der KI-Antwort ein kompaktes Ergebnis-Panel sehen,
+5. zwischen drei Vorschlägen per Swipe, Pfeil oder Pager wechseln,
 6. bei unpassenden Vorschlägen mit **Nochmal** oder kompakten Änderungs-Chips neue Varianten erzeugen,
-7. einen Vorschlag kopieren,
+7. den sichtbaren Vorschlag kopieren,
 8. ihn selbst in WhatsApp einfügen und selbst senden.
 
 Der Retry ist nur ein temporärer neuer Versuch. Es gibt keinen Verlauf, kein Gedächtnis, kein Stiltraining und keine Bewertung einzelner Vorschläge.
@@ -58,7 +58,8 @@ Der Retry ist nur ein temporärer neuer Versuch. Es gibt keinen Verlauf, kein Ge
 | [`docs/TEST_PLAN.md`](docs/TEST_PLAN.md) | Build-, Geräte-, Overlay-, Clipboard-, Retry- und KI-Tests |
 | [`docs/PRIVACY_SECURITY.md`](docs/PRIVACY_SECURITY.md) | Datenschutz- und Sicherheitsgrenzen |
 | [`docs/PROMPTS.md`](docs/PROMPTS.md) | KI-Prompts und Parser-Regeln |
-| [`docs/UI_UX_SPEC.md`](docs/UI_UX_SPEC.md) | UI/UX-Regeln für Button, Panel und Fehlerzustände |
+| [`docs/UI_UX_SPEC.md`](docs/UI_UX_SPEC.md) | UI/UX-Regeln für Button, Eingabebalken, Ergebnis-Panel und Fehlerzustände |
+| [`docs/VISUAL_SCOPE.md`](docs/VISUAL_SCOPE.md) | verbindlicher visueller Scope für Input-Bar, Result-Panel und Vorschlagswechsel |
 
 ---
 
@@ -70,7 +71,8 @@ Der Retry ist nur ein temporärer neuer Versuch. Es gibt keinen Verlauf, kein Ge
 4. [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
 5. [`docs/ANDROID_CONSTRAINTS.md`](docs/ANDROID_CONSTRAINTS.md)
 6. [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md)
-7. nur die zusätzlich relevanten Fachdocs
+7. bei UI-Arbeit zusätzlich [`docs/UI_UX_SPEC.md`](docs/UI_UX_SPEC.md) und [`docs/VISUAL_SCOPE.md`](docs/VISUAL_SCOPE.md)
+8. nur die zusätzlich relevanten Fachdocs
 
 Nicht alle Dokumente pauschal laden. Das reduziert Kontext-Bloat.
 
@@ -84,6 +86,7 @@ Nicht alle Dokumente pauschal laden. Das reduziert Kontext-Bloat.
 | Sprache | Kotlin |
 | Haupt-UI | Jetpack Compose |
 | Overlay-UI | klassische Android Views für MVP |
+| Visueller Scope | Floating Button, Input-Bar, Result-Panel, ein sichtbarer Vorschlag |
 | Overlay | Android `WindowManager` |
 | Overlay-Typ | `TYPE_APPLICATION_OVERLAY` |
 | WhatsApp-Erkennung | `UsageStatsManager.queryEvents()` |
@@ -95,7 +98,7 @@ Nicht alle Dokumente pauschal laden. Das reduziert Kontext-Bloat.
 | Retry | temporäre Änderungs-Chips, keine Speicherung |
 | Distribution | private APK |
 
-Details stehen in [`docs/DECISIONS.md`](docs/DECISIONS.md) und [`docs/API_KEY_STRATEGY.md`](docs/API_KEY_STRATEGY.md).
+Details stehen in [`docs/DECISIONS.md`](docs/DECISIONS.md), [`docs/API_KEY_STRATEGY.md`](docs/API_KEY_STRATEGY.md), [`docs/UI_UX_SPEC.md`](docs/UI_UX_SPEC.md) und [`docs/VISUAL_SCOPE.md`](docs/VISUAL_SCOPE.md).
 
 ---
 
@@ -163,8 +166,11 @@ Der MVP gilt erst als fertig, wenn:
 - die App als APK installierbar ist
 - Berechtigungen verständlich erklärt und geprüft werden
 - Floating Button nur bei WhatsApp erscheint
-- Mini-Fenster stabil funktioniert
-- alle drei Modi funktionieren
+- Eingabebalken kompakt öffnet
+- Ergebnis-Panel erst nach KI-Antwort erscheint
+- immer nur ein Vorschlag sichtbar ist
+- Wechsel zwischen drei Vorschlägen funktioniert
+- sichtbarer Vorschlag kopiert werden kann
 - Clipboard bewusst übernommen wird oder der manuelle Fallback funktioniert
 - KI-Vorschläge erzeugt und kopiert werden können
 - Retry mit `Nochmal` und kompakten Änderungs-Chips funktioniert
