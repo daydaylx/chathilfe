@@ -32,6 +32,7 @@ Regeln:
 - keine automatische Aktion behaupten
 - genau 3 Varianten erzeugen
 - jede Variante muss einzeln sendbar sein
+- bei Retry-Anweisungen nur die neuen Varianten anpassen, nicht über den Retry sprechen
 
 ---
 
@@ -51,6 +52,7 @@ Nicht erwünscht:
 - Markdown-Tabelle
 - Analyseabschnitt
 - Meta-Erklärung
+- Sätze wie „Diesmal kürzer formuliert“
 
 ---
 
@@ -70,6 +72,31 @@ Der Ton darf die Aussage anpassen, aber nicht den Sinn verdrehen.
 
 ---
 
+## Retry-Optionen
+
+Retry-Optionen sind nur temporäre Änderungswünsche für die nächste KI-Anfrage.
+
+Zulässige Werte für `retry_instruction`:
+
+| UI-Wert | Bedeutung |
+|---|---|
+| kürzer | kompakter, weniger Wörter |
+| lockerer | weniger steif, natürlicher Alltagston |
+| direkter | klarer, weniger weichgespült |
+| sanfter | vorsichtiger, weniger hart |
+| klarer | weniger schwammig, konkreter formuliert |
+| weniger künstlich | keine typischen KI-Formulierungen, natürlicher Chatstil |
+
+Regeln:
+
+- `retry_instruction` ist optional.
+- Maximal 1–2 Retry-Werte gleichzeitig verwenden.
+- Retry-Werte dürfen den Sinn der ursprünglichen Nutzerabsicht nicht verändern.
+- Retry-Werte dürfen nicht gespeichert oder als Nutzerprofil interpretiert werden.
+- Die Antwort darf den Retry nicht erwähnen.
+
+---
+
 ## Modus: Antworten
 
 Eingaben:
@@ -77,6 +104,7 @@ Eingaben:
 - `copied_message`
 - `user_intent`
 - `tone`
+- `retry_instruction` optional
 
 Prompt:
 
@@ -98,6 +126,8 @@ Regeln:
 - Die Antwort soll zur kopierten Nachricht passen.
 - Berücksichtige, was der Nutzer ausdrücken will.
 - Wenn Informationen fehlen, formuliere neutral statt Dinge zu erfinden.
+- Wenn ein Änderungswunsch für einen neuen Versuch vorhanden ist, berücksichtige ihn still.
+- Erkläre nicht, was geändert wurde.
 
 Kopierte Nachricht:
 {{copied_message}}
@@ -107,6 +137,9 @@ Was der Nutzer ausdrücken will:
 
 Gewünschter Ton:
 {{tone}}
+
+Änderungswunsch für neuen Versuch, falls vorhanden:
+{{retry_instruction}}
 
 Ausgabeformat:
 1. ...
@@ -122,6 +155,7 @@ Eingaben:
 
 - `user_intent`
 - `tone`
+- `retry_instruction` optional
 
 Prompt:
 
@@ -141,12 +175,17 @@ Regeln:
 - Jede Variante soll direkt kopierbar sein.
 - Wenn der Wunsch emotional ist, bleibe klar und ruhig.
 - Erfinde keine Details, die der Nutzer nicht genannt hat.
+- Wenn ein Änderungswunsch für einen neuen Versuch vorhanden ist, berücksichtige ihn still.
+- Erkläre nicht, was geändert wurde.
 
 Nutzerwunsch:
 {{user_intent}}
 
 Gewünschter Ton:
 {{tone}}
+
+Änderungswunsch für neuen Versuch, falls vorhanden:
+{{retry_instruction}}
 
 Ausgabeformat:
 1. ...
@@ -163,6 +202,7 @@ Eingaben:
 - `original_text`
 - `user_intent`
 - `tone`
+- `retry_instruction` optional
 
 Prompt:
 
@@ -181,6 +221,8 @@ Regeln:
 - Nicht unnötig lang werden.
 - Keine neuen Fakten erfinden.
 - Wenn der Originaltext aggressiv klingt, entschärfe ihn ohne den Kern zu verlieren.
+- Wenn ein Änderungswunsch für einen neuen Versuch vorhanden ist, berücksichtige ihn still.
+- Erkläre nicht, was geändert wurde.
 
 Originaltext:
 {{original_text}}
@@ -190,6 +232,9 @@ Gewünschte Änderung:
 
 Gewünschter Ton:
 {{tone}}
+
+Änderungswunsch für neuen Versuch, falls vorhanden:
+{{retry_instruction}}
 
 Ausgabeformat:
 1. ...
@@ -240,6 +285,7 @@ confirmedClipboardText optional
 userIntent
 originalText optional
 tone
+retryInstruction optional
 language
 count = 3
 ```
@@ -252,6 +298,9 @@ Nicht senden:
 - Gerätekennung
 - Logs
 - Screenshots
+- gespeicherte frühere Nutzertexte
+- gespeicherte frühere KI-Vorschläge
+- Memory-/Gedächtnisdaten
 
 ---
 
@@ -274,6 +323,8 @@ Prompts sind brauchbar, wenn:
 - Varianten direkt kopierbar sind
 - keine Erklärungen ausgegeben werden
 - Ton erkennbar angepasst ist
+- Retry-Anweisungen sichtbar wirken, aber nicht erwähnt werden
 - keine neuen Fakten erfunden werden
 - Sprache natürlich wirkt
 - keine automatische Aktion behauptet wird
+- keine gespeicherten Inhalte oder Memory-Daten benötigt werden
