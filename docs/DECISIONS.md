@@ -260,6 +260,34 @@ Der Hauptnutzen ist schnelles Formulieren im Overlay. Mehrere Modelle würden Fe
 
 ---
 
+## D-010 — Visuelles Overlay-Modell
+
+**Status:** entschieden
+
+**Entscheidung:**
+
+Das Overlay öffnet im MVP zuerst als schmaler Eingabebalken. Erst nach einer KI-Antwort erweitert sich das Overlay zu einem kompakten Ergebnis-Panel.
+
+**Konsequenz:**
+
+- Startzustand ist immer eine Input-Bar, kein großes Formular.
+- Die Input-Bar enthält Ton/Stil, Texteingabe, Einfügen und Start.
+- Der Start-Button darf nicht `Senden` heißen.
+- Das Ergebnis-Panel zeigt immer nur einen Vorschlag.
+- Die 3 Vorschläge werden per Swipe, Pfeilnavigation oder Pager gewechselt.
+- Drei Vorschläge untereinander sind nicht die Standardansicht.
+- Der visuelle Scope ist zusätzlich in `docs/VISUAL_SCOPE.md` definiert.
+
+**Nicht erlaubt im MVP:**
+
+- Vollbild-Dialog
+- großes Formular als Startzustand
+- Dashboard-Anmutung
+- Chatbot-Verlauf
+- Modell-/Provider-/Prompt-Bedienung im Overlay
+
+---
+
 ## Offene Punkte
 
 Diese Punkte bleiben bewusst offen, bis sie für Code relevant werden:
