@@ -4,7 +4,7 @@
 
 Dieses Dokument ist die technische Architekturquelle für den ChatHilfe-MVP.
 
-Ziel ist eine kleine native Android-App mit Floating Button über WhatsApp, Mini-Fenster, drei Modi, KI-Vorschlägen und manueller Kopierfunktion.
+Ziel ist eine kleine native Android-App mit Floating Button über WhatsApp, Mini-Fenster, drei Modi, KI-Vorschlägen, kompaktem Retry und manueller Kopierfunktion.
 
 Die Architektur bleibt absichtlich klein. Overengineering ist hier ein reales Risiko.
 
@@ -23,8 +23,11 @@ Technische Grundentscheidungen stehen verbindlich in `docs/DECISIONS.md`.
 | Runtime | Foreground Service, aus sichtbarer Nutzeraktion gestartet |
 | App-Erkennung | `UsageStatsManager.queryEvents()` |
 | KI-Provider | OpenRouter, ein Provider im MVP |
-| API-Key | Build-Time-Konfiguration, nicht im Repo |
-| Einstellungen | DataStore für UI-/Overlay-Settings, nicht für API-Key |
+| KI-Modell | ein OpenRouter-Default-Modell, vor Phase 7 in `AiConfig` pinnen |
+| Modellrouting | nicht im MVP |
+| API-Key | Build-Time-Konfiguration, nicht im Repo, nicht im UI |
+| Einstellungen | DataStore für UI-/Overlay-Settings, nicht für API-Key oder Texte |
+| Retry | temporäre `RetryInstruction`, nicht persistent |
 
 Kein ComposeView im Overlay-MVP. ComposeView im `WindowManager` ist erst nach stabilem MVP erlaubt und braucht eine eigene Entscheidung.
 
@@ -38,6 +41,7 @@ Kein ComposeView im Overlay-MVP. ComposeView im `WindowManager` ist erst nach st
 - keine doppelten oder hängenden Overlay-Views
 - keine WhatsApp-Automation
 - keine automatische Chat-Auslesung
+- keine Speicherung von Nutzertexten, Vorschlägen, Retry-Anweisungen oder Verläufen
 - keine unnötigen Architektur-Schichten
 - erster Zielzustand: stabile private APK
 
@@ -54,9 +58,14 @@ Nicht bauen:
 - Notification Scraping
 - Screen Scraping
 - Multi-Messenger-Framework
+- Multi-Provider-System
+- Modellrouting nach Tonfall
 - Account-System
 - Backend
 - Analytics
+- Gedächtnis-/Memory-System
+- Verlauf für Nutzertexte, Vorschläge oder Retries
+- Personen-, Kontakt-, Beziehungs- oder Stilprofile
 - große Clean Architecture
 - API-Key-Eingabe im MVP
 
@@ -89,6 +98,7 @@ app/
 └── model/
     ├── ReplyMode.kt
     ├── ToneOption.kt
+    ├── RetryInstruction.kt
     ├── ReplyRequest.kt
     └── ReplySuggestion.kt
 ```
@@ -126,6 +136,7 @@ Nutzer wählt Modus, Ton und Eingabe
 AiClient erzeugt 3 Vorschläge
 ↓
 Nutzer kopiert Vorschlag
+oder nutzt einen bewussten Retry mit optionaler RetryInstruction
 ↓
 Nutzer fügt manuell in WhatsApp ein
 ```
@@ -139,6 +150,7 @@ Nutzer fügt manuell in WhatsApp ein
 Aufgaben:
 
 - Berechtigungsstatus anzeigen
+- API-Key-Konfigurationsstatus anzeigen, falls sinnvoll
 - Overlay aktivieren/deaktivieren
 - Test-Overlay starten
 - kurze Hinweise anzeigen
@@ -149,6 +161,9 @@ Nicht Aufgabe:
 - KI-Konversation
 - komplexe Navigation
 - API-Key-Eingabe
+- Modell-Auswahl
+- Provider-Auswahl
+- Gedächtnis-/Profilverwaltung
 
 ---
 
@@ -167,6 +182,7 @@ Nicht Aufgabe:
 - KI-Dauerjobs
 - Clipboard-Lesen im Hintergrund
 - automatische App-Starts aus dem Hintergrund
+- Persistieren von Texten, Vorschlägen oder Retries
 
 ---
 
@@ -184,9 +200,12 @@ Nicht speichern:
 - API-Key
 - kopierte WhatsApp-Nachrichten
 - Nutzerabsichten
+- Originaltexte
 - generierte Vorschläge
+- Retry-Anweisungen
 - Chatverläufe
 - Clipboard-Historie
+- Profile oder Gedächtnisdaten
 
 ---
 
@@ -207,6 +226,37 @@ Pflichten:
 - vor `removeView` Attached-State prüfen
 - beim Stop alle Views entfernen
 - Drag/Tap sauber trennen
+
+---
+
+## ReplyPanelView
+
+Aufgaben:
+
+- Modusauswahl anzeigen
+- Ton-Auswahl anzeigen
+- Eingabefelder anzeigen
+- Clipboard-Vorschau nur nach Nutzeraktion ermöglichen
+- 3 Vorschlagskarten anzeigen
+- Kopieren pro Vorschlag ermöglichen
+- kompakten Retry-Bereich nach Ergebnissen anzeigen
+
+Retry-Regeln:
+
+- Retry-Bereich erst nach Vorschlägen anzeigen
+- `Nochmal` ohne zusätzliche RetryInstruction senden
+- Änderungs-Chips als temporäre `RetryInstruction` für die nächste Anfrage setzen
+- maximal 1–2 Retry-Chips gleichzeitig aktiv
+- RetryInstruction nach neuer Anfrage oder Panel-Schließen verwerfen
+
+Nicht Aufgabe:
+
+- Verlauf anzeigen
+- Bewertung einzelner Vorschläge
+- freie Feedback-Texteingabe im MVP
+- Stiltraining
+- Memory/Profile
+- Modell- oder Provider-Auswahl
 
 ---
 
@@ -253,7 +303,7 @@ Fallback:
 Aufgaben:
 
 - OpenRouter Endpoint definieren
-- Modell-ID definieren
+- eine Modell-ID definieren
 - API-Key aus Build-Time-Konfiguration bereitstellen
 
 Regeln:
@@ -262,6 +312,7 @@ Regeln:
 - lokale Secret-Dateien müssen ignoriert werden
 - kein API-Key im UI
 - kein API-Key in DataStore
+- kein Modellrouting im MVP
 
 ---
 
@@ -270,10 +321,13 @@ Regeln:
 MVP-Regel:
 
 - OpenRouter als einziger Provider
+- genau ein Default-Modell
 - kein Multi-Provider-System vor stabilem MVP
+- kein automatisches Modell-Fallback im MVP
 - API-Key aus `AiConfig` / BuildConfig lesen
 - API-Key nie loggen
 - Nutzertexte nie loggen
+- Retry-Anweisungen nie loggen
 
 Fehlerfälle:
 
@@ -293,6 +347,10 @@ Modi:
 - `Reply`: auf kopierte oder manuell eingefügte Nachricht antworten
 - `Compose`: neue Nachricht aus Absicht formulieren
 - `Rewrite`: vorhandenen Text umschreiben
+
+Optionale Eingabe:
+
+- `RetryInstruction`: nur für die nächste Anfrage, nicht persistent
 
 Prompts liegen in `docs/PROMPTS.md`.
 
@@ -329,7 +387,12 @@ clipboardPreview
 confirmedClipboardText
 currentUserIntent
 currentOriginalText
+retryInstruction
 suggestions
+suggestionHistory
+retryHistory
+memoryData
+profileData
 ```
 
 ---
@@ -340,7 +403,7 @@ Automatisierbar:
 
 - PromptBuilder
 - AiResponseParser
-- ReplyMode-/ToneOption-Mapping
+- ReplyMode-/ToneOption-/RetryInstruction-Mapping
 
 Gerätetest nötig:
 
@@ -349,6 +412,7 @@ Gerätetest nötig:
 - WhatsApp-Erkennung
 - Dragging
 - Clipboard-Zugriff und manueller Fallback
+- ReplyPanel + Retry-Bereich
 - Sperren/Entsperren
 - Samsung-Akkuverhalten
 
@@ -363,9 +427,12 @@ Architektur ist ausreichend, wenn:
 - OverlayController verwaltet alle Overlay-Views zentral
 - Floating Button erscheint nur bei WhatsApp
 - ReplyPanel funktioniert kompakt
+- Retry-Bereich funktioniert ohne Verlauf, Bewertung, Profil oder Gedächtnis
 - Clipboard wird nur nach Nutzeraktion gelesen oder manueller Fallback funktioniert
 - KI liefert 3 Vorschläge oder saubere Fehler
 - API-Key kommt aus lokaler Build-Time-Konfiguration und steht nicht im Repo
+- keine API-Key-Eingabe im UI vorhanden ist
+- genau ein OpenRouter-Default-Modell genutzt wird
 - keine WhatsApp-Automation vorhanden ist
 - kein Accessibility Service vorhanden ist
 - keine unnötigen Berechtigungen im Manifest stehen
