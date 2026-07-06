@@ -26,13 +26,16 @@ Wenn WhatsApp geöffnet ist, erscheint ein kleiner Floating Button am Bildschirm
 
 Beim Antippen öffnet sich ein kompaktes Mini-Fenster. Dort kann der Nutzer:
 
-1. einen Modus wählen: **Antworten**, **Formulieren** oder **Umschreiben**
+1. einen Modus wählen: **Antworten**, **Formulieren** oder **Umschreiben**,
 2. optional eine kopierte Nachricht aus der Zwischenablage verwenden,
 3. grob beschreiben, was er sagen möchte,
 4. einen Ton auswählen,
 5. von der KI drei direkt kopierbare Vorschläge erzeugen lassen,
-6. einen Vorschlag kopieren,
-7. ihn selbst in WhatsApp einfügen und selbst senden.
+6. bei unpassenden Vorschlägen mit **Nochmal** oder kompakten Änderungs-Chips neue Varianten erzeugen,
+7. einen Vorschlag kopieren,
+8. ihn selbst in WhatsApp einfügen und selbst senden.
+
+Der Retry ist nur ein temporärer neuer Versuch. Es gibt keinen Verlauf, kein Gedächtnis, kein Stiltraining und keine Bewertung einzelner Vorschläge.
 
 ---
 
@@ -52,7 +55,7 @@ Beim Antippen öffnet sich ein kompaktes Mini-Fenster. Dort kann der Nutzer:
 | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | technische Architektur und Komponenten |
 | [`docs/ANDROID_CONSTRAINTS.md`](docs/ANDROID_CONSTRAINTS.md) | Android 15/16, Overlay, Services und Berechtigungen |
 | [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md) | phasenweiser Umsetzungsplan |
-| [`docs/TEST_PLAN.md`](docs/TEST_PLAN.md) | Build-, Geräte-, Overlay-, Clipboard- und KI-Tests |
+| [`docs/TEST_PLAN.md`](docs/TEST_PLAN.md) | Build-, Geräte-, Overlay-, Clipboard-, Retry- und KI-Tests |
 | [`docs/PRIVACY_SECURITY.md`](docs/PRIVACY_SECURITY.md) | Datenschutz- und Sicherheitsgrenzen |
 | [`docs/PROMPTS.md`](docs/PROMPTS.md) | KI-Prompts und Parser-Regeln |
 | [`docs/UI_UX_SPEC.md`](docs/UI_UX_SPEC.md) | UI/UX-Regeln für Button, Panel und Fehlerzustände |
@@ -85,9 +88,11 @@ Nicht alle Dokumente pauschal laden. Das reduziert Kontext-Bloat.
 | Overlay-Typ | `TYPE_APPLICATION_OVERLAY` |
 | WhatsApp-Erkennung | `UsageStatsManager.queryEvents()` |
 | Laufzeit | Foreground Service, aus sichtbarer Nutzeraktion gestartet |
-| Lokale Einstellungen | DataStore für UI-/Overlay-Settings |
+| Lokale Einstellungen | DataStore für UI-/Overlay-Settings, keine Texte/API-Keys |
 | KI-Anbieter | OpenRouter, ein Provider im MVP |
-| API-Key | lokaler Build-Time-Key, nicht im Repo |
+| KI-Modell | ein OpenRouter-Default-Modell, vor Phase 7 pinnen |
+| API-Key | lokaler Build-Time-Key, nicht im Repo, kein UI-Feld |
+| Retry | temporäre Änderungs-Chips, keine Speicherung |
 | Distribution | private APK |
 
 Details stehen in [`docs/DECISIONS.md`](docs/DECISIONS.md) und [`docs/API_KEY_STRATEGY.md`](docs/API_KEY_STRATEGY.md).
@@ -122,6 +127,8 @@ OPENROUTER_API_KEY
 ```
 
 Dokumentation und Beispielcode dürfen nur Platzhalter enthalten.
+
+Die App hat im MVP kein API-Key-Eingabefeld. Der Key wird nicht in DataStore gespeichert und nicht im UI angezeigt.
 
 ---
 
@@ -160,10 +167,15 @@ Der MVP gilt erst als fertig, wenn:
 - alle drei Modi funktionieren
 - Clipboard bewusst übernommen wird oder der manuelle Fallback funktioniert
 - KI-Vorschläge erzeugt und kopiert werden können
+- Retry mit `Nochmal` und kompakten Änderungs-Chips funktioniert
 - kein Accessibility Service verwendet wurde
 - keine unnötigen Berechtigungen verwendet wurden
-- keine Nutzertexte oder API-Keys geloggt werden
+- keine Nutzertexte, Retry-Anweisungen oder API-Keys geloggt werden
+- keine Nutzertexte, Vorschläge, Retry-Anweisungen oder Verläufe gespeichert werden
+- kein Gedächtnis, Stiltraining oder Profil-System existiert
 - kein echter API-Key im Repo steht
+- kein API-Key-Eingabefeld im UI existiert
+- genau ein OpenRouter-Default-Modell genutzt wird
 - Code klein und wartbar bleibt
 
 ---
