@@ -34,12 +34,14 @@ Ziel: Repo verstehen und offene technische Grundsatzentscheidungen vor Code klä
 Bereits entschieden:
 
 - Provider: OpenRouter im MVP
-- API-Key: lokal beim Build einbetten, niemals committen
+- Modellstrategie: genau ein OpenRouter-Default-Modell im MVP; Modellrouting ist Post-MVP
+- API-Key: lokal beim Build einbetten, niemals committen, keine API-Key-Eingabe im UI
 - Overlay-Laufzeit: Foreground Service aus sichtbarer Nutzeraktion
 - Overlay-UI: klassische Android Views
 - `applicationId`: `de.disaai.chathilfe`
 - SDK-Basis: `compileSdk 36`, `targetSdk 35`, `minSdk 29`
 - Clipboard-Fallback: manuelles Einfügen ins Panel
+- Retry: kompakter Retry-Bereich nach Ergebnissen, temporäre `RetryInstruction`, keine Speicherung
 
 Vor Code-Scaffold noch zu pinnen:
 
@@ -60,6 +62,9 @@ Nicht tun:
 - keine Dependencies hinzufügen, bevor Toolchain festgelegt ist
 - keine Architekturentscheidungen ohne Update von `docs/DECISIONS.md`
 - keinen echten API-Key ins Repo schreiben
+- keine API-Key-Eingabe in der App bauen
+- kein Modellrouting, Multi-Provider-System oder Provider-Fallback bauen
+- kein Verlauf, Gedächtnis, Profil oder Stiltraining bauen
 
 Akzeptanz:
 
@@ -83,6 +88,7 @@ Aufgaben:
 - aktuelle kompatible AGP-/Gradle-/Kotlin-/Compose-Versionen pinnen
 - lokalen API-Key-Mechanismus vorbereiten, aber nur mit Platzhalter dokumentieren
 - `.gitignore` für lokale Secret-Dateien ergänzen
+- BuildConfig-/Build-Time-Konfiguration für `OPENROUTER_API_KEY` vorbereiten
 - dunkles Basis-Theme
 - Gradle-Setup minimal halten
 
@@ -92,6 +98,7 @@ Akzeptanz:
 - App startet
 - MainActivity zeigt einfache Setup-Seite
 - kein echter API-Key im Repo
+- keine API-Key-Eingabe im UI
 
 Nicht tun:
 
@@ -113,6 +120,7 @@ Aufgaben:
 - Overlay-Berechtigung prüfen
 - Usage Access prüfen
 - Foreground-Service-/Notification-Anforderungen als Status vorbereiten
+- API-Key-Konfigurationsstatus aus Build-Time-Konfiguration anzeigen, falls sinnvoll
 - Einstellungsseiten öffnen
 - `SettingsStore` mit DataStore für UI-/Overlay-Einstellungen
 - Overlay aktiv/inaktiv speichern
@@ -122,6 +130,7 @@ Akzeptanz:
 
 - Status wird korrekt angezeigt
 - kein API-Key-Feld im UI
+- kein API-Key in DataStore
 - keine API-Keys werden geloggt
 - Status aktualisiert sich nach Rückkehr aus Android-Einstellungen
 
@@ -213,6 +222,10 @@ Aufgaben:
 - manuellen Einfügen-Fallback anbieten
 - Dummy-Vorschläge anzeigen
 - Kopieren testen
+- kompakten Retry-Bereich nach Dummy-Ergebnissen anzeigen
+- Retry-Chips global umsetzen: `Nochmal`, `Kürzer`, `Lockerer`, `Direkter`, `Sanfter`, `Klarer`, `Weniger künstlich`
+- maximal 1–2 Retry-Chips gleichzeitig aktiv halten
+- Retry-Auswahl beim Schließen oder nach neuer Anfrage verwerfen
 
 Akzeptanz:
 
@@ -221,6 +234,8 @@ Akzeptanz:
 - Clipboard wird nicht heimlich gelesen
 - manuelles Einfügen funktioniert auch ohne Clipboard-Zugriff
 - Vorschläge kopierbar
+- Retry-Bereich erscheint erst nach Vorschlägen
+- Retry-Auswahl wird nicht gespeichert
 
 Validierung:
 
@@ -236,13 +251,17 @@ Aufgaben:
 
 - `PromptBuilder`
 - Prompts aus `docs/PROMPTS.md`
+- `RetryInstruction`-Mapping
+- optionale Retry-Anweisung in Prompt einbauen
 - `AiResponseParser`
 - Parser tolerant bauen
-- Unit-Tests für Builder/Parser
+- Unit-Tests für Builder/Parser/RetryInstruction
 
 Akzeptanz:
 
 - jeder Modus erzeugt passenden Prompt
+- Prompt enthält Retry-Anweisung nur, wenn sie aktiv für diese Anfrage gesetzt wurde
+- Retry-Anweisung wird im Prompt berücksichtigt, aber nicht als Profil gespeichert
 - Parser extrahiert Vorschläge robust
 - kein Crash bei schlechter Modellantwort
 
@@ -262,26 +281,32 @@ Aufgaben:
 - API-Key aus lokaler Build-Time-Konfiguration lesen
 - `AiClient`
 - OpenRouter als einziger Provider
+- genau ein Default-Modell nutzen
 - Ladezustand
 - Fehlerbehandlung
 - Antwort parsen
 - 3 Vorschläge anzeigen
+- Retry mit optionaler `RetryInstruction` als neue bewusste Anfrage unterstützen
 
 Akzeptanz:
 
 - fehlender Build-Time-Key → klarer Build- oder Laufzeitfehler ohne Secret-Ausgabe
 - kein Internet → klare Meldung
 - gültige Anfrage → Vorschläge
-- keine Nutzertexte/API-Keys in Logs
-- Anfrage nur nach Button-Klick
+- Retry erzeugt neue Vorschläge und lässt bisherige Vorschläge bei Fehler sichtbar
+- keine Nutzertexte/API-Keys/Retry-Anweisungen in Logs
+- Anfrage nur nach Button-Klick oder bewusstem Retry
 - echter API-Key steht nicht im Repo
 
 Nicht tun:
 
 - kein Multi-Provider-System
+- kein Modellrouting
+- kein automatisches Modell-Fallback
 - kein Verlauf
 - keine automatische Anfrage
 - keine API-Key-Eingabe im UI
+- kein Speichern von Vorschlägen oder Retry-Anweisungen
 
 ---
 
@@ -299,6 +324,7 @@ Aufgaben:
 - Foreground Service testen
 - WhatsApp-Appwechsel testen
 - ReplyPanel testen
+- Retry-Bereich testen
 - Clipboard und manuellen Fallback testen
 - Sperren/Entsperren testen
 - Internetfehler testen
@@ -310,6 +336,7 @@ Akzeptanz:
 - `docs/TEST_PLAN.md` weitgehend erfüllt
 - keine verbotenen Permissions
 - kein Accessibility Service
+- kein Verlauf, Gedächtnis, Profil, Stiltraining oder Analytics
 - README aktualisiert
 
 ---
@@ -342,8 +369,9 @@ Muss zuerst funktionieren:
 5. Button nur bei WhatsApp
 6. Panel öffnet
 7. Clipboard bewusst übernehmen oder manuell einfügen
-8. KI-Vorschläge über lokalen Build-Time-Key erzeugen
-9. Kopieren
+8. Modus, Ton und Retry-Chips funktionieren mit Dummy-Daten
+9. KI-Vorschläge über lokalen Build-Time-Key erzeugen
+10. Kopieren
 
 Darf warten:
 
@@ -351,12 +379,15 @@ Darf warten:
 - Animationen
 - WhatsApp Business
 - Modellauswahl
-- Verlauf
+- weitere Retry-Chips
 - Play Store
 
 Nicht bauen:
 
 - Auto-Senden
 - Auto-Einfügen
-- Chat-Auslesen
-- Accessibility
+- API-Key-Eingabe im UI
+- Verlauf
+- Gedächtnis
+- Stiltraining
+- Modellrouting
