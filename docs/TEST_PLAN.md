@@ -16,7 +16,9 @@ Sicherstellen, dass:
 - Berechtigungen korrekt geprüft werden
 - Floating Button nur bei WhatsApp erscheint
 - Overlay keine doppelten Views erzeugt
-- ReplyPanel stabil funktioniert
+- Input-Bar kompakt öffnet
+- Result-Panel erst nach KI-Antwort erscheint
+- Vorschlagswechsel zwischen 3 Varianten funktioniert
 - Clipboard nur nach Nutzeraktion verwendet wird
 - Retry-Bereich kompakt funktioniert und nichts speichert
 - KI-Vorschläge erzeugt und kopiert werden können
@@ -198,27 +200,52 @@ Erwartet:
 
 ---
 
-## ReplyPanel-Test
+## Input-Bar-Test
 
 Schritte:
 
 1. WhatsApp öffnen.
 2. Floating Button antippen.
-3. Panel öffnet.
-4. Modus wechseln.
-5. Ton wechseln.
-6. Text eingeben.
-7. Dummy-Vorschläge anzeigen.
-8. Retry-Bereich prüfen.
-9. Panel schließen.
+3. Prüfen, dass zuerst nur die Input-Bar erscheint.
+4. Ton/Stil öffnen und ändern.
+5. Text eingeben.
+6. Einfügen-Button antippen.
+7. Start-Button antippen.
+8. Input-Bar schließen oder Overlay beenden.
 
 Erwartet:
 
-- Panel kompakt
-- WhatsApp nicht komplett verdeckt
-- Modus/Ton/Eingabe funktionieren
-- Retry-Bereich erscheint erst nach Vorschlägen
+- Startzustand ist kein großes Formular
+- Input-Bar ist schmal und verdeckt WhatsApp möglichst wenig
+- Ton/Stil ist links oder klar sichtbar erreichbar
+- Textfeld ist direkt nutzbar
+- Einfügen ist optional und blockiert manuelle Eingabe nicht
+- Start-Button heißt nicht `Senden`
 - keine Eingabe wird dauerhaft gespeichert
+
+---
+
+## Result-Panel- und Vorschlagswechsel-Test
+
+Schritte:
+
+1. Input-Bar mit Dummy-Daten nutzen.
+2. Dummy-Vorschläge anzeigen.
+3. Prüfen, dass sich das Result-Panel erst nach Vorschlägen öffnet.
+4. Prüfen, dass nur ein Vorschlag sichtbar ist.
+5. Zwischen Vorschlag 1, 2 und 3 wechseln.
+6. Sichtbaren Vorschlag kopieren.
+7. Panel schließen.
+
+Erwartet:
+
+- Result-Panel erscheint nicht vor Vorschlägen
+- keine drei Vorschläge untereinander als Standardansicht
+- Anzeige wie `1/3`, Pfeile, Punkte oder Swipe ist vorhanden
+- Wechsel zwischen allen 3 Vorschlägen funktioniert
+- Kopieren kopiert den aktuell sichtbaren Vorschlag
+- WhatsApp bleibt im Hintergrund sichtbar
+- kein Vorschlagsverlauf wird gespeichert
 
 ---
 
@@ -226,21 +253,21 @@ Erwartet:
 
 Ohne Clipboard:
 
-- Panel öffnen
+- Input-Bar öffnen
 - keine falsche Vorschau anzeigen
-- Formulieren-Modus bleibt nutzbar
+- manuelle Eingabe bleibt nutzbar
 
 Mit Clipboard:
 
 1. WhatsApp-Nachricht manuell kopieren.
-2. Panel öffnen.
-3. Vorschau prüfen.
-4. „Verwenden“ antippen.
+2. Input-Bar öffnen.
+3. Einfügen antippen.
+4. Übernommenen Text prüfen.
 
 Erwartet:
 
 - Clipboard erst nach Nutzeraktion
-- Text erst nach Bestätigung
+- Text erst nach Nutzeraktion übernehmen
 - kein Speichern
 - kein Logging
 
@@ -290,7 +317,7 @@ Erwartet:
 
 UI-Test:
 
-1. 3 Vorschläge anzeigen.
+1. 3 Vorschläge im Result-Panel anzeigen.
 2. Prüfen, dass der Retry-Bereich darunter erscheint.
 3. `Nochmal` antippen.
 4. Einen Änderungs-Chip wählen.
@@ -303,7 +330,7 @@ Erwartet:
 - Retry-Bereich erscheint nicht vor Ergebnissen
 - `Nochmal` startet neue Anfrage mit gleichen Eingaben
 - Änderungs-Chips wirken nur auf die nächste Anfrage
-- maximal 1–2 Chips gleichzeitig aktiv
+- maximal 1-2 Chips gleichzeitig aktiv
 - Retry-Auswahl wird nach Schließen verworfen
 - kein Verlauf der Retry-Versuche
 - keine Bewertung einzelner Vorschläge
@@ -372,6 +399,21 @@ Prüfen:
 
 ---
 
+## Visueller Scope-Test
+
+Prüfen gegen `docs/VISUAL_SCOPE.md`:
+
+- Floating Button klein und verschiebbar
+- erster Zustand ist Input-Bar
+- Result-Panel erst nach KI-Antwort
+- ein sichtbarer Vorschlag statt drei gestapelter Karten
+- Vorschlagswechsel sichtbar und nutzbar
+- Retry klein und global
+- keine Modell-/Provider-/Prompt-Technik im Overlay
+- kein Dashboard
+
+---
+
 ## Abschluss-Testmatrix
 
 | Bereich | Pflicht |
@@ -383,16 +425,19 @@ Prüfen:
 | Usage Access | ja |
 | WhatsApp-Erkennung | ja |
 | Dragging | ja |
-| Panel öffnen/schließen | ja |
+| Input-Bar | ja |
+| Result-Panel | ja |
+| Vorschlagswechsel | ja |
 | Clipboard bewusst übernehmen | ja |
 | alle 3 Modi | ja |
 | Retry-Bereich | ja |
 | KI-Fehlerfälle | ja |
-| Kopieren | ja |
+| Kopieren sichtbarer Vorschlag | ja |
 | Sperren/Entsperren | ja |
 | keine verbotenen Permissions | ja |
 | kein Accessibility | ja |
 | kein Verlauf/Gedächtnis/Profile | ja |
+| visueller Scope erfüllt | ja |
 
 ---
 
