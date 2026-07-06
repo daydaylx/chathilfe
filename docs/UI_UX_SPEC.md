@@ -63,6 +63,7 @@ Ton wählen
 Vorschläge erstellen
 ↓
 Vorschlag kopieren
+oder bei unpassenden Vorschlägen einmal gezielt neu versuchen
 ↓
 manuell in WhatsApp einfügen
 ```
@@ -121,6 +122,7 @@ Pflichtfelder:
 - Fehlerzustand
 - 3 Vorschlagskarten
 - Kopieren-Button pro Vorschlag
+- kompakter Retry-Bereich nach erzeugten Vorschlägen
 
 ---
 
@@ -225,6 +227,7 @@ Die normale Overlay-UI bleibt bewusst einfach. Der Nutzer soll im ReplyPanel nur
 - Ton-Auswahl
 - Vorschläge erstellen
 - Vorschläge kopieren
+- Vorschläge bei Bedarf gezielt neu erzeugen
 
 Nicht im ReplyPanel anzeigen:
 
@@ -276,6 +279,46 @@ Kopiert
 
 ---
 
+## Retry und Änderungsoptionen
+
+Wenn die 3 Vorschläge nicht passen, soll der Nutzer direkt und ohne neues Menü neu versuchen können.
+
+Anzeige erst nach erzeugten Vorschlägen:
+
+```text
+Nicht passend?
+[Nochmal]
+[Kürzer] [Lockerer] [Direkter]
+[Sanfter] [Klarer] [Weniger künstlich]
+```
+
+Regeln:
+
+- Der Retry-Bereich erscheint erst nach der ersten erfolgreichen oder teilweise erfolgreichen KI-Antwort.
+- `Nochmal` erzeugt 3 neue Vorschläge mit gleichem Modus, gleichem Text, gleicher Absicht und gleichem Ton.
+- Änderungs-Chips sind global für alle Vorschläge, nicht pro Vorschlagskarte.
+- Maximal 1–2 Änderungs-Chips gleichzeitig aktiv.
+- Die Änderungs-Chips ändern nur die nächste KI-Anfrage.
+- Retry-Anweisungen werden nicht gespeichert.
+- Keine Bewertung einzelner Vorschläge.
+- Kein Feedback-Verlauf.
+- Kein Stiltraining.
+- Kein Gedächtnis.
+- Keine freie Feedback-Texteingabe im MVP.
+
+Zulässige Änderungs-Chips:
+
+| Chip | Bedeutung |
+|---|---|
+| Kürzer | kompakter, weniger Wörter |
+| Lockerer | weniger steif, natürlicher Alltagston |
+| Direkter | klarer, weniger weichgespült |
+| Sanfter | vorsichtiger, weniger hart |
+| Klarer | weniger schwammig, konkreter formuliert |
+| Weniger künstlich | keine typischen KI-Formulierungen, natürlicher Chatstil |
+
+---
+
 ## Anti-Nerv-Regeln
 
 - Button nur bei WhatsApp anzeigen
@@ -287,6 +330,8 @@ Kopiert
 - keine Popups ohne Nutzeraktion
 - keine KI-Anfrage ohne Nutzeraktion
 - keine Modell-, Provider- oder Prompt-Einstellungen im Overlay anzeigen
+- Retry-Bereich nur nach Ergebnissen anzeigen
+- keine Feedback-, Bewertungs- oder Memory-Abfragen anzeigen
 
 ---
 
@@ -302,5 +347,8 @@ UI/UX ist akzeptabel, wenn:
 - Clipboard-Nutzung ist freiwillig
 - manuelles Einfügen funktioniert, wenn Clipboard leer/blockiert ist
 - Vorschläge sind leicht kopierbar
+- Nutzer kann bei unpassenden Vorschlägen gezielt neu versuchen
+- Retry-Optionen bleiben kompakt und erscheinen erst nach Ergebnissen
 - Fehler sind verständlich
 - ReplyPanel bleibt frei von Modell-, Provider-, Token-, Reasoning- und Prompt-Einstellungen
+- ReplyPanel bleibt frei von Verlauf, Bewertung, Stiltraining und Gedächtnis
