@@ -1,9 +1,13 @@
 package de.disaai.chathilfe.settings
 
+import android.Manifest
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -32,6 +36,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import de.disaai.chathilfe.BuildConfig
 import de.disaai.chathilfe.R
+import de.disaai.chathilfe.overlay.OverlayService
 import kotlinx.coroutines.launch
 
 @Composable
@@ -44,6 +49,12 @@ fun SettingsScreen(
     val lifecycleOwner = LocalLifecycleOwner.current
 
     var permissionStatus by remember { mutableStateOf(currentPermissionStatus(context)) }
+
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+    ) {
+        permissionStatus = currentPermissionStatus(context)
+    }
 
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -87,9 +98,22 @@ fun SettingsScreen(
             onOpenSettings = { startSettingsActivity(context, usageAccessSettingsIntent()) },
         )
 
+        PermissionCard(
+            title = stringResource(id = R.string.permission_notification_title),
+            description = stringResource(id = R.string.permission_notification_description),
+            state = permissionStatus.notification,
+            onOpenSettings = { notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS) },
+        )
+
         InfoCard(
             title = stringResource(id = R.string.foreground_service_title),
-            statusText = stringResource(id = R.string.foreground_service_state),
+            statusText = stringResource(
+                id = if (settings.overlayEnabled) {
+                    R.string.foreground_service_state_active
+                } else {
+                    R.string.foreground_service_state_inactive
+                },
+            ),
             description = stringResource(id = R.string.foreground_service_description),
         )
 
@@ -105,7 +129,26 @@ fun SettingsScreen(
         OverlayToggleCard(
             checked = settings.overlayEnabled,
             onCheckedChange = { enabled ->
-                coroutineScope.launch { settingsStore.setOverlayEnabled(enabled) }
+                if (enabled) {
+                    if (permissionStatus.overlay != PermissionState.GRANTED) {
+                        Toast.makeText(
+                            context,
+                            context.getString(R.string.overlay_permission_required_toast),
+                            Toast.LENGTH_LONG,
+                        ).show()
+                    } else {
+                        coroutineScope.launch { settingsStore.setOverlayEnabled(true) }
+                        OverlayService.start(context)
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                            permissionStatus.notification != PermissionState.GRANTED
+                        ) {
+                            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                        }
+                    }
+                } else {
+                    coroutineScope.launch { settingsStore.setOverlayEnabled(false) }
+                    OverlayService.stop(context)
+                }
             },
         )
     }
