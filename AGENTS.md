@@ -14,6 +14,8 @@ ChatHilfe is a private Android MVP.
 
 Goal: show a small floating AI reply helper over WhatsApp. The app helps the user formulate, rewrite, or answer messages. The user always copies, pastes, and sends manually.
 
+Visual goal: the overlay starts as a narrow input bar and expands to a compact result panel only after AI suggestions exist. Do not build a large form, dashboard, or stacked suggestion list as the default UI.
+
 If generated suggestions are not good enough, the MVP may offer a compact retry flow with `Nochmal` and a few temporary refinement chips. Retry must not create history, feedback storage, style training, or memory.
 
 ---
@@ -52,6 +54,7 @@ Do not load every document unless needed for the current task.
 | Privacy and security | `docs/PRIVACY_SECURITY.md` |
 | AI prompts and response parsing | `docs/PROMPTS.md` |
 | UI/UX behavior | `docs/UI_UX_SPEC.md` |
+| Visual overlay scope | `docs/VISUAL_SCOPE.md` |
 
 If documents conflict, use this priority:
 
@@ -96,6 +99,30 @@ Do not build or add:
 - unnecessary abstraction layers
 
 If a requested implementation appears to require any forbidden item, stop and explain the tradeoff before coding.
+
+---
+
+## Visual scope boundaries
+
+Follow `docs/VISUAL_SCOPE.md` for all overlay UI work.
+
+Do not build or add:
+
+- large form as the first overlay state
+- full-screen dialog
+- dashboard
+- model/provider/prompt controls in the overlay
+- three suggestion cards stacked vertically as the default result view
+- history/profile/memory panels
+
+MVP visual model:
+
+- Floating Button
+- narrow Input-Bar
+- compact Result-Panel after AI answer
+- one visible suggestion at a time
+- swipe, arrow, or pager navigation for 3 suggestions
+- compact global Retry area
 
 ---
 
@@ -184,6 +211,7 @@ For every implementation task, validate as much as practical:
 - no history, memory, profile, analytics, or tracking storage was added
 - overlay lifecycle avoids duplicate views
 - missing permissions show clear UI
+- visual scope follows `docs/VISUAL_SCOPE.md`
 
 For device-only behavior, report what still needs manual testing.
 
