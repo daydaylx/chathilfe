@@ -22,6 +22,7 @@ Task-spezifisch zusätzlich:
 
 - KI/Prompt: `docs/PROMPTS.md`
 - UI: `docs/UI_UX_SPEC.md`
+- Visueller Scope: `docs/VISUAL_SCOPE.md`
 - Datenschutz: `docs/PRIVACY_SECURITY.md`
 - Tests: `docs/TEST_PLAN.md`
 
@@ -38,9 +39,10 @@ Bereits entschieden:
 - API-Key: lokal beim Build einbetten, niemals committen, keine API-Key-Eingabe im UI
 - Overlay-Laufzeit: Foreground Service aus sichtbarer Nutzeraktion
 - Overlay-UI: klassische Android Views
+- Visueller Scope: schmaler Eingabebalken zuerst, Ergebnis-Panel erst nach KI-Antwort
 - `applicationId`: `de.disaai.chathilfe`
 - SDK-Basis: `compileSdk 36`, `targetSdk 35`, `minSdk 29`
-- Clipboard-Fallback: manuelles Einfügen ins Panel
+- Clipboard-Fallback: manuelles Eingeben oder Einfügen im Overlay
 - Retry: kompakter Retry-Bereich nach Ergebnissen, temporäre `RetryInstruction`, keine Speicherung
 
 Vor Code-Scaffold noch zu pinnen:
@@ -65,11 +67,13 @@ Nicht tun:
 - keine API-Key-Eingabe in der App bauen
 - kein Modellrouting, Multi-Provider-System oder Provider-Fallback bauen
 - kein Verlauf, Gedächtnis, Profil oder Stiltraining bauen
+- kein großes Formular als Startzustand bauen
+- keine drei Vorschlagskarten untereinander als Standardansicht bauen
 
 Akzeptanz:
 
 - Entscheidungen sind in `docs/DECISIONS.md` aktuell
-- kein Widerspruch zu `AGENTS.md` oder `docs/ANDROID_CONSTRAINTS.md`
+- kein Widerspruch zu `AGENTS.md`, `docs/VISUAL_SCOPE.md` oder `docs/ANDROID_CONSTRAINTS.md`
 
 ---
 
@@ -190,8 +194,8 @@ Aufgaben:
 
 Akzeptanz:
 
-- WhatsApp öffnen → Button erscheint
-- WhatsApp verlassen → Button verschwindet
+- WhatsApp öffnen -> Button erscheint
+- WhatsApp verlassen -> Button verschwindet
 - keine doppelten Views
 
 Validierung:
@@ -207,39 +211,50 @@ Nicht tun:
 
 ---
 
-## Phase 5 — ReplyPanel ohne KI
+## Phase 5 — Input-Bar und Result-Panel ohne KI
 
-Ziel: UI funktioniert mit Dummy-Daten.
+Ziel: Die Overlay-UI funktioniert mit Dummy-Daten und folgt `docs/VISUAL_SCOPE.md`.
 
 Aufgaben:
 
-- `ReplyPanelView` als klassische Android View
-- Modi: Antworten, Formulieren, Umschreiben
-- Ton-Auswahl
-- Eingabefelder
-- Clipboard-Vorschau nur nach Panel-Öffnung oder explizitem Tap
-- Clipboard erst nach Bestätigung übernehmen
-- manuellen Einfügen-Fallback anbieten
+- `InputBarView` als klassische Android View bauen
+- Ton-/Stil-Button links im Eingabebalken bauen
+- kompaktes Texteingabefeld bauen
+- Einfügen-Button bauen
+- Start-Button bauen, aber nicht `Senden` nennen
+- `ResultPanelView` als klassische Android View bauen
 - Dummy-Vorschläge anzeigen
-- Kopieren testen
+- genau einen sichtbaren Vorschlag anzeigen
+- Vorschlagswechsel über einfache Pager-/Pfeilnavigation bauen
+- Swipe optional vorbereiten oder später ergänzen
+- Kopieren des sichtbaren Vorschlags testen
+- Clipboard nur nach Panel-Öffnung oder explizitem Tap lesen
+- manuellen Fallback anbieten
 - kompakten Retry-Bereich nach Dummy-Ergebnissen anzeigen
 - Retry-Chips global umsetzen: `Nochmal`, `Kürzer`, `Lockerer`, `Direkter`, `Sanfter`, `Klarer`, `Weniger künstlich`
-- maximal 1–2 Retry-Chips gleichzeitig aktiv halten
+- maximal 1-2 Retry-Chips gleichzeitig aktiv halten
 - Retry-Auswahl beim Schließen oder nach neuer Anfrage verwerfen
 
 Akzeptanz:
 
-- Panel öffnet/schließt
-- Modus und Ton wählbar
+- Floating Button öffnet zuerst nur den schmalen Eingabebalken
+- Eingabebalken verdeckt WhatsApp möglichst wenig
+- kein großer Formularzustand beim Öffnen
+- Ton, Text, Einfügen und Start sind direkt erreichbar
+- Start-Button heißt nicht `Senden`
+- ResultPanel erscheint erst nach Dummy-Vorschlägen
+- immer nur ein Vorschlag sichtbar
+- Nutzer erkennt, dass es 3 Vorschläge gibt
+- Wechsel zwischen Vorschlägen funktioniert
+- Kopieren kopiert den sichtbaren Vorschlag
 - Clipboard wird nicht heimlich gelesen
-- manuelles Einfügen funktioniert auch ohne Clipboard-Zugriff
-- Vorschläge kopierbar
+- manuelles Eingeben funktioniert auch ohne Clipboard-Zugriff
 - Retry-Bereich erscheint erst nach Vorschlägen
 - Retry-Auswahl wird nicht gespeichert
 
 Validierung:
 
-- Gerätetest Pflicht, besonders Clipboard-Fokusverhalten
+- Gerätetest Pflicht, besonders Overlay-Größe, Clipboard-Fokusverhalten und Bedienbarkeit über WhatsApp
 
 ---
 
@@ -285,14 +300,16 @@ Aufgaben:
 - Ladezustand
 - Fehlerbehandlung
 - Antwort parsen
-- 3 Vorschläge anzeigen
+- 3 Vorschläge an das ResultPanel übergeben
+- ResultPanel zeigt einen Vorschlag und erlaubt Wechsel zwischen 3 Vorschlägen
 - Retry mit optionaler `RetryInstruction` als neue bewusste Anfrage unterstützen
 
 Akzeptanz:
 
-- fehlender Build-Time-Key → klarer Build- oder Laufzeitfehler ohne Secret-Ausgabe
-- kein Internet → klare Meldung
-- gültige Anfrage → Vorschläge
+- fehlender Build-Time-Key -> klarer Build- oder Laufzeitfehler ohne Secret-Ausgabe
+- kein Internet -> klare Meldung
+- gültige Anfrage -> 3 Vorschläge
+- Ergebnis-Panel zeigt nicht alle 3 Vorschläge untereinander
 - Retry erzeugt neue Vorschläge und lässt bisherige Vorschläge bei Fehler sichtbar
 - keine Nutzertexte/API-Keys/Retry-Anweisungen in Logs
 - Anfrage nur nach Button-Klick oder bewusstem Retry
@@ -323,7 +340,9 @@ Aufgaben:
 - Usage Access testen
 - Foreground Service testen
 - WhatsApp-Appwechsel testen
-- ReplyPanel testen
+- InputBar testen
+- ResultPanel testen
+- Vorschlagswechsel testen
 - Retry-Bereich testen
 - Clipboard und manuellen Fallback testen
 - Sperren/Entsperren testen
@@ -334,6 +353,7 @@ Aufgaben:
 Akzeptanz:
 
 - `docs/TEST_PLAN.md` weitgehend erfüllt
+- `docs/VISUAL_SCOPE.md` erfüllt
 - keine verbotenen Permissions
 - kein Accessibility Service
 - kein Verlauf, Gedächtnis, Profil, Stiltraining oder Analytics
@@ -367,16 +387,18 @@ Muss zuerst funktionieren:
 3. Foreground Service startet aus Nutzeraktion
 4. Overlay manuell testbar
 5. Button nur bei WhatsApp
-6. Panel öffnet
-7. Clipboard bewusst übernehmen oder manuell einfügen
-8. Modus, Ton und Retry-Chips funktionieren mit Dummy-Daten
-9. KI-Vorschläge über lokalen Build-Time-Key erzeugen
-10. Kopieren
+6. InputBar öffnet kompakt
+7. Text kann eingegeben oder eingefügt werden
+8. ResultPanel zeigt Dummy-Vorschläge einzeln wechselbar
+9. Retry-Chips funktionieren mit Dummy-Daten
+10. KI-Vorschläge über lokalen Build-Time-Key erzeugen
+11. Kopieren des sichtbaren Vorschlags
 
 Darf warten:
 
 - Icon
 - Animationen
+- echtes Swipe, falls Pfeilnavigation zuerst gebaut wird
 - WhatsApp Business
 - Modellauswahl
 - weitere Retry-Chips
@@ -391,3 +413,5 @@ Nicht bauen:
 - Gedächtnis
 - Stiltraining
 - Modellrouting
+- großes Formular als Startzustand
+- drei Vorschläge untereinander als Standardansicht
