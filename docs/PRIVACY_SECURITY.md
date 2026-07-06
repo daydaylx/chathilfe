@@ -28,6 +28,9 @@ Nicht erlaubt:
 - automatisches Einfügen
 - automatisches Senden
 - Speichern von Gesprächsinhalten
+- Gedächtnis-/Memory-System für Nutzertexte, Chats oder Vorschläge
+- Personen-, Kontakt- oder Beziehungsprofile
+- automatische Lernfunktion aus Nutzertexten
 
 ---
 
@@ -82,6 +85,31 @@ Verboten:
 - Bildschirmaufnahmen
 - Clipboard-Historie
 - Gerätekennungen für Tracking
+- gespeicherte Nutzertexte
+- gespeicherte generierte Vorschläge
+- gespeicherter Antwortverlauf
+- Memory-/Gedächtnisdatenbank
+- Personen- oder Beziehungsprofile
+
+---
+
+## Kein Gedächtnis im MVP
+
+Der MVP enthält kein Gedächtnis und keinen Verlauf.
+
+Nicht umsetzen:
+
+- frühere Nutzertexte speichern
+- frühere KI-Vorschläge speichern
+- Antwortverlauf anzeigen
+- Chat- oder Kontaktprofile anlegen
+- Beziehungskontext speichern
+- automatisch aus Formulierungen lernen
+- gespeicherte Inhalte später erneut an die KI senden
+
+Zulässig bleiben nur einfache lokale Komfort-Präferenzen wie bevorzugter Ton, letzter Modus und Button-Position. Diese Präferenzen dürfen keine Chatinhalte, Vorschläge oder personenbezogenen Kommunikationsdaten enthalten.
+
+Ein späteres Schreibprofil wäre nur als bewusst manuell gepflegte Einstellung denkbar. Es ist kein MVP-Bestandteil und darf nicht automatisch aus Nutzertexten erzeugt werden.
 
 ---
 
@@ -151,6 +179,10 @@ Nicht senden:
 - Standort
 - Screenshots
 - Logs
+- gespeicherte frühere Nutzertexte
+- gespeicherte frühere KI-Vorschläge
+- Personen-, Kontakt- oder Beziehungsprofile
+- Memory-/Gedächtnisdaten
 
 KI-Anfragen dürfen nur nach Tippen auf „Vorschläge erstellen“ entstehen.
 
@@ -167,6 +199,7 @@ Nie loggen:
 - Originaltext
 - generierte Antwort
 - vollständige Requests/Responses
+- Memory-/Gedächtnisdaten
 
 Erlaubt:
 
@@ -188,6 +221,10 @@ Datenschutz ist für den MVP akzeptabel, wenn:
 - manueller Fallback funktioniert
 - Nutzertexte nicht gespeichert werden
 - Nutzertexte nicht geloggt werden
+- generierte Vorschläge nicht gespeichert werden
+- kein Antwortverlauf existiert
+- kein Gedächtnis-/Memory-System existiert
+- keine Personen-, Kontakt- oder Beziehungsprofile existieren
 - API-Key nicht geloggt wird
 - API-Key nicht im Repo steht
 - KI-Anfragen nur nach Button-Klick erfolgen
