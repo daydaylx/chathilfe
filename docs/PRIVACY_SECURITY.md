@@ -19,6 +19,8 @@ Erlaubt:
 - Nutzer bestätigt eine kopierte Nachricht
 - Nutzer startet die KI-Anfrage bewusst
 - Nutzer kopiert einen Vorschlag bewusst
+- Nutzer startet einen neuen Versuch bewusst
+- Nutzer wählt temporäre Änderungs-Chips für den nächsten Versuch bewusst
 
 Nicht erlaubt:
 
@@ -71,6 +73,7 @@ Nur flüchtig im Speicher erlaubt:
 - Originaltext für Umschreiben
 - generierte Vorschläge
 - aktuelle Fehlermeldung
+- temporäre Retry-Anweisung für den nächsten Versuch
 
 Verboten:
 
@@ -88,6 +91,7 @@ Verboten:
 - gespeicherte Nutzertexte
 - gespeicherte generierte Vorschläge
 - gespeicherter Antwortverlauf
+- gespeicherte Retry-Anweisungen
 - Memory-/Gedächtnisdatenbank
 - Personen- oder Beziehungsprofile
 
@@ -106,6 +110,7 @@ Nicht umsetzen:
 - Beziehungskontext speichern
 - automatisch aus Formulierungen lernen
 - gespeicherte Inhalte später erneut an die KI senden
+- Retry-Anweisungen als Nutzervorliebe speichern
 
 Zulässig bleiben nur einfache lokale Komfort-Präferenzen wie bevorzugter Ton, letzter Modus und Button-Position. Diese Präferenzen dürfen keine Chatinhalte, Vorschläge oder personenbezogenen Kommunikationsdaten enthalten.
 
@@ -169,6 +174,7 @@ Eine KI-Anfrage darf enthalten:
 - Ton
 - Sprache
 - gewünschte Anzahl Vorschläge
+- temporäre Retry-Anweisung optional
 
 Nicht senden:
 
@@ -181,10 +187,26 @@ Nicht senden:
 - Logs
 - gespeicherte frühere Nutzertexte
 - gespeicherte frühere KI-Vorschläge
+- gespeicherte Retry-Anweisungen
 - Personen-, Kontakt- oder Beziehungsprofile
 - Memory-/Gedächtnisdaten
 
-KI-Anfragen dürfen nur nach Tippen auf „Vorschläge erstellen“ entstehen.
+KI-Anfragen dürfen nur nach Tippen auf „Vorschläge erstellen“ oder bewusstem Retry entstehen.
+
+---
+
+## Retry-Datenschutz
+
+Retry-Optionen sind erlaubt, weil sie nur die nächste Anfrage präzisieren.
+
+Regeln:
+
+- Retry-Anweisungen bleiben flüchtig im Speicher.
+- Retry-Anweisungen werden nicht dauerhaft gespeichert.
+- Retry-Anweisungen werden nicht geloggt.
+- Retry-Anweisungen werden nicht als persönlicher Stil gelernt.
+- Retry-Anweisungen werden nicht als Profil oder Gedächtnis interpretiert.
+- Nach Schließen des ReplyPanels oder erfolgreicher neuer Anfrage dürfen Retry-Anweisungen verworfen werden.
 
 ---
 
@@ -198,6 +220,7 @@ Nie loggen:
 - Nutzerabsicht
 - Originaltext
 - generierte Antwort
+- Retry-Anweisung
 - vollständige Requests/Responses
 - Memory-/Gedächtnisdaten
 
@@ -222,11 +245,12 @@ Datenschutz ist für den MVP akzeptabel, wenn:
 - Nutzertexte nicht gespeichert werden
 - Nutzertexte nicht geloggt werden
 - generierte Vorschläge nicht gespeichert werden
+- Retry-Anweisungen nicht gespeichert oder geloggt werden
 - kein Antwortverlauf existiert
 - kein Gedächtnis-/Memory-System existiert
 - keine Personen-, Kontakt- oder Beziehungsprofile existieren
 - API-Key nicht geloggt wird
 - API-Key nicht im Repo steht
-- KI-Anfragen nur nach Button-Klick erfolgen
+- KI-Anfragen nur nach Button-Klick oder bewusstem Retry erfolgen
 - nur bestätigte Inhalte an KI gesendet werden
 - keine automatische WhatsApp-Aktion möglich ist
