@@ -75,10 +75,19 @@ manuell in WhatsApp einfügen
 Die MainActivity ist nur für Einrichtung gedacht:
 
 - Berechtigungen
-- API-Key
+- API-Key-Konfigurationsstatus aus Build-Time-Konfiguration
 - Overlay aktivieren/deaktivieren
 - Test-Overlay
 - kurze Erklärung
+
+Nicht in die MainActivity:
+
+- API-Key-Eingabefeld
+- Modell-Auswahl
+- Provider-Auswahl
+- Verlauf
+- Gedächtnis
+- Dashboard
 
 ---
 
@@ -241,11 +250,18 @@ Nicht im ReplyPanel anzeigen:
 - Qualitäts-Dashboard
 - technische Fallback-Regeln
 
-Modelle, Provider, Tokenlimits, Temperatur, Fallbacks und mögliche Tonfall-zu-Modell-Zuordnungen sind interne technische Details.
+Im MVP nutzt die App genau ein OpenRouter-Default-Modell. Modelle, Provider, Tokenlimits und Temperatur bleiben technische Details in `AiConfig` und erscheinen nicht im Overlay.
 
-Wenn mehrere Modelle genutzt werden, entscheidet die App intern anhand von Modus, Tonfall und Verfügbarkeit. Der Nutzer sieht weiterhin nur verständliche Ton-Chips wie `freundlich`, `direkt` oder `deeskalierend`.
+Ton-Chips und Retry-Chips ändern im MVP nur den Prompt, nicht die Modellwahl.
 
-Eine sichtbare Qualitätsauswahl wie `Schnell`, `Sehr gut` oder `Beste Qualität` ist kein MVP-Bestandteil. Falls sie später ergänzt wird, muss sie als optionales Post-MVP-Feature behandelt werden und darf das ReplyPanel nicht überladen.
+Nicht im MVP:
+
+- Modellrouting nach Tonfall
+- automatische Modell-Fallbacks
+- mehrere Modelle pro Stil
+- sichtbare Qualitätsauswahl wie `Schnell`, `Sehr gut` oder `Beste Qualität`
+
+Diese Punkte sind höchstens Post-MVP und brauchen eine eigene Entscheidung.
 
 ---
 
@@ -341,6 +357,7 @@ UI/UX ist akzeptabel, wenn:
 
 - Nutzer versteht, wofür die App ist
 - Berechtigungen verständlich erklärt werden
+- MainActivity keinen API-Key entgegennimmt, sondern höchstens Build-Time-Key-Status zeigt
 - Button stört nicht beim Tippen
 - Panel ist schnell bedienbar
 - Modi sind klar
