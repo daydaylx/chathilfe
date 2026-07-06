@@ -39,6 +39,10 @@ Folgende Punkte gehören nicht in den MVP:
 - Account-System
 - Cloud-Speicherung
 - komplexes Prompt-/Rollen-System
+- Gedächtnis-/Memory-System
+- gespeicherter Antwort- oder Vorschlagsverlauf
+- Personen-, Kontakt- oder Beziehungsprofile
+- automatische Lernfunktion aus Nutzertexten
 - Play-Store-Veröffentlichung
 - Social-Media-App oder Messenger-Ersatz
 
@@ -274,6 +278,10 @@ Die App verarbeitet nur Text, den der Nutzer aktiv eingibt oder bewusst aus der 
 - keine automatische WhatsApp-Auslesung
 - keine Kontaktverarbeitung
 - keine Speicherung von Chatinhalten
+- keine Speicherung von Nutzertexten als Gedächtnis
+- keine Speicherung generierter Vorschläge als Verlauf
+- keine Personen-, Kontakt- oder Beziehungsprofile
+- keine automatische Lernfunktion aus Nutzertexten
 - keine Analyse vollständiger Verläufe
 - keine versteckte Zwischenablage-Überwachung
 - API-Key lokal speichern
@@ -476,6 +484,8 @@ Der MVP gilt als fertig, wenn:
 - KI erzeugt genau 3 Vorschläge.
 - Vorschläge können einzeln kopiert werden.
 - App liest keine WhatsApp-Chats automatisch.
+- App speichert keine Nutzertexte, Vorschläge oder Chatverläufe als Gedächtnis.
+- App besitzt kein Memory-/Verlaufssystem.
 - App sendet keine Nachrichten.
 - App nutzt keinen Accessibility Service.
 - App crasht nicht bei Sperren/Entsperren.
@@ -551,7 +561,8 @@ Der MVP gilt als fertig, wenn:
 | Samsung beendet Hintergrunddienst | mittel | Foreground Service optional, Hinweise zur Akkuoptimierung |
 | API-Key unsicher gespeichert | mittel | lokal speichern, keine Logs mit Key |
 | KI-Ausgabe klingt künstlich | mittel | klare Prompts, kurze Varianten, Ton-Auswahl |
-| Scope wächst zu stark | hoch | kein Auto-Senden, kein Chat-Auslesen, kein Multi-App-Support |
+| Scope wächst zu stark | hoch | kein Auto-Senden, kein Chat-Auslesen, kein Multi-App-Support, kein Gedächtnis |
+| Gedächtnis/Verlauf erzeugt Datenschutz- und UX-Bloat | hoch | im MVP nicht umsetzen; nur einfache Komfort-Präferenzen speichern |
 
 ---
 
@@ -564,11 +575,17 @@ Nicht im MVP, aber später möglich:
 - Quick-Actions: „kürzer“, „wärmer“, „direkter“
 - Favorisierte Tonprofile
 - eigene Standardformulierung des Nutzers
-- lokaler Verlauf der letzten Vorschläge, optional
 - KI-Modellauswahl
 - Kostenlimit pro Tag
 - Export/Import der Einstellungen
 - eigenes Keyboard als Alternative zum Overlay
+
+Bewusst nicht als spätere Standarderweiterung vormerken:
+
+- lokaler Verlauf der letzten Vorschläge
+- automatisches Gedächtnis
+- Personen-, Kontakt- oder Beziehungsprofile
+- automatische Lernfunktion aus Nutzertexten
 
 ---
 
