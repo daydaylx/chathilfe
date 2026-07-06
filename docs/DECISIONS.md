@@ -195,6 +195,71 @@ Für eine rein private APK ist eine feste Build-Time-Konfiguration einfacher als
 
 ---
 
+## D-008 — Retry und Änderungs-Chips
+
+**Status:** entschieden
+
+**Entscheidung:**
+
+Der MVP erhält einen kompakten Retry-Bereich nach den Ergebnissen. Nutzer können unpassende Vorschläge neu erzeugen lassen, ohne ein Feedback-, Bewertungs-, Verlauf- oder Gedächtnissystem zu öffnen.
+
+**UI-Regel:**
+
+```text
+Nicht passend?
+[Nochmal]
+[Kürzer] [Lockerer] [Direkter]
+[Sanfter] [Klarer] [Weniger künstlich]
+```
+
+**Konsequenz:**
+
+- Retry erscheint erst nach erzeugten Vorschlägen.
+- `Nochmal` nutzt denselben Modus, dieselbe Eingabe, dieselbe Absicht und denselben Ton.
+- Änderungs-Chips sind global, nicht pro Vorschlagskarte.
+- Maximal 1–2 Änderungs-Chips sind gleichzeitig aktiv.
+- `RetryInstruction` ist nur eine temporäre Eingabe für die nächste KI-Anfrage.
+- Retry-Anweisungen werden nicht gespeichert, nicht geloggt und nicht als Profil interpretiert.
+
+**Nicht erlaubt:**
+
+- Bewertung einzelner Vorschläge
+- freies Feedbackfeld im MVP
+- Stiltraining
+- Verlauf der Versuche
+- Gedächtnis aus Retry-Nutzung
+
+---
+
+## D-009 — Modellstrategie im MVP
+
+**Status:** entschieden für MVP-Grenze, Modell-ID vor Phase 7 zu pinnen
+
+**Entscheidung:**
+
+Der MVP nutzt **ein OpenRouter-Default-Modell**. Modellrouting nach Tonfall, mehrere Modelle pro Stil, Provider-Fallbacks oder eine sichtbare Modellauswahl werden nicht im MVP umgesetzt.
+
+**Grund:**
+
+Der Hauptnutzen ist schnelles Formulieren im Overlay. Mehrere Modelle würden Fehlerfälle, Kostenkontrolle, UI-Erklärung, Tests und Fallbacklogik erhöhen. Die Tonqualität wird im MVP über Prompts, Ton-Chips und Retry-Chips verbessert.
+
+**Konsequenz:**
+
+- `AiConfig` enthält genau eine Modell-ID.
+- `AiClient` kennt genau einen Provider und ein Default-Modell.
+- Ton-Chips und Retry-Chips verändern den Prompt, nicht die Modellwahl.
+- Ein späteres Modellrouting ist Post-MVP und braucht eine eigene Entscheidung.
+
+**Nicht erlaubt im MVP:**
+
+- Modell-Auswahl im Overlay
+- Provider-Auswahl im Overlay
+- Tonfall-zu-Modell-Routing
+- automatische Modell-Fallbacks
+- Qualitätsstufen wie `Schnell`, `Sehr gut`, `Beste Qualität`
+
+---
+
 ## Offene Punkte
 
 Diese Punkte bleiben bewusst offen, bis sie für Code relevant werden:
