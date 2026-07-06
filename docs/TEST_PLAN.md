@@ -18,6 +18,7 @@ Sicherstellen, dass:
 - Overlay keine doppelten Views erzeugt
 - ReplyPanel stabil funktioniert
 - Clipboard nur nach Nutzeraktion verwendet wird
+- Retry-Bereich kompakt funktioniert und nichts speichert
 - KI-Vorschläge erzeugt und kopiert werden können
 - Fehler verständlich dargestellt werden
 - keine verbotenen Funktionen eingebaut wurden
@@ -32,7 +33,7 @@ Primär:
 - Android 15 oder Android 16
 - WhatsApp `com.whatsapp`
 - Internet
-- gültiger API-Key
+- gültiger lokaler Build-Time-API-Key
 
 Optional:
 
@@ -57,6 +58,26 @@ Akzeptanz:
 - Tests laufen, wenn vorhanden
 - Lint-Fehler bewertet
 - keine erfundenen Testergebnisse
+- kein echter API-Key im Repo
+- lokale Secret-Dateien werden ignoriert
+
+---
+
+## Secret-/API-Key-Test
+
+Prüfen:
+
+- App hat kein API-Key-Eingabefeld
+- API-Key wird nicht in DataStore gespeichert
+- API-Key kommt aus Build-Time-Konfiguration oder lokaler Environment-Variable
+- fehlender Key erzeugt klare Fehlermeldung oder klaren Build-/Runtime-Fehler ohne Secret-Ausgabe
+- README/Doku zeigen nur Platzhalter
+
+Erwartet:
+
+- kein echter API-Key im Repo
+- kein echter API-Key in Logs
+- kein API-Key im UI sichtbar
 
 ---
 
@@ -69,6 +90,7 @@ Erlaubte Permissions:
 - `PACKAGE_USAGE_STATS`
 - `POST_NOTIFICATIONS`, nur falls Foreground Service genutzt wird
 - `FOREGROUND_SERVICE`, nur falls Foreground Service genutzt wird
+- `FOREGROUND_SERVICE_SPECIAL_USE`, falls der Foreground-Service-Typ `specialUse` genutzt wird
 
 Verboten:
 
@@ -104,6 +126,8 @@ Erwartet:
 - kein Crash
 - Setup-Status sichtbar
 - fehlende Berechtigungen verständlich
+- API-Key-Status höchstens als Build-Time-Konfiguration sichtbar
+- keine API-Key-Eingabe
 - keine unnötigen Permission-Prompts
 
 ---
@@ -184,13 +208,16 @@ Schritte:
 4. Modus wechseln.
 5. Ton wechseln.
 6. Text eingeben.
-7. Panel schließen.
+7. Dummy-Vorschläge anzeigen.
+8. Retry-Bereich prüfen.
+9. Panel schließen.
 
 Erwartet:
 
 - Panel kompakt
 - WhatsApp nicht komplett verdeckt
 - Modus/Ton/Eingabe funktionieren
+- Retry-Bereich erscheint erst nach Vorschlägen
 - keine Eingabe wird dauerhaft gespeichert
 
 ---
@@ -259,6 +286,37 @@ Erwartet:
 
 ---
 
+## Retry-Tests
+
+UI-Test:
+
+1. 3 Vorschläge anzeigen.
+2. Prüfen, dass der Retry-Bereich darunter erscheint.
+3. `Nochmal` antippen.
+4. Einen Änderungs-Chip wählen.
+5. Zwei Änderungs-Chips wählen.
+6. Mehr als zwei Änderungs-Chips versuchen.
+7. Panel schließen und neu öffnen.
+
+Erwartet:
+
+- Retry-Bereich erscheint nicht vor Ergebnissen
+- `Nochmal` startet neue Anfrage mit gleichen Eingaben
+- Änderungs-Chips wirken nur auf die nächste Anfrage
+- maximal 1–2 Chips gleichzeitig aktiv
+- Retry-Auswahl wird nach Schließen verworfen
+- kein Verlauf der Retry-Versuche
+- keine Bewertung einzelner Vorschläge
+- kein freies Feedbackfeld
+
+Prompt-/Parser-Test:
+
+- `RetryInstruction.KUERZER` erzeugt Prompt mit temporärer Änderungsanweisung
+- `RetryInstruction.WENIGER_KUENSTLICH` erzeugt Prompt ohne Meta-Erklärung
+- Antwort enthält 3 Vorschläge und keine Erklärung wie „Diesmal kürzer“
+
+---
+
 ## KI-Fehlertests
 
 Testen:
@@ -267,11 +325,13 @@ Testen:
 - Internet fehlt
 - ungültige Modellantwort
 - HTTP-Fehler / Rate Limit
+- Retry schlägt fehl
 
 Erwartet:
 
 - klare Fehlermeldung
 - kein Crash
+- bei Retry-Fehler bleiben bisherige Vorschläge sichtbar
 - keine sensiblen Daten in UI/Logs
 
 ---
@@ -302,8 +362,13 @@ Prüfen:
 - keine generierten Antworten gespeichert
 - keine Nutzerabsicht gespeichert
 - keine Clipboard-Historie
+- keine Retry-Anweisungen gespeichert
 - keine API-Keys in Logs
 - keine Nutzertexte in Logs
+- keine Retry-Anweisungen in Logs
+- kein Verlauf
+- kein Gedächtnis
+- keine Profile
 
 ---
 
@@ -313,6 +378,7 @@ Prüfen:
 |---|---|
 | Build | ja |
 | Installation | ja |
+| Secret-/API-Key-Strategie | ja |
 | Overlay Permission | ja |
 | Usage Access | ja |
 | WhatsApp-Erkennung | ja |
@@ -320,11 +386,13 @@ Prüfen:
 | Panel öffnen/schließen | ja |
 | Clipboard bewusst übernehmen | ja |
 | alle 3 Modi | ja |
+| Retry-Bereich | ja |
 | KI-Fehlerfälle | ja |
 | Kopieren | ja |
 | Sperren/Entsperren | ja |
 | keine verbotenen Permissions | ja |
 | kein Accessibility | ja |
+| kein Verlauf/Gedächtnis/Profile | ja |
 
 ---
 
