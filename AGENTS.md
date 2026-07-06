@@ -14,6 +14,8 @@ ChatHilfe is a private Android MVP.
 
 Goal: show a small floating AI reply helper over WhatsApp. The app helps the user formulate, rewrite, or answer messages. The user always copies, pastes, and sends manually.
 
+If generated suggestions are not good enough, the MVP may offer a compact retry flow with `Nochmal` and a few temporary refinement chips. Retry must not create history, feedback storage, style training, or memory.
+
 ---
 
 ## Read order
@@ -79,11 +81,17 @@ Do not build or add:
 - background clipboard monitoring
 - clipboard history
 - message history storage
+- generated suggestion history
+- retry history
+- memory / Gedächtnis system
+- user, contact, relationship, or style profiles
+- automatic learning from user text
 - account system
 - cloud sync
 - analytics/tracking
 - Play Store release work unless explicitly requested
 - multi-app support unless explicitly requested
+- multi-provider or model-routing system in the MVP
 - large Clean Architecture rewrite
 - unnecessary abstraction layers
 
@@ -105,6 +113,7 @@ If a requested implementation appears to require any forbidden item, stop and ex
 | Runtime host | Foreground Service started from visible user action |
 | Settings | DataStore for UI/overlay settings only |
 | AI provider | OpenRouter only for MVP |
+| AI model | one OpenRouter default model pinned before Phase 7 |
 | API key | Build-time local secret, never committed |
 | Distribution | private APK |
 | Primary test device | Samsung Galaxy S25 / Android 15 or 16 |
@@ -119,6 +128,27 @@ If a requested implementation appears to require any forbidden item, stop and ex
 - Use a local ignored file or local environment variable for `OPENROUTER_API_KEY`.
 - The app may embed the key into the private APK at build time.
 - There is no API-key entry UI in the MVP.
+- `SettingsStore` must not store API keys.
+
+---
+
+## Retry rules
+
+Allowed in MVP:
+
+- global retry area after suggestions
+- `Nochmal`
+- compact temporary chips such as `Kürzer`, `Lockerer`, `Direkter`, `Sanfter`, `Klarer`, `Weniger künstlich`
+- optional `RetryInstruction` in the next AI request only
+
+Not allowed:
+
+- saving retry instructions
+- logging retry instructions
+- rating individual suggestions
+- feedback history
+- style training
+- memory or profiles from retry usage
 
 ---
 
@@ -149,8 +179,9 @@ For every implementation task, validate as much as practical:
 - no Accessibility Service was added
 - no WhatsApp automation was added
 - no background clipboard monitoring was added
-- no API keys, user text, clipboard text, or generated replies are logged
+- no API keys, user text, clipboard text, retry instructions, or generated replies are logged
 - no real API key is committed
+- no history, memory, profile, analytics, or tracking storage was added
 - overlay lifecycle avoids duplicate views
 - missing permissions show clear UI
 
@@ -166,7 +197,7 @@ Before adding a production dependency:
 2. Explain why the dependency is needed.
 3. Prefer stable, common libraries.
 4. Avoid large frameworks for small tasks.
-5. Never add analytics, tracking, ads, or crash-reporting SDKs unless explicitly requested.
+5. Never add analytics, tracking, ads, crash-reporting SDKs, memory stores, vector databases, or cloud sync unless explicitly requested.
 
 Ask for approval before adding new production dependencies.
 
@@ -232,6 +263,9 @@ Stop and ask for explicit approval before:
 - adding screen scraping
 - adding analytics/tracking
 - adding server-side storage
+- adding memory / Gedächtnis
+- adding history of user texts, suggestions, or retries
+- adding style training or user/contact/relationship profiles
 - changing the app into a keyboard
 - expanding to other messengers
 - introducing a large architecture rewrite
