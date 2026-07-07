@@ -28,6 +28,21 @@ Task-spezifisch zusätzlich:
 
 ---
 
+## Gerätetest-Strategie
+
+Gerätetests werden für diesen Projektablauf gebündelt in Phase 8 durchgeführt.
+
+Das ist nicht die risikoärmste technische Variante, aber die gewünschte Arbeitsweise für dieses Projekt.
+
+Regeln:
+
+- Nach Phase 3, 4 und 5 sind Gerätetests empfohlen, aber nicht blockierend.
+- Agenten dürfen mit der nächsten Phase fortfahren, wenn Code- und Build-Prüfungen soweit möglich sauber sind.
+- Alle nicht auf Gerät geprüften Punkte bleiben bis Phase 8 als Risiko offen.
+- Erfolgreiche Gerätetests dürfen erst behauptet werden, wenn sie wirklich durchgeführt wurden.
+
+---
+
 ## Phase 0 — Projektprüfung und Entscheidungs-Gate
 
 Ziel: Repo verstehen und offene technische Grundsatzentscheidungen vor Code klären.
@@ -44,6 +59,7 @@ Bereits entschieden:
 - SDK-Basis: `compileSdk 36`, `targetSdk 35`, `minSdk 29`
 - Clipboard-Fallback: manuelles Eingeben oder Einfügen im Overlay
 - Retry: kompakter Retry-Bereich nach Ergebnissen, temporäre `RetryInstruction`, keine Speicherung
+- Gerätetest-Strategie: gebündelte Gerätevalidierung in Phase 8
 
 Vor Code-Scaffold noch zu pinnen:
 
@@ -142,7 +158,7 @@ Akzeptanz:
 
 ## Phase 3 — Manuelles Overlay
 
-Ziel: Floating Button manuell testbar.
+Ziel: Floating Button manuell testbar im Code, echter Gerätetest folgt gebündelt in Phase 8.
 
 Aufgaben:
 
@@ -160,15 +176,17 @@ Aufgaben:
 
 Akzeptanz:
 
-- Button erscheint über Apps
-- Button ist verschiebbar
-- keine doppelten Buttons
+- Button-Logik ist implementiert
+- Drag/Tap-Logik ist implementiert
+- doppelte Views werden defensiv verhindert
 - Button kann deaktiviert werden
-- Service-Notification ist verständlich
+- Service-Notification ist verständlich vorbereitet
 
 Validierung:
 
-- Gerätetest Pflicht
+- Build-/Codeprüfung soweit lokal möglich
+- Gerätetest empfohlen, aber nicht blockierend
+- finaler Gerätetest in Phase 8
 
 Nicht tun:
 
@@ -180,7 +198,7 @@ Nicht tun:
 
 ## Phase 4 — WhatsApp-Erkennung
 
-Ziel: Bubble nur bei WhatsApp.
+Ziel: Bubble nur bei WhatsApp; echter Gerätetest folgt gebündelt in Phase 8.
 
 Aufgaben:
 
@@ -194,15 +212,16 @@ Aufgaben:
 
 Akzeptanz:
 
-- WhatsApp öffnen -> Button erscheint
-- WhatsApp verlassen -> Button verschwindet
-- keine doppelten Views
+- WhatsApp-Erkennung ist implementiert
+- Button-Sichtbarkeit wird an erkannte Vordergrund-App gekoppelt
+- fehlender Usage Access wird sauber behandelt
+- keine doppelten Views in der Logik
 
 Validierung:
 
-- Gerätetest Pflicht
-- mehrfacher App-Wechsel
-- Sperren/Entsperren kurz prüfen
+- Build-/Codeprüfung soweit lokal möglich
+- Gerätetest empfohlen, aber nicht blockierend
+- finaler Gerätetest in Phase 8
 
 Nicht tun:
 
@@ -213,7 +232,7 @@ Nicht tun:
 
 ## Phase 5 — Input-Bar und Result-Panel ohne KI
 
-Ziel: Die Overlay-UI funktioniert mit Dummy-Daten und folgt `docs/VISUAL_SCOPE.md`.
+Ziel: Die Overlay-UI funktioniert mit Dummy-Daten und folgt `docs/VISUAL_SCOPE.md`; echter Gerätetest folgt gebündelt in Phase 8.
 
 Aufgaben:
 
@@ -238,7 +257,6 @@ Aufgaben:
 Akzeptanz:
 
 - Floating Button öffnet zuerst nur den schmalen Eingabebalken
-- Eingabebalken verdeckt WhatsApp möglichst wenig
 - kein großer Formularzustand beim Öffnen
 - Ton, Text, Einfügen und Start sind direkt erreichbar
 - Start-Button heißt nicht `Senden`
@@ -254,7 +272,9 @@ Akzeptanz:
 
 Validierung:
 
-- Gerätetest Pflicht, besonders Overlay-Größe, Clipboard-Fokusverhalten und Bedienbarkeit über WhatsApp
+- Build-/Codeprüfung soweit lokal möglich
+- Gerätetest empfohlen, aber nicht blockierend
+- finaler Gerätetest in Phase 8
 
 ---
 
@@ -327,9 +347,11 @@ Nicht tun:
 
 ---
 
-## Phase 8 — Stabilisierung auf Gerät
+## Phase 8 — Stabilisierung und Gerätetest
 
 Ziel: private APK ist real nutzbar.
+
+Phase 8 ist der Sammelpunkt für echte Gerätetests.
 
 Aufgaben:
 
@@ -354,6 +376,7 @@ Akzeptanz:
 
 - `docs/TEST_PLAN.md` weitgehend erfüllt
 - `docs/VISUAL_SCOPE.md` erfüllt
+- echte Gerätetestergebnisse dokumentiert
 - keine verbotenen Permissions
 - kein Accessibility Service
 - kein Verlauf, Gedächtnis, Profil, Stiltraining oder Analytics
@@ -385,14 +408,15 @@ Muss zuerst funktionieren:
 1. App startet
 2. Berechtigungen sichtbar
 3. Foreground Service startet aus Nutzeraktion
-4. Overlay manuell testbar
-5. Button nur bei WhatsApp
+4. Overlay manuell testbar im Code
+5. Button-Logik an WhatsApp-Erkennung gekoppelt
 6. InputBar öffnet kompakt
 7. Text kann eingegeben oder eingefügt werden
 8. ResultPanel zeigt Dummy-Vorschläge einzeln wechselbar
 9. Retry-Chips funktionieren mit Dummy-Daten
 10. KI-Vorschläge über lokalen Build-Time-Key erzeugen
 11. Kopieren des sichtbaren Vorschlags
+12. gebündelter Gerätetest in Phase 8
 
 Darf warten:
 
