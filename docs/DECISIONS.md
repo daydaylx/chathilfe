@@ -140,19 +140,20 @@ Clipboard-Nutzung bleibt optional. Wenn Android das Lesen der Zwischenablage aus
 
 ---
 
-## D-006 — Gerätetest-Gate
+## D-006 — Gerätetest-Strategie
 
 **Status:** entschieden
 
 **Entscheidung:**
 
-Gerätetests werden nicht erst am Ende gesammelt, sondern früh nach Overlay und WhatsApp-Erkennung durchgeführt.
+Gerätetests werden für diesen MVP gebündelt in Phase 8 durchgeführt. Zwischen den Phasen 3 bis 7 sind Gerätetests empfohlen, aber nicht blockierend.
 
-**Pflicht-Gates:**
+**Konsequenz:**
 
-- nach Phase 3: manuelles Overlay auf echtem Gerät testen
-- nach Phase 4: WhatsApp-Erkennung auf echtem Gerät testen
-- nach Phase 5: Clipboard/ReplyPanel auf echtem Gerät testen
+- Agenten dürfen nach Phase 3, 4 und 5 weiterarbeiten, wenn Code- und Build-Prüfungen soweit möglich sauber sind.
+- Nicht getestete Geräteaspekte bleiben bis Phase 8 als Risiko offen.
+- Erfolgreiche Gerätetests dürfen erst behauptet werden, wenn sie wirklich durchgeführt wurden.
+- Details stehen in `docs/DEVICE_TEST_POLICY.md`.
 
 ---
 
