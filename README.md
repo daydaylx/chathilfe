@@ -51,6 +51,7 @@ Der Retry ist nur ein temporärer neuer Versuch. Es gibt keinen Verlauf, kein Ge
 | [`docs/PHASE_2_REPORT.md`](docs/PHASE_2_REPORT.md) | Abschlussbericht zu Phase 2 |
 | [`docs/PHASE_3_REPORT.md`](docs/PHASE_3_REPORT.md) | Abschlussbericht zu Phase 3 |
 | [`docs/DECISIONS.md`](docs/DECISIONS.md) | angenommene technische Entscheidungen aus dem Audit |
+| [`docs/DEVICE_TEST_POLICY.md`](docs/DEVICE_TEST_POLICY.md) | Strategie: Gerätetests gesammelt in Phase 8 |
 | [`docs/API_KEY_STRATEGY.md`](docs/API_KEY_STRATEGY.md) | lokale API-Key-Strategie für private Builds |
 | [`docs/PLAN_AUDIT.md`](docs/PLAN_AUDIT.md) | Plan-Audit, Risiken und erste Umsetzungstickets |
 | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | technische Architektur und Komponenten |
@@ -100,7 +101,7 @@ Nicht alle Dokumente pauschal laden. Das reduziert Kontext-Bloat.
 | Gerätetest | gesammelt in Phase 8 |
 | Distribution | private APK |
 
-Details stehen in [`docs/DECISIONS.md`](docs/DECISIONS.md), [`docs/API_KEY_STRATEGY.md`](docs/API_KEY_STRATEGY.md), [`docs/UI_UX_SPEC.md`](docs/UI_UX_SPEC.md) und [`docs/VISUAL_SCOPE.md`](docs/VISUAL_SCOPE.md).
+Details stehen in [`docs/DECISIONS.md`](docs/DECISIONS.md), [`docs/API_KEY_STRATEGY.md`](docs/API_KEY_STRATEGY.md), [`docs/UI_UX_SPEC.md`](docs/UI_UX_SPEC.md), [`docs/VISUAL_SCOPE.md`](docs/VISUAL_SCOPE.md) und [`docs/DEVICE_TEST_POLICY.md`](docs/DEVICE_TEST_POLICY.md).
 
 ---
 
