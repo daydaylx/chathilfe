@@ -10,13 +10,14 @@ Die App ist kein Messenger-Ersatz. Sie hilft nur beim Formulieren, Umschreiben u
 
 | Punkt | Stand |
 |---|---|
-| Projektphase | Phase 3 code-seitig abgeschlossen; Build (`assembleDebug`) lokal verifiziert; Gerätetest als nächster Schritt |
+| Projektphase | Phase 3 code-seitig abgeschlossen; Build lokal verifiziert; nächster Schritt ist Phase 4 |
 | Ziel | private Android-APK |
 | Primäres Gerät | Samsung Galaxy S25 |
 | Zielplattform | Android 15/16 |
 | Release-Ziel | zunächst nicht Play Store |
 | Android-Projektbasis | angelegt |
-| Buildstatus | `assembleDebug` ✅ lokal verifiziert (Clean-Build); `test` ✅ (NO-SOURCE); `lint` ❌ 1 Error + 9 Warnings (nicht APK-blockierend). Siehe `docs/BUILD_VALIDATION_REPORT.md` und `docs/PHASE_3_REPORT.md` |
+| Gerätetest-Strategie | gebündelte Gerätevalidierung in Phase 8 |
+| Buildstatus | `assembleDebug` lokal verifiziert; `test` NO-SOURCE; `lint` mit 1 Error + 9 Warnings, nicht APK-blockierend. Siehe `docs/BUILD_VALIDATION_REPORT.md` und `docs/PHASE_3_REPORT.md` |
 
 ---
 
@@ -96,6 +97,7 @@ Nicht alle Dokumente pauschal laden. Das reduziert Kontext-Bloat.
 | KI-Modell | ein OpenRouter-Default-Modell, vor Phase 7 pinnen |
 | API-Key | lokaler Build-Time-Key, nicht im Repo, kein UI-Feld |
 | Retry | temporäre Änderungs-Chips, keine Speicherung |
+| Gerätetest | gesammelt in Phase 8 |
 | Distribution | private APK |
 
 Details stehen in [`docs/DECISIONS.md`](docs/DECISIONS.md), [`docs/API_KEY_STRATEGY.md`](docs/API_KEY_STRATEGY.md), [`docs/UI_UX_SPEC.md`](docs/UI_UX_SPEC.md) und [`docs/VISUAL_SCOPE.md`](docs/VISUAL_SCOPE.md).
@@ -147,22 +149,17 @@ Standardbefehle:
 ./gradlew lint
 ```
 
-Aktueller Hinweis: In der GitHub-Prüfung ist kein CI-/Build-Run sichtbar. Ein Agent darf erfolgreiche Builds oder Tests nur behaupten, wenn sie tatsächlich ausgeführt wurden.
+Ein Agent darf erfolgreiche Builds oder Tests nur behaupten, wenn sie tatsächlich ausgeführt wurden.
 
 ---
 
 ## Aktueller nächster Schritt
 
-Phase 3 (manuelles Overlay und Floating Button) ist code-seitig umgesetzt; `./gradlew assembleDebug`
-ist lokal verifiziert und liefert eine installierbare Debug-APK (`app/build/outputs/apk/debug/app-debug.apk`).
-`./gradlew test` läuft (NO-SOURCE, keine Unit-Tests). `./gradlew lint` scheitert mit 1 Error + 9 Warnings
-(nicht APK-blockierend, separater Auftrag). Details in [`docs/PHASE_3_REPORT.md`](docs/PHASE_3_REPORT.md).
+Phase 3 ist code-seitig umgesetzt. `./gradlew assembleDebug` ist lokal verifiziert und liefert eine installierbare Debug-APK. `./gradlew test` läuft ohne vorhandene Unit-Tests. `./gradlew lint` meldet 1 Error und 9 Warnings; das ist ein separater Auftrag.
 
-Noch offen: der **Pflicht-Gerätetest** (siehe Checkliste im Phase-3-Report) auf einem echten
-Android-Gerät (Samsung S25) — Pflicht-Gate laut `docs/DECISIONS.md` (D-006).
+Nächster sinnvoller Schritt: **Phase 4 — WhatsApp-Erkennung** (`ForegroundAppDetector`) gemäß `docs/IMPLEMENTATION_PLAN.md`.
 
-Nächster sinnvoller Schritt nach bestandenem Gerätetest: **Phase 4 — WhatsApp-Erkennung**
-(`ForegroundAppDetector`) gemäß `docs/IMPLEMENTATION_PLAN.md`.
+Der echte Gerätetest wird bewusst nicht als Zwischen-Gate genutzt, sondern gebündelt in **Phase 8 — Stabilisierung und Gerätetest** durchgeführt.
 
 ---
 
@@ -181,6 +178,7 @@ Der MVP gilt erst als fertig, wenn:
 - Clipboard bewusst übernommen wird oder der manuelle Fallback funktioniert
 - KI-Vorschläge erzeugt und kopiert werden können
 - Retry mit `Nochmal` und kompakten Änderungs-Chips funktioniert
+- echter Gerätetest in Phase 8 durchgeführt und dokumentiert wurde
 - kein Accessibility Service verwendet wurde
 - keine unnötigen Berechtigungen verwendet wurden
 - keine Nutzertexte, Retry-Anweisungen oder API-Keys geloggt werden
