@@ -2,7 +2,9 @@
 
 ## Purpose
 
-This is the primary instruction file for coding agents working on ChatHilfe.
+This is the primary shared instruction file for coding agents working on ChatHilfe.
+
+Claude Code enters through `CLAUDE.md`, which imports this file. Other agents should read this file directly.
 
 Keep this file short. Detailed rules live in the linked project documents. When in doubt, follow the most restrictive rule regarding privacy, permissions, automation, secrets, and scope.
 
@@ -35,6 +37,8 @@ Before implementation work, read in this order:
 7. `docs/IMPLEMENTATION_PLAN.md`
 8. task-relevant docs from the source-of-truth table below
 
+For Claude Code, `CLAUDE.md` imports this file and adds Claude-specific model guidance.
+
 Do not load every document unless needed for the current task.
 
 ---
@@ -45,6 +49,8 @@ Do not load every document unless needed for the current task.
 |---|---|
 | Product goal and MVP scope | `Konzept.md` |
 | Agent rules and stop conditions | `AGENTS.md` |
+| Claude Code entrypoint | `CLAUDE.md` |
+| Agent model policy | `docs/AGENT_MODEL_POLICY.md` |
 | Accepted technical decisions | `docs/DECISIONS.md` |
 | Device test timing | `docs/DEVICE_TEST_POLICY.md` |
 | API key handling for private builds | `docs/API_KEY_STRATEGY.md` |
@@ -140,6 +146,19 @@ Rules:
 - Real device validation is collected in Phase 8.
 - Do not claim successful device behavior unless it was actually tested.
 - List untested device behavior as risk until Phase 8.
+
+---
+
+## Model policy
+
+Follow `docs/AGENT_MODEL_POLICY.md`.
+
+Rules:
+
+- Claude Sonnet 5: use `high` for normal implementation and `xhigh` for architecture, Android lifecycle, security, privacy, permissions, multi-file refactors, and hard debugging.
+- Claude Sonnet 5: do not set non-default `temperature`, `top_p`, or `top_k`.
+- GLM-5.2: prefer Max effort for long or risky coding work; use High only deliberately for smaller or latency-sensitive tasks.
+- Model policy is for coding agents only. Do not turn it into app-level model routing.
 
 ---
 
