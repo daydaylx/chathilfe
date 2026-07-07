@@ -7,11 +7,11 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.os.IBinder
-import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import de.disaai.chathilfe.R
 import de.disaai.chathilfe.detection.ForegroundAppDetector
+import de.disaai.chathilfe.model.ToneOption
 import de.disaai.chathilfe.settings.SettingsStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -23,21 +23,33 @@ import kotlinx.coroutines.launch
 /**
  * Hosts the overlay bubble's runtime. Started only from a visible user action
  * (the Settings overlay toggle) - never from boot or a broadcast. Runs no AI
- * requests and reads no clipboard.
+ * requests and reads no clipboard in the background.
  *
  * As of Phase 4, the bubble is no longer shown immediately on start. A
  * [ForegroundAppDetector] polls the foreground app; the bubble is attached only
  * while WhatsApp is in the foreground and removed when it leaves, without stopping
  * the service. Position is persisted across show/hide cycles via [SettingsStore].
+ *
+ * As of Phase 5, tapping the bubble opens a narrow [InputBarView]; starting from it shows a
+ * dummy-data [ResultPanelView]. Both are torn down (without stopping the service) as soon as
+ * WhatsApp leaves the foreground, so no overlay content is ever left orphaned.
  */
 class OverlayService : Service() {
+
+    private enum class OverlayState { HIDDEN, BUBBLE, INPUT_BAR, RESULT_PANEL }
 
     private lateinit var controller: OverlayController
     private lateinit var settingsStore: SettingsStore
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
     private var detector: ForegroundAppDetector? = null
-    private var isBubbleShown = false
+    private var overlayState = OverlayState.HIDDEN
+    private var isWhatsappForeground = false
+
+    // Transient, in-memory only for the current Input-Bar -> Result-Panel round trip.
+    // Never logged or persisted.
+    private var pendingText: String = ""
+    private var pendingTone: ToneOption = ToneOption.DEFAULT
 
     private val bubbleListener = object : FloatingBubbleView.BubbleListener {
         override fun onDragMove(newX: Int, newY: Int) {
@@ -49,7 +61,28 @@ class OverlayService : Service() {
         }
 
         override fun onTap() {
-            Toast.makeText(applicationContext, getString(R.string.bubble_tap_toast), Toast.LENGTH_SHORT).show()
+            openInputBar()
+        }
+    }
+
+    private val inputBarListener = object : InputBarView.Listener {
+        override fun onToneSelected(tone: ToneOption) {
+            pendingTone = tone
+            scope.launch { settingsStore.setPreferredTone(tone.internalValue) }
+        }
+
+        override fun onStart(text: String, tone: ToneOption) {
+            pendingText = text
+            pendingTone = tone
+            val suggestions = DummySuggestionSource.generate(text, tone)
+            controller.showResultPanel(suggestions, text, tone, resultPanelListener)
+            overlayState = OverlayState.RESULT_PANEL
+        }
+    }
+
+    private val resultPanelListener = object : ResultPanelView.Listener {
+        override fun onClose() {
+            closeContent()
         }
     }
 
@@ -63,7 +96,7 @@ class OverlayService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (intent?.action == ACTION_STOP) {
             stopDetection()
-            hideBubble()
+            hideEverything()
             stopForeground(STOP_FOREGROUND_REMOVE)
             stopSelf()
             return START_NOT_STICKY
@@ -88,17 +121,25 @@ class OverlayService : Service() {
     /** Runs on [scope] (Main). Show/hide are idempotent and guarded against double views. */
     private fun onDetectionState(state: ForegroundAppDetector.State) {
         when (state) {
-            ForegroundAppDetector.State.NoUsageAccess -> hideBubble()
+            ForegroundAppDetector.State.NoUsageAccess -> {
+                isWhatsappForeground = false
+                hideEverything()
+            }
             is ForegroundAppDetector.State.WhatsappForeground -> {
-                if (state.isForeground) showBubble() else hideBubble()
+                isWhatsappForeground = state.isForeground
+                if (state.isForeground) {
+                    if (overlayState == OverlayState.HIDDEN) showBubble()
+                } else {
+                    hideEverything()
+                }
             }
         }
     }
 
     private fun showBubble() {
-        if (isBubbleShown) return
+        if (overlayState != OverlayState.HIDDEN) return
         scope.launch {
-            if (isBubbleShown) return@launch
+            if (overlayState != OverlayState.HIDDEN) return@launch
             val settings = settingsStore.settings.first()
             val (defaultX, defaultY) = FloatingBubbleView.defaultPosition(applicationContext)
             controller.show(
@@ -106,14 +147,37 @@ class OverlayService : Service() {
                 settings.bubbleY ?: defaultY,
                 bubbleListener,
             )
-            isBubbleShown = controller.isAttached
+            if (controller.isAttached) overlayState = OverlayState.BUBBLE
         }
     }
 
-    private fun hideBubble() {
-        if (!isBubbleShown) return
+    private fun openInputBar() {
         controller.remove()
-        isBubbleShown = false
+        scope.launch {
+            val settings = settingsStore.settings.first()
+            val tone = ToneOption.fromInternalValue(settings.preferredTone)
+            pendingTone = tone
+            controller.showInputBar(tone, inputBarListener)
+            overlayState = OverlayState.INPUT_BAR
+        }
+    }
+
+    /** Closes Input-Bar/Result-Panel content and returns to the bubble (or hides fully). */
+    private fun closeContent() {
+        controller.hideContent()
+        pendingText = ""
+        pendingTone = ToneOption.DEFAULT
+        overlayState = OverlayState.HIDDEN
+        if (isWhatsappForeground) showBubble()
+    }
+
+    /** Removes the bubble and any Input-Bar/Result-Panel content. Idempotent. */
+    private fun hideEverything() {
+        controller.hideContent()
+        controller.remove()
+        pendingText = ""
+        pendingTone = ToneOption.DEFAULT
+        overlayState = OverlayState.HIDDEN
     }
 
     private fun buildNotification(): Notification =
@@ -137,7 +201,7 @@ class OverlayService : Service() {
 
     override fun onDestroy() {
         stopDetection()
-        hideBubble()
+        hideEverything()
         scope.cancel()
         super.onDestroy()
     }

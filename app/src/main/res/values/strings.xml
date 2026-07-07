@@ -36,5 +36,16 @@
     <string name="notification_channel_name">ChatHilfe Overlay</string>
     <string name="notification_title">ChatHilfe ist aktiv</string>
     <string name="notification_text">Der Floating Button läuft. Zum Beenden in den Einstellungen deaktivieren.</string>
-    <string name="bubble_tap_toast">ChatHilfe – noch keine Aktion in Phase 3</string>
+    <string name="input_bar_hint">Was willst du sagen?</string>
+    <string name="input_bar_paste_button">Einfügen</string>
+    <string name="input_bar_start_button">Los</string>
+    <string name="input_bar_tone_button_description">Ton auswählen</string>
+
+    <string name="result_panel_copy_button">Kopieren</string>
+    <string name="result_panel_copied_toast">In Zwischenablage kopiert</string>
+    <string name="result_panel_retry_prompt">Nicht passend?</string>
+    <string name="result_panel_retry_button">Nochmal</string>
+    <string name="result_panel_close_description">Schließen</string>
+    <string name="result_panel_previous_description">Vorheriger Vorschlag</string>
+    <string name="result_panel_next_description">Nächster Vorschlag</string>
 </resources>
