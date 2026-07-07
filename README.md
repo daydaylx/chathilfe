@@ -16,6 +16,7 @@ Die App ist kein Messenger-Ersatz. Sie hilft nur beim Formulieren, Umschreiben u
 | Zielplattform | Android 15/16 |
 | Release-Ziel | zunächst nicht Play Store |
 | Android-Projektbasis | angelegt |
+| Agenten-Setup | `AGENTS.md` + `CLAUDE.md` + Modell-/Parameter-Policies |
 | Gerätetest-Strategie | gebündelte Gerätevalidierung in Phase 8 |
 | Buildstatus | `assembleDebug` ✅ lokal verifiziert; `test` ✅ (NO-SOURCE); `lint` ✅ (0 errors, 9 warnings). Siehe [`docs/PHASE_4_REPORT.md`](docs/PHASE_4_REPORT.md) und [`docs/BUILD_VALIDATION_REPORT.md`](docs/BUILD_VALIDATION_REPORT.md) |
 
@@ -45,8 +46,11 @@ Der Retry ist nur ein temporärer neuer Versuch. Es gibt keinen Verlauf, kein Ge
 | Dokument | Zweck |
 |---|---|
 | [`AGENTS.md`](AGENTS.md) | verbindliche Kurzregeln für Coding-Agenten |
+| [`CLAUDE.md`](CLAUDE.md) | Claude-Code-Einstiegspunkt, importiert `AGENTS.md` |
 | [`Konzept.md`](Konzept.md) | Produktziel, Scope, Modi, Risiken und Abschlusskriterien |
-| [`Arbeitsauftrag.md`](Arbeitsauftrag.md) | ausführlicher Startauftrag für externe Coding-Agenten |
+| [`Arbeitsauftrag.md`](Arbeitsauftrag.md) | aktualisierter Startauftrag für externe Coding-Agenten |
+| [`docs/AGENT_MODEL_POLICY.md`](docs/AGENT_MODEL_POLICY.md) | Regeln für Claude Sonnet 5 und GLM-5.2 bei Agentenarbeit |
+| [`docs/PROMPT_PARAMETER_POLICY.md`](docs/PROMPT_PARAMETER_POLICY.md) | modellabhängige Parameterregeln für Prompt-/Provider-Anbindung |
 | [`docs/PHASE_0_1_REPORT.md`](docs/PHASE_0_1_REPORT.md) | Abschlussbericht zu Phase 0/1 |
 | [`docs/PHASE_2_REPORT.md`](docs/PHASE_2_REPORT.md) | Abschlussbericht zu Phase 2 |
 | [`docs/PHASE_3_REPORT.md`](docs/PHASE_3_REPORT.md) | Abschlussbericht zu Phase 3 |
@@ -69,13 +73,15 @@ Der Retry ist nur ein temporärer neuer Versuch. Es gibt keinen Verlauf, kein Ge
 ## Empfohlene Lesereihenfolge für Agenten
 
 1. [`AGENTS.md`](AGENTS.md)
-2. [`Konzept.md`](Konzept.md)
-3. [`docs/DECISIONS.md`](docs/DECISIONS.md)
-4. [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
-5. [`docs/ANDROID_CONSTRAINTS.md`](docs/ANDROID_CONSTRAINTS.md)
-6. [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md)
-7. bei UI-Arbeit zusätzlich [`docs/UI_UX_SPEC.md`](docs/UI_UX_SPEC.md) und [`docs/VISUAL_SCOPE.md`](docs/VISUAL_SCOPE.md)
-8. nur die zusätzlich relevanten Fachdocs
+2. bei Claude Code zusätzlich [`CLAUDE.md`](CLAUDE.md)
+3. [`Konzept.md`](Konzept.md)
+4. [`docs/DECISIONS.md`](docs/DECISIONS.md)
+5. [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
+6. [`docs/ANDROID_CONSTRAINTS.md`](docs/ANDROID_CONSTRAINTS.md)
+7. [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md)
+8. bei Agentenmodell-/Providerarbeit zusätzlich [`docs/AGENT_MODEL_POLICY.md`](docs/AGENT_MODEL_POLICY.md) und [`docs/PROMPT_PARAMETER_POLICY.md`](docs/PROMPT_PARAMETER_POLICY.md)
+9. bei UI-Arbeit zusätzlich [`docs/UI_UX_SPEC.md`](docs/UI_UX_SPEC.md) und [`docs/VISUAL_SCOPE.md`](docs/VISUAL_SCOPE.md)
+10. nur die zusätzlich relevanten Fachdocs
 
 Nicht alle Dokumente pauschal laden. Das reduziert Kontext-Bloat.
 
@@ -98,11 +104,13 @@ Nicht alle Dokumente pauschal laden. Das reduziert Kontext-Bloat.
 | KI-Anbieter | OpenRouter, ein Provider im MVP |
 | KI-Modell | ein OpenRouter-Default-Modell, vor Phase 7 pinnen |
 | API-Key | lokaler Build-Time-Key, nicht im Repo, kein UI-Feld |
+| Agentenmodell-Policy | Claude Sonnet 5 / GLM-5.2 in `docs/AGENT_MODEL_POLICY.md` |
+| Prompt-Parameter | modellabhängig in `docs/PROMPT_PARAMETER_POLICY.md` |
 | Retry | temporäre Änderungs-Chips, keine Speicherung |
 | Gerätetest | gesammelt in Phase 8 |
 | Distribution | private APK |
 
-Details stehen in [`docs/DECISIONS.md`](docs/DECISIONS.md), [`docs/API_KEY_STRATEGY.md`](docs/API_KEY_STRATEGY.md), [`docs/UI_UX_SPEC.md`](docs/UI_UX_SPEC.md), [`docs/VISUAL_SCOPE.md`](docs/VISUAL_SCOPE.md) und [`docs/DEVICE_TEST_POLICY.md`](docs/DEVICE_TEST_POLICY.md).
+Details stehen in [`docs/DECISIONS.md`](docs/DECISIONS.md), [`docs/API_KEY_STRATEGY.md`](docs/API_KEY_STRATEGY.md), [`docs/UI_UX_SPEC.md`](docs/UI_UX_SPEC.md), [`docs/VISUAL_SCOPE.md`](docs/VISUAL_SCOPE.md), [`docs/DEVICE_TEST_POLICY.md`](docs/DEVICE_TEST_POLICY.md), [`docs/AGENT_MODEL_POLICY.md`](docs/AGENT_MODEL_POLICY.md) und [`docs/PROMPT_PARAMETER_POLICY.md`](docs/PROMPT_PARAMETER_POLICY.md).
 
 ---
 
