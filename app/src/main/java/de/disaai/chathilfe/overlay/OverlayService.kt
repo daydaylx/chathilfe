@@ -11,6 +11,7 @@ import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import de.disaai.chathilfe.R
+import de.disaai.chathilfe.detection.ForegroundAppDetector
 import de.disaai.chathilfe.settings.SettingsStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -22,13 +23,35 @@ import kotlinx.coroutines.launch
 /**
  * Hosts the overlay bubble's runtime. Started only from a visible user action
  * (the Settings overlay toggle) - never from boot or a broadcast. Runs no AI
- * requests, reads no clipboard, and does no app/WhatsApp detection.
+ * requests and reads no clipboard.
+ *
+ * As of Phase 4, the bubble is no longer shown immediately on start. A
+ * [ForegroundAppDetector] polls the foreground app; the bubble is attached only
+ * while WhatsApp is in the foreground and removed when it leaves, without stopping
+ * the service. Position is persisted across show/hide cycles via [SettingsStore].
  */
 class OverlayService : Service() {
 
     private lateinit var controller: OverlayController
     private lateinit var settingsStore: SettingsStore
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+
+    private var detector: ForegroundAppDetector? = null
+    private var isBubbleShown = false
+
+    private val bubbleListener = object : FloatingBubbleView.BubbleListener {
+        override fun onDragMove(newX: Int, newY: Int) {
+            controller.updatePosition(newX, newY)
+        }
+
+        override fun onDragEnd(finalX: Int, finalY: Int) {
+            scope.launch { settingsStore.setBubblePosition(finalX, finalY) }
+        }
+
+        override fun onTap() {
+            Toast.makeText(applicationContext, getString(R.string.bubble_tap_toast), Toast.LENGTH_SHORT).show()
+        }
+    }
 
     override fun onCreate() {
         super.onCreate()
@@ -39,42 +62,58 @@ class OverlayService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (intent?.action == ACTION_STOP) {
-            controller.remove()
+            stopDetection()
+            hideBubble()
             stopForeground(STOP_FOREGROUND_REMOVE)
             stopSelf()
             return START_NOT_STICKY
         }
 
         startForeground(NOTIFICATION_ID, buildNotification())
-        if (!controller.isAttached) {
-            scope.launch { showBubble() }
-        }
+        startDetection()
         return START_NOT_STICKY
     }
 
-    private suspend fun showBubble() {
-        val settings = settingsStore.settings.first()
-        val (defaultX, defaultY) = FloatingBubbleView.defaultPosition(applicationContext)
-        val x = settings.bubbleX ?: defaultX
-        val y = settings.bubbleY ?: defaultY
+    private fun startDetection() {
+        if (detector != null) return
+        detector = ForegroundAppDetector(applicationContext, scope)
+            .also { it.start(::onDetectionState) }
+    }
 
-        controller.show(
-            x,
-            y,
-            object : FloatingBubbleView.BubbleListener {
-                override fun onDragMove(newX: Int, newY: Int) {
-                    controller.updatePosition(newX, newY)
-                }
+    private fun stopDetection() {
+        detector?.stop()
+        detector = null
+    }
 
-                override fun onDragEnd(finalX: Int, finalY: Int) {
-                    scope.launch { settingsStore.setBubblePosition(finalX, finalY) }
-                }
+    /** Runs on [scope] (Main). Show/hide are idempotent and guarded against double views. */
+    private fun onDetectionState(state: ForegroundAppDetector.State) {
+        when (state) {
+            ForegroundAppDetector.State.NoUsageAccess -> hideBubble()
+            is ForegroundAppDetector.State.WhatsappForeground -> {
+                if (state.isForeground) showBubble() else hideBubble()
+            }
+        }
+    }
 
-                override fun onTap() {
-                    Toast.makeText(applicationContext, getString(R.string.bubble_tap_toast), Toast.LENGTH_SHORT).show()
-                }
-            },
-        )
+    private fun showBubble() {
+        if (isBubbleShown) return
+        scope.launch {
+            if (isBubbleShown) return@launch
+            val settings = settingsStore.settings.first()
+            val (defaultX, defaultY) = FloatingBubbleView.defaultPosition(applicationContext)
+            controller.show(
+                settings.bubbleX ?: defaultX,
+                settings.bubbleY ?: defaultY,
+                bubbleListener,
+            )
+            isBubbleShown = controller.isAttached
+        }
+    }
+
+    private fun hideBubble() {
+        if (!isBubbleShown) return
+        controller.remove()
+        isBubbleShown = false
     }
 
     private fun buildNotification(): Notification =
@@ -97,7 +136,8 @@ class OverlayService : Service() {
     }
 
     override fun onDestroy() {
-        controller.remove()
+        stopDetection()
+        hideBubble()
         scope.cancel()
         super.onDestroy()
     }

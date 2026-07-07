@@ -35,7 +35,7 @@
             android:foregroundServiceType="specialUse">
             <property
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-                android:value="Manually started draggable floating bubble shown over other apps; no auto-start, no background reading of chat content." />
+                android:value="Manually started draggable floating bubble shown over other apps; appears only while WhatsApp is in the foreground (detected via usage stats); no auto-start, no background reading of chat content." />
         </service>
     </application>
 

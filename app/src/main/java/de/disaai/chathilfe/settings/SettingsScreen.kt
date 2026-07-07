@@ -130,19 +130,29 @@ fun SettingsScreen(
             checked = settings.overlayEnabled,
             onCheckedChange = { enabled ->
                 if (enabled) {
-                    if (permissionStatus.overlay != PermissionState.GRANTED) {
-                        Toast.makeText(
-                            context,
-                            context.getString(R.string.overlay_permission_required_toast),
-                            Toast.LENGTH_LONG,
-                        ).show()
-                    } else {
-                        coroutineScope.launch { settingsStore.setOverlayEnabled(true) }
-                        OverlayService.start(context)
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-                            permissionStatus.notification != PermissionState.GRANTED
-                        ) {
-                            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                    when {
+                        permissionStatus.overlay != PermissionState.GRANTED -> {
+                            Toast.makeText(
+                                context,
+                                R.string.overlay_permission_required_toast,
+                                Toast.LENGTH_LONG,
+                            ).show()
+                        }
+                        permissionStatus.usageAccess != PermissionState.GRANTED -> {
+                            Toast.makeText(
+                                context,
+                                R.string.usage_permission_required_toast,
+                                Toast.LENGTH_LONG,
+                            ).show()
+                        }
+                        else -> {
+                            coroutineScope.launch { settingsStore.setOverlayEnabled(true) }
+                            OverlayService.start(context)
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                                permissionStatus.notification != PermissionState.GRANTED
+                            ) {
+                                notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                            }
                         }
                     }
                 } else {

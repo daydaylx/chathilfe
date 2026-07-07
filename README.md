@@ -10,14 +10,14 @@ Die App ist kein Messenger-Ersatz. Sie hilft nur beim Formulieren, Umschreiben u
 
 | Punkt | Stand |
 |---|---|
-| Projektphase | Phase 3 code-seitig abgeschlossen; Build lokal verifiziert; nächster Schritt ist Phase 4 |
+| Projektphase | Phase 4 code-seitig abgeschlossen; Build (`assembleDebug`) und `lint` lokal verifiziert; nächster Schritt ist Phase 5 |
 | Ziel | private Android-APK |
 | Primäres Gerät | Samsung Galaxy S25 |
 | Zielplattform | Android 15/16 |
 | Release-Ziel | zunächst nicht Play Store |
 | Android-Projektbasis | angelegt |
 | Gerätetest-Strategie | gebündelte Gerätevalidierung in Phase 8 |
-| Buildstatus | `assembleDebug` lokal verifiziert; `test` NO-SOURCE; `lint` mit 1 Error + 9 Warnings, nicht APK-blockierend. Siehe `docs/BUILD_VALIDATION_REPORT.md` und `docs/PHASE_3_REPORT.md` |
+| Buildstatus | `assembleDebug` ✅ lokal verifiziert; `test` ✅ (NO-SOURCE); `lint` ✅ (0 errors, 9 warnings). Siehe [`docs/PHASE_4_REPORT.md`](docs/PHASE_4_REPORT.md) und [`docs/BUILD_VALIDATION_REPORT.md`](docs/BUILD_VALIDATION_REPORT.md) |
 
 ---
 
@@ -50,6 +50,7 @@ Der Retry ist nur ein temporärer neuer Versuch. Es gibt keinen Verlauf, kein Ge
 | [`docs/PHASE_0_1_REPORT.md`](docs/PHASE_0_1_REPORT.md) | Abschlussbericht zu Phase 0/1 |
 | [`docs/PHASE_2_REPORT.md`](docs/PHASE_2_REPORT.md) | Abschlussbericht zu Phase 2 |
 | [`docs/PHASE_3_REPORT.md`](docs/PHASE_3_REPORT.md) | Abschlussbericht zu Phase 3 |
+| [`docs/PHASE_4_REPORT.md`](docs/PHASE_4_REPORT.md) | Abschlussbericht zu Phase 4 |
 | [`docs/DECISIONS.md`](docs/DECISIONS.md) | angenommene technische Entscheidungen aus dem Audit |
 | [`docs/DEVICE_TEST_POLICY.md`](docs/DEVICE_TEST_POLICY.md) | Strategie: Gerätetests gesammelt in Phase 8 |
 | [`docs/API_KEY_STRATEGY.md`](docs/API_KEY_STRATEGY.md) | lokale API-Key-Strategie für private Builds |
@@ -156,11 +157,18 @@ Ein Agent darf erfolgreiche Builds oder Tests nur behaupten, wenn sie tatsächli
 
 ## Aktueller nächster Schritt
 
-Phase 3 ist code-seitig umgesetzt. `./gradlew assembleDebug` ist lokal verifiziert und liefert eine installierbare Debug-APK. `./gradlew test` läuft ohne vorhandene Unit-Tests. `./gradlew lint` meldet 1 Error und 9 Warnings; das ist ein separater Auftrag.
+Phase 4 (WhatsApp-Erkennung über `ForegroundAppDetector` / `UsageStatsManager.queryEvents`) ist
+code-seitig umgesetzt: die Floating Bubble erscheint nur noch, solange `com.whatsapp` im
+Vordergrund steht. `./gradlew assembleDebug` und `./gradlew lint` sind lokal verifiziert
+(installierbare Debug-APK unter `app/build/outputs/apk/debug/app-debug.apk`; lint: 0 errors,
+9 warnings). `./gradlew test` läuft (NO-SOURCE). Details in [`docs/PHASE_4_REPORT.md`](docs/PHASE_4_REPORT.md).
 
-Nächster sinnvoller Schritt: **Phase 4 — WhatsApp-Erkennung** (`ForegroundAppDetector`) gemäß `docs/IMPLEMENTATION_PLAN.md`.
+Der echte Gerätetest wird bewusst nicht als Zwischen-Gate genutzt, sondern gebündelt in
+**Phase 8 — Stabilisierung und Gerätetest** durchgeführt (siehe Gerätetest-Strategie oben).
+Die Checkliste für den offenen Phase-4-Gerätetest steht in [`docs/PHASE_4_REPORT.md`](docs/PHASE_4_REPORT.md).
 
-Der echte Gerätetest wird bewusst nicht als Zwischen-Gate genutzt, sondern gebündelt in **Phase 8 — Stabilisierung und Gerätetest** durchgeführt.
+Nächster sinnvoller Schritt: **Phase 5 — Input-Bar und Result-Panel ohne KI** (Dummy-Daten)
+gemäß [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md).
 
 ---
 
