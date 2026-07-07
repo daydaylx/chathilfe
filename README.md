@@ -10,7 +10,7 @@ Die App ist kein Messenger-Ersatz. Sie hilft nur beim Formulieren, Umschreiben u
 
 | Punkt | Stand |
 |---|---|
-| Projektphase | Phase 5 code-seitig abgeschlossen (inkl. Input-Bar-Schließen-Button); Build/Test/Lint in der letzten Cloud-Sitzung nicht ausführbar (kein Android SDK, blockierter Gradle-Distribution-Download); nächster Schritt ist Phase 6 |
+| Projektphase | Phase 6 code-seitig abgeschlossen (`PromptBuilder` + `AiResponseParser` mit `ParseResult`, Unit-Tests grün); nächster Schritt ist Phase 7 (KI-Anbindung) |
 | Ziel | private Android-APK |
 | Primäres Gerät | Samsung Galaxy S25 |
 | Zielplattform | Android 15/16 |
@@ -18,7 +18,7 @@ Die App ist kein Messenger-Ersatz. Sie hilft nur beim Formulieren, Umschreiben u
 | Android-Projektbasis | angelegt |
 | Agenten-Setup | `AGENTS.md` + `CLAUDE.md` + Modell-/Parameter-Policies |
 | Gerätetest-Strategie | gebündelte Gerätevalidierung in Phase 8 |
-| Buildstatus | letzter lokal verifizierter Stand (Phase 4): `assembleDebug` ✅, `test` ✅ (NO-SOURCE), `lint` ✅ (0 errors, 9 warnings) — siehe [`docs/PHASE_4_REPORT.md`](docs/PHASE_4_REPORT.md) / [`docs/BUILD_VALIDATION_REPORT.md`](docs/BUILD_VALIDATION_REPORT.md). Für Phase 5 (Cloud-Sitzung) waren `assembleDebug`/`test`/`lint` **nicht ausführbar** (kein Android SDK, Gradle-Distribution-Download vom Sitzungsproxy mit 403 blockiert) — Details in [`docs/PHASE_5_REPORT.md`](docs/PHASE_5_REPORT.md) |
+| Buildstatus | Phase 6 lokal verifiziert: `test` ✅ (33 Tests, 0 failures) und `lint` ✅ (0 errors, 9 warnings — alles vor Phase 6 bekannte Warnings) — siehe [`docs/PHASE_6_REPORT.md`](docs/PHASE_6_REPORT.md). Phase 4/5-Vorstände unter [`docs/PHASE_4_REPORT.md`](docs/PHASE_4_REPORT.md) / [`docs/PHASE_5_REPORT.md`](docs/PHASE_5_REPORT.md) |
 
 ---
 
@@ -56,6 +56,7 @@ Der Retry ist nur ein temporärer neuer Versuch. Es gibt keinen Verlauf, kein Ge
 | [`docs/PHASE_3_REPORT.md`](docs/PHASE_3_REPORT.md) | Abschlussbericht zu Phase 3 |
 | [`docs/PHASE_4_REPORT.md`](docs/PHASE_4_REPORT.md) | Abschlussbericht zu Phase 4 |
 | [`docs/PHASE_5_REPORT.md`](docs/PHASE_5_REPORT.md) | Abschlussbericht zu Phase 5 |
+| [`docs/PHASE_6_REPORT.md`](docs/PHASE_6_REPORT.md) | Abschlussbericht zu Phase 6 |
 | [`docs/DECISIONS.md`](docs/DECISIONS.md) | angenommene technische Entscheidungen aus dem Audit |
 | [`docs/DEVICE_TEST_POLICY.md`](docs/DEVICE_TEST_POLICY.md) | Strategie: Gerätetests gesammelt in Phase 8 |
 | [`docs/API_KEY_STRATEGY.md`](docs/API_KEY_STRATEGY.md) | lokale API-Key-Strategie für private Builds |
@@ -166,21 +167,21 @@ Ein Agent darf erfolgreiche Builds oder Tests nur behaupten, wenn sie tatsächli
 
 ## Aktueller nächster Schritt
 
-Phase 5 (Input-Bar und Result-Panel ohne KI, Dummy-Daten) ist code-seitig umgesetzt: `InputBarView`
-und `ResultPanelView` als klassische Android Views, Vorschlagswechsel über `SuggestionPager`,
-Retry über `RetryChipSelector`/`RetryInstruction`, Clipboard nur nach Nutzertap über
-`ClipboardHelper`. Nachträglich ergänzt: ein kleiner `×`-Schließen-Button in der Input-Bar, der
-über `OverlayService.closeContent()` sauber zur Bubble zurückführt, wenn WhatsApp noch im
-Vordergrund ist (derselbe Rückkehrpfad wie beim bestehenden Result-Panel-Close). Details, inklusive
-des in dieser Cloud-Sitzung blockierten Build/Test/Lint-Laufs, stehen in
-[`docs/PHASE_5_REPORT.md`](docs/PHASE_5_REPORT.md).
+Phase 6 (PromptBuilder und Parser ohne Provider) ist code-seitig umgesetzt: `PromptBuilder` erzeugt
+aus `ReplyRequest` die drei Prompt-Templates aus [`docs/PROMPTS.md`](docs/PROMPTS.md) (Antworten/
+Formulieren/Umschreiben), `AiResponseParser` parst die Modellantwort tolerant als `sealed ParseResult`
+(`Success`/`Partial`/`Error`) und crasht nie. Neue Models: `ReplyMode`, `ReplyRequest`. `NOCHMAL`
+erzeugt keinen Retry-Text im Prompt (nur die Change-Chips). Netzwerk/Provider/`AiConfig` bleiben weg
+(Phase 7). Overlay weiter auf `DummySuggestionSource`. `test` ✅ (33 Tests), `lint` ✅ (0 errors) —
+Details in [`docs/PHASE_6_REPORT.md`](docs/PHASE_6_REPORT.md).
 
 Der echte Gerätetest wird bewusst nicht als Zwischen-Gate genutzt, sondern gebündelt in
 **Phase 8 — Stabilisierung und Gerätetest** durchgeführt (siehe Gerätetest-Strategie oben).
-Die offene Phase-4-Gerätetest-Checkliste steht weiterhin in [`docs/PHASE_4_REPORT.md`](docs/PHASE_4_REPORT.md).
 
-Nächster sinnvoller Schritt: **Phase 6 — PromptBuilder und Parser ohne Provider**
-gemäß [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md).
+Nächster sinnvoller Schritt: **Phase 7 — KI-Anbindung** (OpenRouter-Default-Modell pinnen,
+`AiConfig`/`AiClient`, echte Vorschläge ins Result-Panel) gemäß
+[`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md). Vor Phase 7 muss das konkrete
+OpenRouter-Default-Modell in `AiConfig` festgelegt werden (`docs/DECISIONS.md` offener Punkt).
 
 ---
 
