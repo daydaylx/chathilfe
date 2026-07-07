@@ -102,10 +102,12 @@ OverlayController + ForegroundAppDetector laufen innerhalb dieser Overlay-Laufze
 |---|---|
 | App-Name | ChatHilfe |
 | `applicationId` | `de.disaai.chathilfe` |
-| `compileSdk` | 36 |
+| `compileSdk` | 37 |
 | `targetSdk` | 35 für ersten stabilen MVP |
 | späteres Ziel | targetSdk 36 nach Stabilisierung |
 | `minSdk` | 29 |
+
+> **Hinweis `compileSdk` 37 (Abweichung vom ursprünglichen Planwert 36):** Die in Phase 1/2 gewählten androidx-Versionen `androidx.core:core-ktx:1.19.0` und `androidx.lifecycle:lifecycle-runtime-compose:2.11.0` erfordern zum Kompilieren API-Level 37 (`checkDebugAarMetadata`). `compileSdk` wurde beim ersten lokalen Build-Validierungslauf (Juli 2026) daher von 36 auf 37 angehoben. Dies ändert nur die Kompilierungs-API, nicht das Laufzeitverhalten: `targetSdk` bleibt 35, `minSdk` bleibt 29. Siehe auch `docs/BUILD_VALIDATION_REPORT.md`.
 
 **Toolchain (gepinnt in Phase 1, Stand Juli 2026 gegen offizielle Quellen geprüft):**
 

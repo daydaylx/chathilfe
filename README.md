@@ -110,7 +110,7 @@ Details stehen in [`docs/DECISIONS.md`](docs/DECISIONS.md), [`docs/API_KEY_STRAT
 | Gradle Wrapper | 9.6.1 |
 | Kotlin / Compose Compiler Plugin | 2.4.0 |
 | Compose BOM | 2026.06.01 |
-| `compileSdk` | 36 |
+| `compileSdk` | 37 |
 | `targetSdk` | 35 |
 | `minSdk` | 29 |
 | `applicationId` | `de.disaai.chathilfe` |

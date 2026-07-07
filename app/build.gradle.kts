@@ -18,7 +18,7 @@ val openRouterApiKey: String =
 
 android {
     namespace = "de.disaai.chathilfe"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "de.disaai.chathilfe"

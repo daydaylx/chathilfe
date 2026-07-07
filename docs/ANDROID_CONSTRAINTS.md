@@ -15,7 +15,7 @@ Verbindliche Entscheidungen stehen zusätzlich in `docs/DECISIONS.md`.
 | Einstellung | MVP-Default |
 |---|---|
 | `applicationId` | `de.disaai.chathilfe` |
-| `compileSdk` | 36 |
+| `compileSdk` | 37 |
 | `targetSdk` | 35 für ersten stabilen MVP |
 | späteres Ziel | targetSdk 36 nach Stabilisierung |
 | `minSdk` | 29 |
