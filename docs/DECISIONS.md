@@ -291,6 +291,31 @@ Das Overlay öffnet im MVP zuerst als schmaler Eingabebalken. Erst nach einer KI
 
 ---
 
+## D-011 — Agentenmodell-Policy
+
+**Status:** entschieden
+
+**Entscheidung:**
+
+Für Coding-Agenten gelten separate Modellregeln in `docs/AGENT_MODEL_POLICY.md`. Diese Regeln betreffen nur Agentenarbeit am Repo und sind keine Produktfunktion der ChatHilfe-App.
+
+**Konsequenz:**
+
+- Claude Code nutzt `CLAUDE.md`, das `AGENTS.md` importiert.
+- Claude Sonnet 5 wird für normale Implementierung mit `high` und für Architektur, Android-Lifecycle, Security, Datenschutz, Berechtigungen, Multi-Datei-Refactors und harte Fehlersuche mit `xhigh` geführt.
+- Claude Sonnet 5 erhält keine non-default `temperature`, `top_p` oder `top_k`.
+- GLM-5.2 wird für lange oder riskante Coding-Aufgaben bevorzugt mit Max-Effort geführt.
+- GLM-5.2 High-Effort ist nur für kleinere oder bewusst latenzsensiblere Aufgaben gedacht.
+- Prompt- und Providerparameter für die App werden zusätzlich durch `docs/PROMPT_PARAMETER_POLICY.md` begrenzt.
+
+**Nicht erlaubt:**
+
+- daraus Modellrouting für die App ableiten
+- Modell- oder Provider-Auswahl im Overlay bauen
+- Agentenmodell-Regeln als Nutzerfeature behandeln
+
+---
+
 ## Offene Punkte
 
 Diese Punkte bleiben bewusst offen, bis sie für Code relevant werden:
