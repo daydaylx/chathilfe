@@ -9,6 +9,7 @@ import android.view.WindowManager
 import android.view.inputmethod.InputMethodManager
 import de.disaai.chathilfe.model.ReplySuggestion
 import de.disaai.chathilfe.model.ToneOption
+import kotlin.math.min
 
 /**
  * Sole owner of WindowManager.addView/removeView/updateViewLayout for all overlay views
@@ -120,22 +121,51 @@ class OverlayController(private val context: Context) {
         }
     }
 
+    // --- Typed delegates to the currently attached content view (Input-Bar / Result-Panel).
+    // Each is a safe no-op if the expected view type is not attached (e.g. after teardown).
+
+    fun setInputBarLoading(active: Boolean) {
+        (contentView as? InputBarView)?.setLoading(active)
+    }
+
+    fun setInputBarError(message: String?) {
+        (contentView as? InputBarView)?.showError(message)
+    }
+
+    fun setResultPanelLoading(active: Boolean) {
+        (contentView as? ResultPanelView)?.setLoading(active)
+    }
+
+    fun setResultPanelError(message: String?) {
+        (contentView as? ResultPanelView)?.showError(message)
+    }
+
+    /** Swaps suggestions on the attached Result-Panel without recreating it (retry path). */
+    fun replaceResultSuggestions(suggestions: List<ReplySuggestion>) {
+        (contentView as? ResultPanelView)?.replaceSuggestions(suggestions)
+    }
+
     private fun replaceContent(focusable: Boolean, factory: () -> View) {
         hideContent()
 
         val metrics = context.resources.displayMetrics
         val margin = (CONTENT_MARGIN_DP * metrics.density).toInt()
+        val maxWidthPx = (CONTENT_MAX_WIDTH_DP * metrics.density).toInt()
+        val width = min(metrics.widthPixels - margin * 2, maxWidthPx)
+        // Horizontally centered: on phones width == fullWidth (centered via equal margins);
+        // on wide screens the cap keeps the panel compact and centered.
+        val x = (metrics.widthPixels - width) / 2
         val flags = if (focusable) 0 else WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
         val params = WindowManager.LayoutParams(
-            metrics.widthPixels - margin * 2,
+            width,
             WindowManager.LayoutParams.WRAP_CONTENT,
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
             flags,
             PixelFormat.TRANSLUCENT,
         ).apply {
             gravity = Gravity.TOP or Gravity.START
-            x = margin
-            y = margin
+            this.x = x
+            this.y = margin
         }
 
         try {
@@ -155,6 +185,7 @@ class OverlayController(private val context: Context) {
 
     private companion object {
         const val TAG = "OverlayController"
-        const val CONTENT_MARGIN_DP = 12
+        const val CONTENT_MARGIN_DP = 16
+        const val CONTENT_MAX_WIDTH_DP = 560
     }
 }

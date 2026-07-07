@@ -10,7 +10,7 @@ Die App ist kein Messenger-Ersatz. Sie hilft nur beim Formulieren, Umschreiben u
 
 | Punkt | Stand |
 |---|---|
-| Projektphase | Phase 6 code-seitig abgeschlossen (`PromptBuilder` + `AiResponseParser` mit `ParseResult`, Unit-Tests grün); nächster Schritt ist Phase 7 (KI-Anbindung) |
+| Projektphase | Phase 7 code-seitig umgesetzt (OpenRouter-KI-Anbindung: `AiConfig`/`AiClient`/`OpenRouterJson`, Modell `anthropic/claude-sonnet-5` gepinnt, `DummySuggestionSource` ersetzt); nächster Schritt ist Phase 8 (Gerätetest) |
 | Ziel | private Android-APK |
 | Primäres Gerät | Samsung Galaxy S25 |
 | Zielplattform | Android 15/16 |
@@ -18,7 +18,7 @@ Die App ist kein Messenger-Ersatz. Sie hilft nur beim Formulieren, Umschreiben u
 | Android-Projektbasis | angelegt |
 | Agenten-Setup | `AGENTS.md` + `CLAUDE.md` + Modell-/Parameter-Policies |
 | Gerätetest-Strategie | gebündelte Gerätevalidierung in Phase 8 |
-| Buildstatus | Phase 6 lokal verifiziert: `test` ✅ (33 Tests, 0 failures) und `lint` ✅ (0 errors, 9 warnings — alles vor Phase 6 bekannte Warnings) — siehe [`docs/PHASE_6_REPORT.md`](docs/PHASE_6_REPORT.md). Phase 4/5-Vorstände unter [`docs/PHASE_4_REPORT.md`](docs/PHASE_4_REPORT.md) / [`docs/PHASE_5_REPORT.md`](docs/PHASE_5_REPORT.md) |
+| Buildstatus | Phase 7 lokal verifiziert: `assembleDebug` ✅, `test` ✅ (46 Tests, 0 failures) und `lint` ✅ (0 errors, 9 warnings — unverändert zu vor Phase 7) — siehe [`docs/PHASE_7_REPORT.md`](docs/PHASE_7_REPORT.md). Vorstände unter [`docs/PHASE_5_REPORT.md`](docs/PHASE_5_REPORT.md) / [`docs/PHASE_6_REPORT.md`](docs/PHASE_6_REPORT.md) |
 
 ---
 
@@ -57,6 +57,7 @@ Der Retry ist nur ein temporärer neuer Versuch. Es gibt keinen Verlauf, kein Ge
 | [`docs/PHASE_4_REPORT.md`](docs/PHASE_4_REPORT.md) | Abschlussbericht zu Phase 4 |
 | [`docs/PHASE_5_REPORT.md`](docs/PHASE_5_REPORT.md) | Abschlussbericht zu Phase 5 |
 | [`docs/PHASE_6_REPORT.md`](docs/PHASE_6_REPORT.md) | Abschlussbericht zu Phase 6 |
+| [`docs/PHASE_7_REPORT.md`](docs/PHASE_7_REPORT.md) | Abschlussbericht zu Phase 7 |
 | [`docs/DECISIONS.md`](docs/DECISIONS.md) | angenommene technische Entscheidungen aus dem Audit |
 | [`docs/DEVICE_TEST_POLICY.md`](docs/DEVICE_TEST_POLICY.md) | Strategie: Gerätetests gesammelt in Phase 8 |
 | [`docs/API_KEY_STRATEGY.md`](docs/API_KEY_STRATEGY.md) | lokale API-Key-Strategie für private Builds |
@@ -104,7 +105,7 @@ Nicht alle Dokumente pauschal laden. Das reduziert Kontext-Bloat.
 | Laufzeit | Foreground Service, aus sichtbarer Nutzeraktion gestartet |
 | Lokale Einstellungen | DataStore für UI-/Overlay-Settings, keine Texte/API-Keys |
 | KI-Anbieter | OpenRouter, ein Provider im MVP |
-| KI-Modell | ein OpenRouter-Default-Modell, vor Phase 7 pinnen |
+| KI-Modell | `anthropic/claude-sonnet-5` (OpenRouter), in Phase 7 gepinnt (D-012) |
 | API-Key | lokaler Build-Time-Key, nicht im Repo, kein UI-Feld |
 | Agentenmodell-Policy | Claude Sonnet 5 / GLM-5.2 in `docs/AGENT_MODEL_POLICY.md` |
 | Prompt-Parameter | modellabhängig in `docs/PROMPT_PARAMETER_POLICY.md` |
@@ -167,21 +168,23 @@ Ein Agent darf erfolgreiche Builds oder Tests nur behaupten, wenn sie tatsächli
 
 ## Aktueller nächster Schritt
 
-Phase 6 (PromptBuilder und Parser ohne Provider) ist code-seitig umgesetzt: `PromptBuilder` erzeugt
-aus `ReplyRequest` die drei Prompt-Templates aus [`docs/PROMPTS.md`](docs/PROMPTS.md) (Antworten/
-Formulieren/Umschreiben), `AiResponseParser` parst die Modellantwort tolerant als `sealed ParseResult`
-(`Success`/`Partial`/`Error`) und crasht nie. Neue Models: `ReplyMode`, `ReplyRequest`. `NOCHMAL`
-erzeugt keinen Retry-Text im Prompt (nur die Change-Chips). Netzwerk/Provider/`AiConfig` bleiben weg
-(Phase 7). Overlay weiter auf `DummySuggestionSource`. `test` ✅ (33 Tests), `lint` ✅ (0 errors) —
-Details in [`docs/PHASE_6_REPORT.md`](docs/PHASE_6_REPORT.md).
+Phase 7 (KI-Anbindung) ist code-seitig umgesetzt: ein Provider (OpenRouter), ein gepinntes Modell
+(`anthropic/claude-sonnet-5`, siehe [`docs/DECISIONS.md`](docs/DECISIONS.md) D-012), **keine** neue
+Dependency (`HttpURLConnection` + eigene `OpenRouterJson`-Logik). `AiClient` sendet `model`/
+`max_tokens` und genau eine User-Message — bewusst **ohne** Sampling-Parameter (Claude Sonnet 5,
+[`docs/PROMPT_PARAMETER_POLICY.md`](docs/PROMPT_PARAMETER_POLICY.md)). Das Overlay ist an die echte
+KI verdrahtet (Initial-Anfrage aus der Input-Bar, Retry aus dem Result-Panel), `DummySuggestionSource`
+ist entfernt. Lade-/Fehlerzustände sind kompakt umgesetzt. `assembleDebug` ✅, `test` ✅ (46 Tests),
+`lint` ✅ (0 errors) — Details in [`docs/PHASE_7_REPORT.md`](docs/PHASE_7_REPORT.md).
 
 Der echte Gerätetest wird bewusst nicht als Zwischen-Gate genutzt, sondern gebündelt in
-**Phase 8 — Stabilisierung und Gerätetest** durchgeführt (siehe Gerätetest-Strategie oben).
+**Phase 8 — Stabilisierung und Gerätetest** durchgeführt (siehe Gerätetest-Strategie oben). Für
+Phase 8 muss lokal ein echter OpenRouter-Key in `local.properties` hinterlegt werden
+(`isKeyConfigured` → true), damit echte Modellqualität, Lade-/Fehler-UX und Netzwerkverhalten auf
+dem Samsung S25 geprüft werden können.
 
-Nächster sinnvoller Schritt: **Phase 7 — KI-Anbindung** (OpenRouter-Default-Modell pinnen,
-`AiConfig`/`AiClient`, echte Vorschläge ins Result-Panel) gemäß
-[`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md). Vor Phase 7 muss das konkrete
-OpenRouter-Default-Modell in `AiConfig` festgelegt werden (`docs/DECISIONS.md` offener Punkt).
+Nächster sinnvoller Schritt: **Phase 8 — Stabilisierung und Gerätetest** gemäß
+[`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md).
 
 ---
 

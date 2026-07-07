@@ -25,7 +25,7 @@ Wenn Entscheidungen hier einer älteren Formulierung in anderen Dateien widerspr
 
 - `AiClient` implementiert zuerst nur OpenRouter.
 - `AiConfig` enthält Endpoint, Modell-ID und Auth-Header.
-- Phase 7 ist blockiert, bis ein konkretes Modell in `AiConfig` festgelegt ist.
+- Phase 7 war blockiert, bis ein konkretes Modell in `AiConfig` festgelegt ist — siehe D-012 (erledigt).
 - Phasen 1–6 sind nicht blockiert.
 
 **Nicht erlaubt:**
@@ -316,10 +316,34 @@ Für Coding-Agenten gelten separate Modellregeln in `docs/AGENT_MODEL_POLICY.md`
 
 ---
 
+## D-012 — Gepinntes OpenRouter-Default-Modell für Phase 7
+
+**Status:** entschieden (schließt den offenen Punkt aus D-001/D-009)
+
+**Entscheidung:**
+
+Das konkrete MVP-Default-Modell ist **`anthropic/claude-sonnet-5`** über den einzigen Provider OpenRouter.
+
+**Verifikation (gegen OpenRouter-Modell-Metadaten, 2026-07-07):**
+
+- Modell verfügbar via `https://openrouter.ai/api/v1/models`.
+- `supported_parameters`: `max_tokens`/`max_completion_tokens` vorhanden; **kein** `temperature`/`top_p`/`top_k`.
+- Das passt exakt zu `docs/PROMPT_PARAMETER_POLICY.md`: für Claude Sonnet 5 werden keine non-default Sampling-Parameter gesendet. Stil wird ausschließlich über Prompt, Ton-Chips und Retry-Chips gesteuert.
+
+**Konsequenz:**
+
+- `AiConfig` hält genau diese Modell-ID; kein Routing, kein Fallback.
+- `AiClient` sendet `model`, `max_tokens` (Output-Budget) und genau eine User-Message; **keine** Sampling-Parameter, kein Reasoning-/Thinking-Parameter.
+- Keine Modell-/Provider-Auswahl im Overlay.
+
+**Nicht erlaubt:**
+
+- abweichende Modell-IDs, Mehrfachmodelle, Modell-Fallback, Tonfall-Routing.
+
+---
+
 ## Offene Punkte
 
-Diese Punkte bleiben bewusst offen, bis sie für Code relevant werden:
+Aktuell keine offenen Punkte für den MVP-Scope. Das für Phase 7 benötigte OpenRouter-Default-Modell wurde in D-012 gepinnt.
 
-- konkretes OpenRouter-Default-Modell für Phase 7
-
-Offen heißt hier nicht beliebig: Ein Agent muss sie vor der jeweiligen Phase entscheiden, dokumentieren und gegen `AGENTS.md` sowie `docs/ANDROID_CONSTRAINTS.md` prüfen.
+"Offen" hieß hier nicht beliebig: Ein Agent musste diese Punkte vor der jeweiligen Phase entscheiden, dokumentieren und gegen `AGENTS.md` sowie `docs/ANDROID_CONSTRAINTS.md` prüfen.

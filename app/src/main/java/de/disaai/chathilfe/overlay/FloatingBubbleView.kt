@@ -1,10 +1,17 @@
 package de.disaai.chathilfe.overlay
 
 import android.content.Context
+import android.graphics.Outline
+import android.view.Gravity
 import android.view.MotionEvent
+import android.view.View
+import android.view.ViewOutlineProvider
 import android.view.ViewConfiguration
 import android.widget.FrameLayout
+import android.widget.ImageView
 import androidx.core.content.ContextCompat
+import androidx.core.view.ViewCompat
+import androidx.core.widget.ImageViewCompat
 import de.disaai.chathilfe.R
 import kotlin.math.abs
 
@@ -12,6 +19,9 @@ import kotlin.math.abs
  * Classic Android View for the floating bubble (no Compose, per D-003). It never touches
  * WindowManager itself - touch state is reported upward via [BubbleListener] so
  * [OverlayController] remains the sole caller of addView/removeView/updateViewLayout.
+ *
+ * The glass look is purely visual: a translucent dark circle with a fine contour stroke
+ * (bg_floating_bubble) plus a centered accent chat icon. Drag/Tap behavior is unchanged.
  */
 class FloatingBubbleView(context: Context) : FrameLayout(context) {
 
@@ -37,6 +47,31 @@ class FloatingBubbleView(context: Context) : FrameLayout(context) {
         val size = sizePx(context)
         minimumWidth = size
         minimumHeight = size
+
+        // Best-effort depth. On TYPE_APPLICATION_OVERLAY the elevation shadow frequently does
+        // not render; the contour stroke in bg_floating_bubble carries the visual edge anyway.
+        ViewCompat.setElevation(this, dp(8f))
+        outlineProvider = object : ViewOutlineProvider() {
+            override fun getOutline(view: View, outline: Outline) {
+                outline.setOval(0, 0, view.width, view.height)
+            }
+        }
+
+        val iconSize = (ICON_SIZE_DP * resources.displayMetrics.density).toInt()
+        val icon = ImageView(context).apply {
+            setImageResource(R.drawable.ic_bubble_spark)
+            // Accent chat icon on the dark glass circle.
+            ImageViewCompat.setImageTintList(
+                this,
+                ContextCompat.getColorStateList(context, OverlayStyle.accent),
+            )
+            scaleType = ImageView.ScaleType.CENTER
+            importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
+        }
+        addView(icon, LayoutParams(iconSize, iconSize).apply { gravity = Gravity.CENTER })
+
+        importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_YES
+        contentDescription = context.getString(R.string.floating_bubble_description)
     }
 
     /** Must be called once, right after construction, before the view receives touch input. */
@@ -90,8 +125,11 @@ class FloatingBubbleView(context: Context) : FrameLayout(context) {
         return super.onTouchEvent(event)
     }
 
+    private fun dp(value: Float): Float = value * resources.displayMetrics.density
+
     companion object {
         private const val BUBBLE_SIZE_DP = 52
+        private const val ICON_SIZE_DP = 24
 
         fun sizePx(context: Context): Int =
             (BUBBLE_SIZE_DP * context.resources.displayMetrics.density).toInt()

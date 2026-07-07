@@ -10,11 +10,18 @@ import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import de.disaai.chathilfe.R
+import de.disaai.chathilfe.ai.AiClient
+import de.disaai.chathilfe.ai.ParseResult
 import de.disaai.chathilfe.detection.ForegroundAppDetector
+import de.disaai.chathilfe.model.ReplyMode
+import de.disaai.chathilfe.model.ReplyRequest
+import de.disaai.chathilfe.model.ReplySuggestion
+import de.disaai.chathilfe.model.RetryInstruction
 import de.disaai.chathilfe.model.ToneOption
 import de.disaai.chathilfe.settings.SettingsStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.first
@@ -41,6 +48,8 @@ class OverlayService : Service() {
     private lateinit var controller: OverlayController
     private lateinit var settingsStore: SettingsStore
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    private val aiClient = AiClient()
+    private var requestJob: Job? = null
 
     private var detector: ForegroundAppDetector? = null
     private var overlayState = OverlayState.HIDDEN
@@ -74,9 +83,7 @@ class OverlayService : Service() {
         override fun onStart(text: String, tone: ToneOption) {
             pendingText = text
             pendingTone = tone
-            val suggestions = DummySuggestionSource.generate(text, tone)
-            controller.showResultPanel(suggestions, text, tone, resultPanelListener)
-            overlayState = OverlayState.RESULT_PANEL
+            runInitialRequest()
         }
 
         override fun onClose() {
@@ -87,6 +94,10 @@ class OverlayService : Service() {
     private val resultPanelListener = object : ResultPanelView.Listener {
         override fun onClose() {
             closeContent()
+        }
+
+        override fun onRetry(chips: Set<RetryInstruction>) {
+            runRetry(chips)
         }
     }
 
@@ -166,8 +177,74 @@ class OverlayService : Service() {
         }
     }
 
+    /**
+     * Starts the first AI request from the Input-Bar. Uses [ReplyMode.COMPOSE] (MVP wiring);
+     * the entered text is the user intent. Disables the bar + shows a loading hint; on success
+     * opens the Result-Panel, on error shows a compact message and keeps the Input-Bar open.
+     * At most one request runs at a time.
+     */
+    private fun runInitialRequest() {
+        requestJob?.cancel()
+        val request = ReplyRequest(
+            mode = ReplyMode.COMPOSE,
+            userIntent = pendingText,
+            tone = pendingTone,
+        )
+        controller.setInputBarError(null)
+        controller.setInputBarLoading(true)
+        requestJob = scope.launch {
+            val result = aiClient.request(request)
+            controller.setInputBarLoading(false)
+            val suggestions = when (result) {
+                is ParseResult.Success -> result.suggestions
+                is ParseResult.Partial -> result.suggestions
+                is ParseResult.Error -> null
+            }
+            if (suggestions != null) {
+                controller.showResultPanel(suggestions, pendingText, pendingTone, resultPanelListener)
+                overlayState = OverlayState.RESULT_PANEL
+            } else {
+                controller.setInputBarError((result as ParseResult.Error).message)
+            }
+        }
+    }
+
+    /**
+     * Retries with optional change chips. Builds a fresh request from the stored text/tone + the
+     * active chips, shows a compact loading hint on the existing Result-Panel. On success the
+     * suggestions are swapped; on error the previous suggestions stay visible with a short error.
+     * Chip selection is cleared only on success, so a failed retry keeps the user's choice.
+     */
+    private fun runRetry(chips: Set<RetryInstruction>) {
+        requestJob?.cancel()
+        val request = ReplyRequest(
+            mode = ReplyMode.COMPOSE,
+            userIntent = pendingText,
+            tone = pendingTone,
+            retryInstructions = chips,
+        )
+        controller.setResultPanelError(null)
+        controller.setResultPanelLoading(true)
+        requestJob = scope.launch {
+            val result = aiClient.request(request)
+            controller.setResultPanelLoading(false)
+            val suggestions = when (result) {
+                is ParseResult.Success -> result.suggestions
+                is ParseResult.Partial -> result.suggestions
+                is ParseResult.Error -> null
+            }
+            if (suggestions != null) {
+                controller.replaceResultSuggestions(suggestions)
+            } else {
+                controller.setResultPanelError((result as ParseResult.Error).message)
+            }
+        }
+    }
+
     /** Closes Input-Bar/Result-Panel content and returns to the bubble (or hides fully). */
     private fun closeContent() {
+        requestJob?.cancel()
+        requestJob = null
         controller.hideContent()
         pendingText = ""
         pendingTone = ToneOption.DEFAULT
@@ -177,6 +254,8 @@ class OverlayService : Service() {
 
     /** Removes the bubble and any Input-Bar/Result-Panel content. Idempotent. */
     private fun hideEverything() {
+        requestJob?.cancel()
+        requestJob = null
         controller.hideContent()
         controller.remove()
         pendingText = ""
