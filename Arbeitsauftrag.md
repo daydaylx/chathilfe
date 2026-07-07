@@ -11,11 +11,12 @@ Für dauerhafte Repo-Regeln gelten vorrangig:
 3. [`Konzept.md`](Konzept.md)
 4. [`docs/DECISIONS.md`](docs/DECISIONS.md)
 5. [`docs/AGENT_MODEL_POLICY.md`](docs/AGENT_MODEL_POLICY.md)
-6. [`docs/DEVICE_TEST_POLICY.md`](docs/DEVICE_TEST_POLICY.md)
-7. [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
-8. [`docs/ANDROID_CONSTRAINTS.md`](docs/ANDROID_CONSTRAINTS.md)
-9. [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md)
-10. taskrelevante Fachdocs in [`docs/`](docs/)
+6. [`docs/PROMPT_PARAMETER_POLICY.md`](docs/PROMPT_PARAMETER_POLICY.md)
+7. [`docs/DEVICE_TEST_POLICY.md`](docs/DEVICE_TEST_POLICY.md)
+8. [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
+9. [`docs/ANDROID_CONSTRAINTS.md`](docs/ANDROID_CONSTRAINTS.md)
+10. [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md)
+11. taskrelevante Fachdocs in [`docs/`](docs/)
 
 Wenn dieser Arbeitsauftrag einer Fachdatei widerspricht, gilt die Fachdatei.
 
@@ -39,6 +40,8 @@ Empfohlen:
 - GLM-5.2: Max-Effort für lange oder riskante Coding-Aufgaben; High nur bewusst für kleinere oder latenzsensiblere Teilaufgaben.
 - Keine non-default `temperature`, `top_p` oder `top_k` mit Claude Sonnet 5 verwenden.
 - Modellregeln gelten nur für Coding-Agenten, nicht als App-Feature.
+
+Für Prompt- und Providerparameter gilt zusätzlich `docs/PROMPT_PARAMETER_POLICY.md`.
 
 ---
 
@@ -148,6 +151,7 @@ Keine Phase überspringen, wenn dadurch ungetestete oder unklare Grundfunktional
 - Keine Entscheidungen still ändern; bei Bedarf `docs/DECISIONS.md` aktualisieren.
 - Visual Scope gegen `docs/VISUAL_SCOPE.md` prüfen.
 - Device-Test-Flow gegen `docs/DEVICE_TEST_POLICY.md` prüfen.
+- Provider- und Promptparameter gegen `docs/PROMPT_PARAMETER_POLICY.md` prüfen.
 
 ---
 
