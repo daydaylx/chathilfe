@@ -51,6 +51,7 @@ Do not load every document unless needed for the current task.
 | Agent rules and stop conditions | `AGENTS.md` |
 | Claude Code entrypoint | `CLAUDE.md` |
 | Agent model policy | `docs/AGENT_MODEL_POLICY.md` |
+| Prompt parameter policy | `docs/PROMPT_PARAMETER_POLICY.md` |
 | Accepted technical decisions | `docs/DECISIONS.md` |
 | Device test timing | `docs/DEVICE_TEST_POLICY.md` |
 | API key handling for private builds | `docs/API_KEY_STRATEGY.md` |
@@ -151,7 +152,7 @@ Rules:
 
 ## Model policy
 
-Follow `docs/AGENT_MODEL_POLICY.md`.
+Follow `docs/AGENT_MODEL_POLICY.md` and `docs/PROMPT_PARAMETER_POLICY.md`.
 
 Rules:
 
@@ -159,6 +160,7 @@ Rules:
 - Claude Sonnet 5: do not set non-default `temperature`, `top_p`, or `top_k`.
 - GLM-5.2: prefer Max effort for long or risky coding work; use High only deliberately for smaller or latency-sensitive tasks.
 - Model policy is for coding agents only. Do not turn it into app-level model routing.
+- Prompt parameter policy applies when wiring an AI provider request.
 
 ---
 
