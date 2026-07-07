@@ -304,14 +304,16 @@ Nicht senden:
 
 ---
 
-## Empfohlene Startparameter
+## Parameter-Regeln
 
-```text
-temperature: 0.6
-max_tokens: ausreichend für 3 kurze Antworten
-```
+Modell- und Providerparameter stehen in `docs/PROMPT_PARAMETER_POLICY.md`.
 
-Nicht zu hoch einstellen, sonst werden Vorschläge künstlicher und weniger zuverlässig.
+Für dieses Dokument gilt nur:
+
+- genug Output-Budget für 3 kurze Antworten einplanen
+- keine pauschalen Sampling-Parameter für alle Modelle festlegen
+- nur Parameter senden, die das konkrete Modell und der konkrete Provider unterstützen
+- Stil über Prompt, Ton-Chips und Retry-Chips steuern
 
 ---
 
