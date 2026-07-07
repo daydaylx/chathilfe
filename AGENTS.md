@@ -16,6 +16,8 @@ Goal: show a small floating AI reply helper over WhatsApp. The app helps the use
 
 Visual goal: the overlay starts as a narrow input bar and expands to a compact result panel only after AI suggestions exist. Do not build a large form, dashboard, or stacked suggestion list as the default UI.
 
+Device testing is deferred to Phase 8. Phases 3 to 7 may continue without blocking on a real device test, but all untested device behavior must remain listed as risk.
+
 If generated suggestions are not good enough, the MVP may offer a compact retry flow with `Nochmal` and a few temporary refinement chips. Retry must not create history, feedback storage, style training, or memory.
 
 ---
@@ -44,6 +46,7 @@ Do not load every document unless needed for the current task.
 | Product goal and MVP scope | `Konzept.md` |
 | Agent rules and stop conditions | `AGENTS.md` |
 | Accepted technical decisions | `docs/DECISIONS.md` |
+| Device test timing | `docs/DEVICE_TEST_POLICY.md` |
 | API key handling for private builds | `docs/API_KEY_STRATEGY.md` |
 | Plan/audit context | `docs/PLAN_AUDIT.md` |
 | External implementation prompt | `Arbeitsauftrag.md` |
@@ -126,6 +129,20 @@ MVP visual model:
 
 ---
 
+## Device test policy
+
+Follow `docs/DEVICE_TEST_POLICY.md`.
+
+Rules:
+
+- Phases 3 to 7 may continue without blocking on real device tests.
+- Build, lint, unit tests, and code checks should still be run as far as practical.
+- Real device validation is collected in Phase 8.
+- Do not claim successful device behavior unless it was actually tested.
+- List untested device behavior as risk until Phase 8.
+
+---
+
 ## Technical defaults
 
 | Area | Default |
@@ -142,6 +159,7 @@ MVP visual model:
 | AI provider | OpenRouter only for MVP |
 | AI model | one OpenRouter default model pinned before Phase 7 |
 | API key | Build-time local secret, never committed |
+| Device testing | deferred to Phase 8 |
 | Distribution | private APK |
 | Primary test device | Samsung Galaxy S25 / Android 15 or 16 |
 
@@ -212,6 +230,7 @@ For every implementation task, validate as much as practical:
 - overlay lifecycle avoids duplicate views
 - missing permissions show clear UI
 - visual scope follows `docs/VISUAL_SCOPE.md`
+- device-only behavior is marked as untested until Phase 8 unless actually validated
 
 For device-only behavior, report what still needs manual testing.
 
