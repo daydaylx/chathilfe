@@ -10,13 +10,13 @@ Die App ist kein Messenger-Ersatz. Sie hilft nur beim Formulieren, Umschreiben u
 
 | Punkt | Stand |
 |---|---|
-| Projektphase | Phase 3 code-seitig abgeschlossen, Gerätetest + Build-Verifikation als nächster Schritt |
+| Projektphase | Phase 3 code-seitig abgeschlossen; Build (`assembleDebug`) lokal verifiziert; Gerätetest als nächster Schritt |
 | Ziel | private Android-APK |
 | Primäres Gerät | Samsung Galaxy S25 |
 | Zielplattform | Android 15/16 |
 | Release-Ziel | zunächst nicht Play Store |
 | Android-Projektbasis | angelegt |
-| Buildstatus | Gradle-Projekt vorhanden; `assembleDebug` in dieser Session weiterhin nicht ausführbar (siehe `docs/PHASE_3_REPORT.md`), muss lokal/CI mit Android SDK verifiziert werden |
+| Buildstatus | `assembleDebug` ✅ lokal verifiziert (Clean-Build); `test` ✅ (NO-SOURCE); `lint` ❌ 1 Error + 9 Warnings (nicht APK-blockierend). Siehe `docs/BUILD_VALIDATION_REPORT.md` und `docs/PHASE_3_REPORT.md` |
 
 ---
 
@@ -153,9 +153,16 @@ Aktueller Hinweis: In der GitHub-Prüfung ist kein CI-/Build-Run sichtbar. Ein A
 
 ## Aktueller nächster Schritt
 
-Phase 3 (manuelles Overlay und Floating Button) ist code-seitig umgesetzt; Details in [`docs/PHASE_3_REPORT.md`](docs/PHASE_3_REPORT.md). Build (`./gradlew assembleDebug`/`test`/`lint`) und der Pflicht-Gerätetest (siehe Checkliste im Phase-3-Report) stehen noch aus, da dieser Sandbox weder ein Android SDK noch Zugriff auf die gepinnte Gradle-Distribution zur Verfügung steht.
+Phase 3 (manuelles Overlay und Floating Button) ist code-seitig umgesetzt; `./gradlew assembleDebug`
+ist lokal verifiziert und liefert eine installierbare Debug-APK (`app/build/outputs/apk/debug/app-debug.apk`).
+`./gradlew test` läuft (NO-SOURCE, keine Unit-Tests). `./gradlew lint` scheitert mit 1 Error + 9 Warnings
+(nicht APK-blockierend, separater Auftrag). Details in [`docs/PHASE_3_REPORT.md`](docs/PHASE_3_REPORT.md).
 
-Nächster sinnvoller Schritt: Gerätetest + Build-Verifikation nachholen, danach **Phase 4 — WhatsApp-Erkennung** (`ForegroundAppDetector`) gemäß `docs/IMPLEMENTATION_PLAN.md`.
+Noch offen: der **Pflicht-Gerätetest** (siehe Checkliste im Phase-3-Report) auf einem echten
+Android-Gerät (Samsung S25) — Pflicht-Gate laut `docs/DECISIONS.md` (D-006).
+
+Nächster sinnvoller Schritt nach bestandenem Gerätetest: **Phase 4 — WhatsApp-Erkennung**
+(`ForegroundAppDetector`) gemäß `docs/IMPLEMENTATION_PLAN.md`.
 
 ---
 
