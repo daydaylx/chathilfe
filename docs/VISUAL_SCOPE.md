@@ -41,6 +41,7 @@ Pflichtelemente:
 - kompaktes Texteingabefeld
 - Einfügen-Option
 - Start-Button für KI-Vorschläge
+- rechts eine kleine Schließen-/Zurück-Aktion (z. B. `×`), die zur Bubble zurückführt
 
 Regeln:
 

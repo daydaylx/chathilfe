@@ -78,6 +78,10 @@ class OverlayService : Service() {
             controller.showResultPanel(suggestions, text, tone, resultPanelListener)
             overlayState = OverlayState.RESULT_PANEL
         }
+
+        override fun onClose() {
+            closeContent()
+        }
     }
 
     private val resultPanelListener = object : ResultPanelView.Listener {

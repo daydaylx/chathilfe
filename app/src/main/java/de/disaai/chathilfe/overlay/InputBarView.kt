@@ -24,6 +24,7 @@ class InputBarView(context: Context) : FrameLayout(context) {
     interface Listener {
         fun onToneSelected(tone: ToneOption)
         fun onStart(text: String, tone: ToneOption)
+        fun onClose()
     }
 
     var listener: Listener? = null
@@ -80,10 +81,17 @@ class InputBarView(context: Context) : FrameLayout(context) {
             }
         }
 
+        val closeButton = Button(context).apply {
+            text = context.getString(R.string.input_bar_close_button)
+            contentDescription = context.getString(R.string.input_bar_close_description)
+            setOnClickListener { listener?.onClose() }
+        }
+
         mainRow.addView(toneButton)
         mainRow.addView(editText)
         mainRow.addView(pasteButton)
         mainRow.addView(startButton)
+        mainRow.addView(closeButton)
 
         toneRow = LinearLayout(context).apply {
             orientation = LinearLayout.HORIZONTAL

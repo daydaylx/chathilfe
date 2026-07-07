@@ -10,7 +10,7 @@ Die App ist kein Messenger-Ersatz. Sie hilft nur beim Formulieren, Umschreiben u
 
 | Punkt | Stand |
 |---|---|
-| Projektphase | Phase 4 code-seitig abgeschlossen; Build (`assembleDebug`) und `lint` lokal verifiziert; nächster Schritt ist Phase 5 |
+| Projektphase | Phase 5 code-seitig abgeschlossen (inkl. Input-Bar-Schließen-Button); Build/Test/Lint in der letzten Cloud-Sitzung nicht ausführbar (kein Android SDK, blockierter Gradle-Distribution-Download); nächster Schritt ist Phase 6 |
 | Ziel | private Android-APK |
 | Primäres Gerät | Samsung Galaxy S25 |
 | Zielplattform | Android 15/16 |
@@ -18,7 +18,7 @@ Die App ist kein Messenger-Ersatz. Sie hilft nur beim Formulieren, Umschreiben u
 | Android-Projektbasis | angelegt |
 | Agenten-Setup | `AGENTS.md` + `CLAUDE.md` + Modell-/Parameter-Policies |
 | Gerätetest-Strategie | gebündelte Gerätevalidierung in Phase 8 |
-| Buildstatus | `assembleDebug` ✅ lokal verifiziert; `test` ✅ (NO-SOURCE); `lint` ✅ (0 errors, 9 warnings). Siehe [`docs/PHASE_4_REPORT.md`](docs/PHASE_4_REPORT.md) und [`docs/BUILD_VALIDATION_REPORT.md`](docs/BUILD_VALIDATION_REPORT.md) |
+| Buildstatus | letzter lokal verifizierter Stand (Phase 4): `assembleDebug` ✅, `test` ✅ (NO-SOURCE), `lint` ✅ (0 errors, 9 warnings) — siehe [`docs/PHASE_4_REPORT.md`](docs/PHASE_4_REPORT.md) / [`docs/BUILD_VALIDATION_REPORT.md`](docs/BUILD_VALIDATION_REPORT.md). Für Phase 5 (Cloud-Sitzung) waren `assembleDebug`/`test`/`lint` **nicht ausführbar** (kein Android SDK, Gradle-Distribution-Download vom Sitzungsproxy mit 403 blockiert) — Details in [`docs/PHASE_5_REPORT.md`](docs/PHASE_5_REPORT.md) |
 
 ---
 
@@ -55,6 +55,7 @@ Der Retry ist nur ein temporärer neuer Versuch. Es gibt keinen Verlauf, kein Ge
 | [`docs/PHASE_2_REPORT.md`](docs/PHASE_2_REPORT.md) | Abschlussbericht zu Phase 2 |
 | [`docs/PHASE_3_REPORT.md`](docs/PHASE_3_REPORT.md) | Abschlussbericht zu Phase 3 |
 | [`docs/PHASE_4_REPORT.md`](docs/PHASE_4_REPORT.md) | Abschlussbericht zu Phase 4 |
+| [`docs/PHASE_5_REPORT.md`](docs/PHASE_5_REPORT.md) | Abschlussbericht zu Phase 5 |
 | [`docs/DECISIONS.md`](docs/DECISIONS.md) | angenommene technische Entscheidungen aus dem Audit |
 | [`docs/DEVICE_TEST_POLICY.md`](docs/DEVICE_TEST_POLICY.md) | Strategie: Gerätetests gesammelt in Phase 8 |
 | [`docs/API_KEY_STRATEGY.md`](docs/API_KEY_STRATEGY.md) | lokale API-Key-Strategie für private Builds |
@@ -165,17 +166,20 @@ Ein Agent darf erfolgreiche Builds oder Tests nur behaupten, wenn sie tatsächli
 
 ## Aktueller nächster Schritt
 
-Phase 4 (WhatsApp-Erkennung über `ForegroundAppDetector` / `UsageStatsManager.queryEvents`) ist
-code-seitig umgesetzt: die Floating Bubble erscheint nur noch, solange `com.whatsapp` im
-Vordergrund steht. `./gradlew assembleDebug` und `./gradlew lint` sind lokal verifiziert
-(installierbare Debug-APK unter `app/build/outputs/apk/debug/app-debug.apk`; lint: 0 errors,
-9 warnings). `./gradlew test` läuft (NO-SOURCE). Details in [`docs/PHASE_4_REPORT.md`](docs/PHASE_4_REPORT.md).
+Phase 5 (Input-Bar und Result-Panel ohne KI, Dummy-Daten) ist code-seitig umgesetzt: `InputBarView`
+und `ResultPanelView` als klassische Android Views, Vorschlagswechsel über `SuggestionPager`,
+Retry über `RetryChipSelector`/`RetryInstruction`, Clipboard nur nach Nutzertap über
+`ClipboardHelper`. Nachträglich ergänzt: ein kleiner `×`-Schließen-Button in der Input-Bar, der
+über `OverlayService.closeContent()` sauber zur Bubble zurückführt, wenn WhatsApp noch im
+Vordergrund ist (derselbe Rückkehrpfad wie beim bestehenden Result-Panel-Close). Details, inklusive
+des in dieser Cloud-Sitzung blockierten Build/Test/Lint-Laufs, stehen in
+[`docs/PHASE_5_REPORT.md`](docs/PHASE_5_REPORT.md).
 
 Der echte Gerätetest wird bewusst nicht als Zwischen-Gate genutzt, sondern gebündelt in
 **Phase 8 — Stabilisierung und Gerätetest** durchgeführt (siehe Gerätetest-Strategie oben).
-Die Checkliste für den offenen Phase-4-Gerätetest steht in [`docs/PHASE_4_REPORT.md`](docs/PHASE_4_REPORT.md).
+Die offene Phase-4-Gerätetest-Checkliste steht weiterhin in [`docs/PHASE_4_REPORT.md`](docs/PHASE_4_REPORT.md).
 
-Nächster sinnvoller Schritt: **Phase 5 — Input-Bar und Result-Panel ohne KI** (Dummy-Daten)
+Nächster sinnvoller Schritt: **Phase 6 — PromptBuilder und Parser ohne Provider**
 gemäß [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md).
 
 ---
