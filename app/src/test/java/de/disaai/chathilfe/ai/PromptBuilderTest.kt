@@ -70,6 +70,29 @@ class PromptBuilderTest {
     }
 
     @Test
+    fun `fixed app voice is present in every mode`() {
+        val reply = PromptBuilder.build(
+            baseRequest(mode = ReplyMode.REPLY, copiedMessage = "Hallo?")
+        )
+        val compose = PromptBuilder.build(baseRequest(mode = ReplyMode.COMPOSE))
+        val rewrite = PromptBuilder.build(
+            baseRequest(mode = ReplyMode.REWRITE, originalText = "Test.")
+        )
+        // Static app voice rule (see docs/PROMPTS.md + docs/PRIVACY_SECURITY.md).
+        listOf(reply, compose, rewrite).forEach { prompt ->
+            assertTrue("voice missing", prompt.contains("Frau Anfang 30"))
+            assertTrue("voice marked as profile rule", prompt.contains("feste App-Vorgabe und kein gespeichertes Profil"))
+        }
+    }
+
+    @Test
+    fun `hardened whatsapp style rules are present`() {
+        val prompt = PromptBuilder.build(baseRequest(mode = ReplyMode.COMPOSE))
+        assertTrue(prompt.contains("wie eine WhatsApp-Nachricht, nicht wie eine E-Mail oder ein Brief"))
+        assertTrue(prompt.contains("Maximal 1–2 kurze Sätze"))
+    }
+
+    @Test
     fun `retry text appears only when a change chip is active`() {
         val without = PromptBuilder.build(baseRequest())
         val with = PromptBuilder.build(

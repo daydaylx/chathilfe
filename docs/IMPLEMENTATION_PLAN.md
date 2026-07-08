@@ -347,6 +347,34 @@ Nicht tun:
 
 ---
 
+## Phase 7.5 — Antwortqualitäts-Kalibrierung (Audit)
+
+Quelle: `docs/RESPONSE_QUALITY_AUDIT.md`. Ziel: Antworten wirken weniger
+geschäftlich/künstlich, sondern wie echte WhatsApp-Nachrichten.
+
+Aufgaben (Stand 2026-07-08):
+
+- korrekte Modus-Verdrahtung (`REPLY→copiedMessage`, `COMPOSE→userIntent`) — bereits durch Overlay-Redesign erledigt
+- Trennung kopierte Nachricht vs. Nutzerabsicht — bereits erledigt (Feld = `copiedMessage`, Antwort-Chips = `userIntent`)
+- härtere WhatsApp-Stilregeln in `PromptBuilder`/`docs/PROMPTS.md` (1–2 Sätze, keine Floskeln, keine Therapiesprache)
+- feste App-Stimme (Persona) als statische Prompt-Vorgabe — entschieden in `docs/DECISIONS.md` D-013, dokumentiert in `docs/PRIVACY_SECURITY.md`
+- Antwortqualitäts-Testset in `docs/TEST_PLAN.md` (manuell, ~18 Fälle + Bewertungsraster)
+
+Akzeptanz:
+
+- PromptBuilder ↔ `docs/PROMPTS.md` konsistent
+- Persona ist hart codiert und nirgendwo gespeichert/gelernt
+- bestehende `PromptBuilder`-Unit-Tests grün, Persona-Assertion vorhanden
+- Modell bleibt `anthropic/claude-sonnet-5` (D-012); A/B-Modelltest ist offener Punkt
+
+Nicht tun:
+
+- kein Modellwechsel vor Testset/A/B
+- kein speicherbares Stil-/Personenprofil
+- kein automatisiertes A/B-Framework
+
+---
+
 ## Phase 8 — Stabilisierung und Gerätetest
 
 Ziel: private APK ist real nutzbar.

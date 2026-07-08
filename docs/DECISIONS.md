@@ -342,8 +342,56 @@ Das konkrete MVP-Default-Modell ist **`anthropic/claude-sonnet-5`** über den ei
 
 ---
 
+## D-013 — Feste App-Stimme (Persona) im Prompt
+
+**Status:** entschieden (folgt aus `docs/RESPONSE_QUALITY_AUDIT.md`)
+
+**Auslöser:** Antworten wirkten trotz laufendem Phase-7-Pfad zu geschäftlich,
+akademisch oder künstlich. Das Audit (`docs/RESPONSE_QUALITY_AUDIT.md`) nennt
+als Hebel neben Modus-Verdrahtung und WhatsApp-Stilregeln auch eine Ziel-Stimme.
+
+**Entscheidung:**
+
+Die Prompts enthalten eine feste kommunikative Stimme als **statische
+App-Vorgabe**: die Antworten sollen klingen, als hätte sie eine alltägliche
+Person geschrieben – eine Frau Anfang 30 mit normaler Bildung, natürlicher
+Alltagssprache, nicht zu akademisch, geschäftlich, jugendlich oder künstlich
+perfekt. Die Stimme ist hart codiert in `PromptBuilder` und in `docs/PROMPTS.md`
+dokumentiert.
+
+**Scope-Eingrenzung (warum das kein verbotenes Profil ist):**
+
+- die Stimme ist eine **Prompt-Regel**, kein gespeicherter Zustand
+- sie gilt für alle Nutzenden gleich, ist nicht individuell und nicht erlernbar
+- sie wird **nicht** in DataStore, BuildConfig, Logs oder Analytics abgelegt
+- sie bildet keine Identität, kein Gedächtnis und keinen Verlauf ab
+- die demografische Formulierung ist eine Stilschablone, keine Aussage über die
+  reale nutzende Person
+
+Das ist mit `docs/PRIVACY_SECURITY.md` („Personen-/Kontakt-/Beziehungsprofile
+verboten“) vereinbar, weil keine nutzerbezogenen Daten verarbeitet oder
+gespeichert werden.
+
+**Nicht erlaubt:**
+
+- ein speicherbares, nutzerbezogenes Stil-/Personenprofil
+- Ableitung der Stimme aus Nutzertexten (Lernen/Training)
+- eine Profill-/Identitäts- oder Gedächtnisdatenbank
+
+---
+
 ## Offene Punkte
 
-Aktuell keine offenen Punkte für den MVP-Scope. Das für Phase 7 benötigte OpenRouter-Default-Modell wurde in D-012 gepinnt.
+**Modell-A/B nach Testset (Audit-Empfehlung):** Nach Prompt-/Persona-Kalibrierung
+und Aufbau eines Testsets (`docs/TEST_PLAN.md`) soll `anthropic/claude-sonnet-5`
+(D-012) gegen Kandidaten wie `~anthropic/claude-haiku-latest` und
+`~openai/gpt-mini-latest` verglichen werden. Danach wird ein **konkreter
+Modell-Slug** (kein `latest`-Alias) in `AiConfig` / D-012 gepinnt. Bis dahin
+bleibt Sonnet 5 das gepinnte Modell; ein Provider-/Routing-/Fallback-System
+bleibt weiterhin ausgeschlossen (D-009).
 
-"Offen" hieß hier nicht beliebig: Ein Agent musste diese Punkte vor der jeweiligen Phase entscheiden, dokumentieren und gegen `AGENTS.md` sowie `docs/ANDROID_CONSTRAINTS.md` prüfen.
+Weitere offene Punkte für den MVP-Scope: keine.
+
+"Offen" heißt hier nicht beliebig: Ein Agent muss diese Punkte vor der
+jeweiligen Phase entscheiden, dokumentieren und gegen `AGENTS.md` sowie
+`docs/ANDROID_CONSTRAINTS.md` prüfen.

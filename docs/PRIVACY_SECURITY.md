@@ -118,6 +118,28 @@ Ein späteres Schreibprofil wäre nur als bewusst manuell gepflegte Einstellung 
 
 ---
 
+## Feste App-Stimme (Persona)
+
+Die Prompts enthalten eine feste kommunikative Stimme („alltägliche Person,
+Frau Anfang 30, normale Bildung, Alltagssprache, nicht zu perfekt“). Das ist
+ausdrücklich **kein** personen-, kontakt- oder beziehungsbezogenes Profil im
+Sinne der obigen Verbote.
+
+Grenze:
+
+- die Stimme ist eine **statische App-Vorgabe** im Prompt-String
+- sie gilt für alle Nutzenden gleich und ist nicht individuell
+- sie wird **nicht** in DataStore, BuildConfig, Logs oder Analytics gespeichert
+- sie wird **nicht** aus Nutzertexten gelernt oder abgeleitet
+- sie bildet keine Identität, kein Gedächtnis und keinen Verlauf ab
+- die demografische Formulierung ist eine Stilschablone, keine Aussage über die
+  reale nutzende Person
+
+Erlaubt bleibt ausschließlich dieser eine hart codierte Prompt-Block. Ein
+speicherbares, nutzerbezogenes Stil- oder Personenprofil ist weiterhin verboten.
+
+---
+
 ## Berechtigungen
 
 Erlaubt:
@@ -249,6 +271,7 @@ Datenschutz ist für den MVP akzeptabel, wenn:
 - kein Antwortverlauf existiert
 - kein Gedächtnis-/Memory-System existiert
 - keine Personen-, Kontakt- oder Beziehungsprofile existieren
+- die feste App-Stimme nur als statische Prompt-Vorgabe existiert und nicht gespeichert/gelernt wird
 - API-Key nicht geloggt wird
 - API-Key nicht im Repo steht
 - KI-Anfragen nur nach Button-Klick oder bewusstem Retry erfolgen
