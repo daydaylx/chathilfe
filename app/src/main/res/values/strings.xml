@@ -38,8 +38,11 @@
     <string name="notification_text">Der Floating Button läuft. Zum Beenden in den Einstellungen deaktivieren.</string>
     <string name="floating_bubble_description">ChatHilfe öffnen</string>
     <string name="input_bar_hint">Was willst du sagen?</string>
+    <string name="input_bar_hint_reply">Nachricht, auf die du antworten willst</string>
     <string name="input_bar_paste_button">Einfügen</string>
     <string name="input_bar_start_button">Los</string>
+    <string name="input_bar_mode_description">Modus wählen</string>
+    <string name="input_bar_mode_compose_short">Schreiben</string>
     <string name="input_bar_tone_button_description">Ton auswählen</string>
     <string name="input_bar_close_description">Schließen</string>
     <string name="input_bar_loading">Vorschläge werden erstellt …</string>

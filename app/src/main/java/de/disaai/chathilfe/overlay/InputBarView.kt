@@ -12,38 +12,57 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.drawable.DrawableCompat
 import de.disaai.chathilfe.R
 import de.disaai.chathilfe.clipboard.ClipboardHelper
+import de.disaai.chathilfe.model.ReplyMode
 import de.disaai.chathilfe.model.ToneOption
 
 /**
- * Classic Android View for the Input-Bar (no Compose, per D-003). Narrow start state of the
- * overlay. Two compact rows so the text field stays usable on phone width:
+ * Classic Android View for the Input-Bar (no Compose, per D-003).
  *
- *   row 1: [Ton] [================ Textfeld ================] [×]
- *   row 2: [Einfügen] ……… [Los]
+ * Messenger-native capsule v2:
+ * - top row: mode segmented control (Antworten / Schreiben) + close
+ * - input row: tone pill + text field + paste
+ * - reply-only intent chips: Zustimmen, Absagen, Entschuldigen, Nachfragen, Beruhigen, Grenze
+ * - primary Los action
  *
- * Start button is never called "Senden". Never logs or stores typed text or clipboard content.
- * Glass look via OverlayStyle / res/drawable; behavior unchanged from the visual refresh.
+ * Never logs or stores typed text, clipboard content, selected reply intents or suggestions.
  */
 class InputBarView(context: Context) : FrameLayout(context) {
 
     interface Listener {
+        fun onModeSelected(mode: ReplyMode)
         fun onToneSelected(tone: ToneOption)
-        fun onStart(text: String, tone: ToneOption)
+        fun onStart(text: String, tone: ToneOption, mode: ReplyMode, replyIntent: String?)
         fun onClose()
+    }
+
+    private enum class ReplyIntentChip(val label: String, val promptText: String) {
+        ZUSTIMMEN("Zustimmen", "zustimmen"),
+        ABSAGEN("Absagen", "absagen"),
+        ENTSCHULDIGEN("Entschuldigen", "sich entschuldigen"),
+        NACHFRAGEN("Nachfragen", "nachfragen"),
+        BERUHIGEN("Beruhigen", "beruhigen und deeskalieren"),
+        GRENZE("Grenze", "eine klare Grenze setzen"),
     }
 
     var listener: Listener? = null
 
+    private val visibleModes = listOf(ReplyMode.REPLY, ReplyMode.COMPOSE)
+    private var currentMode: ReplyMode = ReplyMode.REPLY
     private var currentTone: ToneOption = ToneOption.DEFAULT
+    private var selectedReplyIntent: ReplyIntentChip? = null
 
     private val toneButton: TextView
     private val editText: EditText
     private val toneScroll: HorizontalScrollView
+    private val replyIntentScroll: HorizontalScrollView
     private val toneChips = mutableListOf<TextView>()
+    private val segmentViews = mutableListOf<TextView>()
+    private val intentChipViews = mutableMapOf<ReplyIntentChip, TextView>()
     private val pasteButton: ImageView
-    private val startButton: ImageView
+    private val startButton: TextView
     private val statusText: TextView
 
     init {
@@ -51,57 +70,89 @@ class InputBarView(context: Context) : FrameLayout(context) {
 
         val root = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
+            setPadding(
+                dp(OverlayStyle.SPACE_M),
+                dp(OverlayStyle.SPACE_S),
+                dp(OverlayStyle.SPACE_M),
+                dp(OverlayStyle.SPACE_M),
+            )
         }
 
-        // --- Row 1: tone | text field (dominant) | close ---
+        // --- Top capsule row: [Antworten | Schreiben] … [close] ---
+        val topRow = LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+        }
+        val modeRow = LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            background = ContextCompat.getDrawable(context, R.drawable.bg_segmented)
+            contentDescription = context.getString(R.string.input_bar_mode_description)
+            setPadding(dp(OverlayStyle.SPACE_XS), dp(OverlayStyle.SPACE_XS), dp(OverlayStyle.SPACE_XS), dp(OverlayStyle.SPACE_XS))
+            layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
+        }
+        visibleModes.forEachIndexed { index, mode ->
+            val label = if (mode == ReplyMode.COMPOSE) context.getString(R.string.input_bar_mode_compose_short) else mode.label
+            val segment = TextView(context).apply {
+                OverlayStyle.applySegment(this, mode == currentMode)
+                text = label
+                setOnClickListener {
+                    if (currentMode != mode) {
+                        currentMode = mode
+                        if (mode != ReplyMode.REPLY) selectedReplyIntent = null
+                        refreshSegments()
+                        refreshReplyIntentChips()
+                        applyModeState()
+                        listener?.onModeSelected(mode)
+                    }
+                }
+                layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f).apply {
+                    marginEnd = if (index == visibleModes.lastIndex) 0 else dp(OverlayStyle.SPACE_XS)
+                }
+            }
+            segmentViews.add(segment)
+            modeRow.addView(segment)
+        }
+        val closeButton = iconButton(R.drawable.ic_close, R.string.input_bar_close_description) {
+            listener?.onClose()
+        }.apply {
+            layoutParams = LinearLayout.LayoutParams(dp(OverlayStyle.ICON_BUTTON), dp(OverlayStyle.ICON_BUTTON)).apply {
+                marginStart = dp(OverlayStyle.SPACE_S)
+            }
+        }
+        topRow.addView(modeRow)
+        topRow.addView(closeButton)
+
+        // --- Input row: tone | message/intent field | paste ---
         val inputRow = LinearLayout(context).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
-            setPadding(dp(10), dp(10), dp(6), dp(4))
+            setPadding(0, dp(OverlayStyle.SPACE_S), 0, 0)
         }
-
         toneButton = TextView(context).apply {
             OverlayStyle.applyTextPill(this)
             text = currentTone.label
             contentDescription = context.getString(R.string.input_bar_tone_button_description)
-            setOnClickListener { toneScroll.visibility = if (toneScroll.visibility == VISIBLE) GONE else VISIBLE }
+            setOnClickListener {
+                toneScroll.visibility = if (toneScroll.visibility == VISIBLE) GONE else VISIBLE
+            }
             layoutParams = LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT,
-            ).apply { marginEnd = dp(6) }
+            ).apply { marginEnd = dp(OverlayStyle.SPACE_S) }
         }
-
         editText = EditText(context).apply {
-            hint = context.getString(R.string.input_bar_hint)
             setHintTextColor(OverlayStyle.color(context, OverlayStyle.textMuted))
             setTextColor(OverlayStyle.color(context, OverlayStyle.text))
             inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
             maxLines = 3
-            minHeight = dp(40)
+            minHeight = dp(OverlayStyle.ICON_BUTTON)
             background = ContextCompat.getDrawable(context, R.drawable.bg_input_field)
-            setPadding(dp(12), dp(8), dp(12), dp(8))
-            textSize = OverlayStyle.TEXT_SIZE_BODY
+            setPadding(dp(OverlayStyle.SPACE_M), dp(OverlayStyle.SPACE_S), dp(OverlayStyle.SPACE_M), dp(OverlayStyle.SPACE_S))
+            textSize = OverlayStyle.TEXT_BODY
             layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f).apply {
-                marginStart = dp(2)
-                marginEnd = dp(4)
+                marginEnd = dp(OverlayStyle.SPACE_S)
             }
         }
-
-        val closeButton = iconButton(R.drawable.ic_close, R.string.input_bar_close_description) {
-            listener?.onClose()
-        }
-
-        inputRow.addView(toneButton)
-        inputRow.addView(editText)
-        inputRow.addView(closeButton)
-
-        // --- Row 2: paste (left) … start (right, primary accent) ---
-        val actionRow = LinearLayout(context).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER_VERTICAL
-            setPadding(dp(10), 0, dp(6), dp(10))
-        }
-
         pasteButton = iconButton(R.drawable.ic_paste, R.string.input_bar_paste_button) {
             val pasted = ClipboardHelper.readText(context)
             if (!pasted.isNullOrBlank()) {
@@ -109,24 +160,42 @@ class InputBarView(context: Context) : FrameLayout(context) {
                 editText.setSelection(editText.text.length)
             }
         }
+        inputRow.addView(toneButton)
+        inputRow.addView(editText)
+        inputRow.addView(pasteButton)
 
-        val spacer = View(context).apply {
-            layoutParams = LinearLayout.LayoutParams(0, 1, 1f)
+        // --- Reply intent chips (only visible in Antworten mode) ---
+        replyIntentScroll = HorizontalScrollView(context).apply {
+            isHorizontalScrollBarEnabled = false
+            setPadding(0, dp(OverlayStyle.SPACE_S), 0, 0)
         }
-
-        startButton = iconButton(R.drawable.ic_arrow_right, R.string.input_bar_start_button, accent = true) {
-            listener?.onStart(editText.text.toString(), currentTone)
+        val replyIntentRow = LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
         }
+        ReplyIntentChip.entries.forEach { chip ->
+            val chipView = TextView(context).apply {
+                OverlayStyle.applyChip(this, selectedReplyIntent == chip)
+                text = chip.label
+                setOnClickListener {
+                    selectedReplyIntent = if (selectedReplyIntent == chip) null else chip
+                    refreshReplyIntentChips()
+                }
+                layoutParams = LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                ).apply { marginEnd = dp(OverlayStyle.SPACE_S) }
+            }
+            intentChipViews[chip] = chipView
+            replyIntentRow.addView(chipView)
+        }
+        replyIntentScroll.addView(replyIntentRow)
 
-        actionRow.addView(pasteButton)
-        actionRow.addView(spacer)
-        actionRow.addView(startButton)
-
-        // --- Tone picker (horizontally scrollable, hidden until tone pill is tapped) ---
+        // --- Tone picker (hidden until tone pill is tapped) ---
         toneScroll = HorizontalScrollView(context).apply {
             isHorizontalScrollBarEnabled = false
             visibility = GONE
-            setPadding(dp(10), 0, dp(6), dp(6))
+            setPadding(0, dp(OverlayStyle.SPACE_S), 0, 0)
         }
         val toneRow = LinearLayout(context).apply {
             orientation = LinearLayout.HORIZONTAL
@@ -146,28 +215,55 @@ class InputBarView(context: Context) : FrameLayout(context) {
                 layoutParams = LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.WRAP_CONTENT,
                     ViewGroup.LayoutParams.WRAP_CONTENT,
-                ).apply { marginEnd = dp(6) }
+                ).apply { marginEnd = dp(OverlayStyle.SPACE_S) }
             }
             toneChips.add(chip)
             toneRow.addView(chip)
         }
         toneScroll.addView(toneRow)
 
+        // --- Action row: … Los → ---
+        val actionRow = LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL or Gravity.END
+            setPadding(0, dp(OverlayStyle.SPACE_S), 0, 0)
+        }
+        startButton = TextView(context).apply {
+            OverlayStyle.applyAccentPill(this)
+            text = context.getString(R.string.input_bar_start_button)
+            val arrowDrawable = ContextCompat.getDrawable(context, R.drawable.ic_arrow_right)?.mutate()
+            arrowDrawable?.let { DrawableCompat.setTint(it, OverlayStyle.color(context, OverlayStyle.onAccent)) }
+            setCompoundDrawablesRelativeWithIntrinsicBounds(null, null, arrowDrawable, null)
+            compoundDrawablePadding = dp(OverlayStyle.SPACE_XS)
+            setOnClickListener {
+                listener?.onStart(
+                    editText.text.toString(),
+                    currentTone,
+                    currentMode,
+                    selectedReplyIntent?.promptText,
+                )
+            }
+        }
+        actionRow.addView(View(context).apply { layoutParams = LinearLayout.LayoutParams(0, 1, 1f) })
+        actionRow.addView(startButton)
+
         statusText = TextView(context).apply {
-            setTextColor(OverlayStyle.color(context, OverlayStyle.textMuted))
-            textSize = OverlayStyle.TEXT_SIZE_HINT
-            setPadding(dp(12), 0, dp(12), dp(8))
+            OverlayStyle.applySectionLabel(this)
+            setPadding(dp(OverlayStyle.SPACE_XS), dp(OverlayStyle.SPACE_S), dp(OverlayStyle.SPACE_XS), 0)
             visibility = GONE
         }
 
+        root.addView(topRow)
         root.addView(inputRow)
-        root.addView(actionRow)
+        root.addView(replyIntentScroll)
         root.addView(toneScroll)
+        root.addView(actionRow)
         root.addView(statusText)
         addView(root)
+
+        applyModeState()
     }
 
-    /** Disables start/paste and shows a compact muted loading hint while an AI request is in flight. */
     fun setLoading(active: Boolean) {
         startButton.isEnabled = !active
         pasteButton.isEnabled = !active
@@ -176,24 +272,55 @@ class InputBarView(context: Context) : FrameLayout(context) {
         statusText.visibility = if (active) VISIBLE else GONE
     }
 
-    /** Shows a compact error message below the input row; null clears it. */
     fun showError(message: String?) {
         statusText.text = message ?: ""
         statusText.setTextColor(OverlayStyle.color(context, OverlayStyle.error))
         statusText.visibility = if (message != null) VISIBLE else GONE
     }
 
-    /** Sets the initial tone (e.g. restored from settings) without notifying the listener. */
     fun setTone(tone: ToneOption) {
         currentTone = tone
         toneButton.text = tone.label
         refreshToneChips()
     }
 
+    fun setMode(mode: ReplyMode) {
+        currentMode = if (mode in visibleModes) mode else ReplyMode.REPLY
+        if (currentMode != ReplyMode.REPLY) selectedReplyIntent = null
+        refreshSegments()
+        refreshReplyIntentChips()
+        applyModeState()
+    }
+
     fun currentText(): String = editText.text.toString()
 
+    private fun applyModeState() {
+        editText.hint = context.getString(
+            when (currentMode) {
+                ReplyMode.REPLY -> R.string.input_bar_hint_reply
+                ReplyMode.COMPOSE -> R.string.input_bar_hint
+                ReplyMode.REWRITE -> R.string.input_bar_hint
+            },
+        )
+        replyIntentScroll.visibility = if (currentMode == ReplyMode.REPLY) VISIBLE else GONE
+    }
+
+    private fun refreshSegments() {
+        segmentViews.forEachIndexed { index, view ->
+            OverlayStyle.applySegment(view, visibleModes[index] == currentMode)
+        }
+    }
+
+    private fun refreshReplyIntentChips() {
+        intentChipViews.forEach { (chip, view) ->
+            OverlayStyle.applyChip(view, selectedReplyIntent == chip)
+        }
+    }
+
     private fun refreshToneChips() {
-        toneChips.forEach { OverlayStyle.applyChip(it, it.text == currentTone.label) }
+        toneChips.forEachIndexed { index, view ->
+            OverlayStyle.applyChip(view, ToneOption.entries[index] == currentTone)
+        }
     }
 
     private fun iconButton(
@@ -205,9 +332,7 @@ class InputBarView(context: Context) : FrameLayout(context) {
         OverlayStyle.applyIconButton(this, iconRes, accent)
         contentDescription = context.getString(descriptionRes)
         setOnClickListener { onClick() }
-        layoutParams = LinearLayout.LayoutParams(dp(OverlayStyle.ICON_SIZE_DP), dp(OverlayStyle.ICON_SIZE_DP)).apply {
-            marginStart = dp(2)
-        }
+        layoutParams = LinearLayout.LayoutParams(dp(OverlayStyle.ICON_BUTTON), dp(OverlayStyle.ICON_BUTTON))
     }
 
     private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()

@@ -1,20 +1,19 @@
 <resources>
     <!-- App/Setup theme background (MainActivity/Settings window, referenced by themes.xml).
-         The overlay now uses the isolated overlay_* palette below. The former
-         surface/primary/on_background tokens were only used by the overlay drawables and
-         are therefore removed to avoid UnusedResources. -->
+         The overlay uses the isolated overlay_* palette below. -->
     <color name="chathilfe_background">#FF121212</color>
 
-    <!-- Overlay glass palette (WindowManager overlay views only). Dark translucent glass,
-         fine contour, clear light text, single accent green, soft error. No real blur:
-         the glass look comes from translucency + contour + typography. -->
+    <!-- Overlay glass palette v2 (WindowManager overlay views only). Dark translucent glass,
+         fine contour, clear light text, single accent green, soft error, layered surfaces.
+         No real blur: depth comes from translucency + contour + layered surfaces + typography. -->
     <color name="overlay_glass">#E61A1F24</color>
+    <color name="overlay_surface">#F01F2A33</color>
+    <color name="overlay_field">#B3101612</color>
     <color name="overlay_contour">#33FFFFFF</color>
+    <color name="overlay_divider">#14FFFFFF</color>
     <color name="overlay_text">#F4F7F5</color>
     <color name="overlay_text_muted">#B8C1BC</color>
     <color name="overlay_accent">#36C275</color>
     <color name="overlay_error">#FFB4AB</color>
     <color name="overlay_on_accent">#FF121212</color>
-    <!-- Calm inset surface for the text field and unselected chips (distinct from the bar/panel glass). -->
-    <color name="overlay_field">#B3101612</color>
 </resources>

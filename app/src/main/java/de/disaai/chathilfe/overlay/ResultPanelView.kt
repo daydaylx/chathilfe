@@ -21,10 +21,11 @@ import de.disaai.chathilfe.model.ToneOption
 
 /**
  * Classic Android View for the Result-Panel (no Compose, per D-003). Shows exactly one of the
- * 3 suggestions at a time, with pager navigation, copy, and a global/temporary retry area.
+ * suggestions at a time, with pager navigation, copy, and a global/temporary retry area.
  * Never persists or logs suggestion text, retry selections, or clipboard content.
  *
- * Glass look via OverlayStyle / res/drawable. Navigation, copy and retry behavior unchanged.
+ * Messenger-native capsule: compact pager row, readable suggestion body, primary Copy action,
+ * then a small retry strip. No large branded card/header.
  */
 class ResultPanelView(context: Context) : FrameLayout(context) {
 
@@ -51,10 +52,10 @@ class ResultPanelView(context: Context) : FrameLayout(context) {
 
         val root = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(dp(14), dp(12), dp(14), dp(12))
+            setPadding(dp(OverlayStyle.SPACE_M), dp(OverlayStyle.SPACE_M), dp(OverlayStyle.SPACE_M), dp(OverlayStyle.SPACE_M))
         }
 
-        // --- Header: ‹  |  1/3 (pill)  |  ›  |  close ---
+        // --- Pager row: ‹ 1/3 › … close ---
         val headerRow = LinearLayout(context).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
@@ -65,23 +66,28 @@ class ResultPanelView(context: Context) : FrameLayout(context) {
         positionLabel = TextView(context).apply {
             OverlayStyle.applyTextPill(this)
             gravity = Gravity.CENTER
-            layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f).apply {
-                marginStart = dp(6)
-                marginEnd = dp(6)
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+            ).apply {
+                marginStart = dp(OverlayStyle.SPACE_XS)
+                marginEnd = dp(OverlayStyle.SPACE_XS)
             }
         }
         val nextButton = iconButton(R.drawable.ic_chevron_right, R.string.result_panel_next_description) {
             pager.next(); refreshBody()
         }
+        val spacer = View(context).apply { layoutParams = LinearLayout.LayoutParams(0, 1, 1f) }
         val closeButton = iconButton(R.drawable.ic_close, R.string.result_panel_close_description) {
             listener?.onClose()
         }
         headerRow.addView(previousButton)
         headerRow.addView(positionLabel)
         headerRow.addView(nextButton)
+        headerRow.addView(spacer)
         headerRow.addView(closeButton)
 
-        // --- Body: capped, internally scrollable suggestion text ---
+        // --- Suggestion body: capped and internally scrollable ---
         bodyText = TextView(context).apply {
             OverlayStyle.applyBodyText(this)
             layoutParams = LinearLayout.LayoutParams(
@@ -90,13 +96,13 @@ class ResultPanelView(context: Context) : FrameLayout(context) {
             )
         }
         val bodyScroll = MaxHeightScrollView(context).apply {
-            maxHeightPx = (resources.displayMetrics.heightPixels * 0.4f).toInt()
+            maxHeightPx = (resources.displayMetrics.heightPixels * (OverlayStyle.BODY_MAX_HEIGHT_FRACTION_PERCENT / 100f)).toInt()
             isVerticalScrollBarEnabled = true
             addView(bodyText)
             layoutParams = LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT,
-            )
+            ).apply { topMargin = dp(OverlayStyle.SPACE_S) }
         }
 
         // --- Copy: primary accent pill with copy icon + label ---
@@ -107,7 +113,7 @@ class ResultPanelView(context: Context) : FrameLayout(context) {
             text = context.getString(R.string.result_panel_copy_button)
             gravity = Gravity.CENTER
             setCompoundDrawablesRelativeWithIntrinsicBounds(copyDrawable, null, null, null)
-            compoundDrawablePadding = dp(8)
+            compoundDrawablePadding = dp(OverlayStyle.SPACE_S)
             setOnClickListener {
                 val current = suggestions.getOrNull(pager.index) ?: return@setOnClickListener
                 ClipboardHelper.writeText(context, current.text)
@@ -116,32 +122,22 @@ class ResultPanelView(context: Context) : FrameLayout(context) {
             layoutParams = LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT,
-            ).apply {
-                topMargin = dp(8)
-            }
+            ).apply { topMargin = dp(OverlayStyle.SPACE_S) }
         }
 
-        // --- Retry: global + compact ("Nicht passend?" … Nochmal) ---
+        // --- Retry: compact strip ---
         val retryRow = LinearLayout(context).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
-            layoutParams = LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-            ).apply { topMargin = dp(10) }
+            setPadding(0, dp(OverlayStyle.SPACE_M), 0, 0)
         }
         retryRow.addView(
             TextView(context).apply {
+                OverlayStyle.applySectionLabel(this)
                 text = context.getString(R.string.result_panel_retry_prompt)
-                setTextColor(OverlayStyle.color(context, OverlayStyle.textMuted))
-                textSize = OverlayStyle.TEXT_SIZE_HINT
             },
         )
-        retryRow.addView(
-            View(context).apply {
-                layoutParams = LinearLayout.LayoutParams(0, 1, 1f)
-            },
-        )
+        retryRow.addView(View(context).apply { layoutParams = LinearLayout.LayoutParams(0, 1, 1f) })
         retryRow.addView(
             TextView(context).apply {
                 OverlayStyle.applyTextPill(this)
@@ -150,17 +146,13 @@ class ResultPanelView(context: Context) : FrameLayout(context) {
                 layoutParams = LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.WRAP_CONTENT,
                     ViewGroup.LayoutParams.WRAP_CONTENT,
-                ).apply { marginStart = dp(8) }
+                ).apply { marginStart = dp(OverlayStyle.SPACE_S) }
             },
         )
 
-        // --- Change chips: horizontally scrollable, global, max 1-2 active ---
         val chipScroll = HorizontalScrollView(context).apply {
             isHorizontalScrollBarEnabled = false
-            layoutParams = LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-            ).apply { topMargin = dp(8) }
+            setPadding(0, dp(OverlayStyle.SPACE_S), 0, 0)
         }
         val chipRow = LinearLayout(context).apply {
             orientation = LinearLayout.HORIZONTAL
@@ -176,7 +168,7 @@ class ResultPanelView(context: Context) : FrameLayout(context) {
                 layoutParams = LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.WRAP_CONTENT,
                     ViewGroup.LayoutParams.WRAP_CONTENT,
-                ).apply { marginEnd = dp(6) }
+                ).apply { marginEnd = dp(OverlayStyle.SPACE_S) }
             }
             chipViews[chip] = chipView
             chipRow.addView(chipView)
@@ -184,9 +176,8 @@ class ResultPanelView(context: Context) : FrameLayout(context) {
         chipScroll.addView(chipRow)
 
         statusText = TextView(context).apply {
-            setTextColor(OverlayStyle.color(context, OverlayStyle.textMuted))
-            textSize = OverlayStyle.TEXT_SIZE_HINT
-            setPadding(0, dp(8), 0, 0)
+            OverlayStyle.applySectionLabel(this)
+            setPadding(0, dp(OverlayStyle.SPACE_S), 0, 0)
             visibility = GONE
         }
 
@@ -199,7 +190,6 @@ class ResultPanelView(context: Context) : FrameLayout(context) {
         addView(root)
     }
 
-    /** Replaces the shown suggestions and resets pager/retry state. */
     fun show(suggestions: List<ReplySuggestion>, originalText: String, tone: ToneOption) {
         this.suggestions = suggestions
         this.originalText = originalText
@@ -210,7 +200,6 @@ class ResultPanelView(context: Context) : FrameLayout(context) {
         refreshChips()
     }
 
-    /** Swaps suggestions for a retry while keeping stored text/tone; resets pager + chips. */
     fun replaceSuggestions(suggestions: List<ReplySuggestion>) {
         this.suggestions = suggestions
         pager.reset(suggestions.size)
@@ -219,14 +208,12 @@ class ResultPanelView(context: Context) : FrameLayout(context) {
         refreshChips()
     }
 
-    /** Compact muted loading hint during a retry; previous suggestions stay visible. */
     fun setLoading(active: Boolean) {
         statusText.text = if (active) context.getString(R.string.result_panel_loading) else ""
         statusText.setTextColor(OverlayStyle.color(context, OverlayStyle.textMuted))
         statusText.visibility = if (active) VISIBLE else GONE
     }
 
-    /** Compact error message in error color (previous suggestions stay visible); null clears it. */
     fun showError(message: String?) {
         statusText.text = message ?: ""
         statusText.setTextColor(OverlayStyle.color(context, OverlayStyle.error))
@@ -254,7 +241,7 @@ class ResultPanelView(context: Context) : FrameLayout(context) {
         OverlayStyle.applyIconButton(this, iconRes)
         contentDescription = context.getString(descriptionRes)
         setOnClickListener { onClick() }
-        layoutParams = LinearLayout.LayoutParams(dp(OverlayStyle.ICON_SIZE_DP), dp(OverlayStyle.ICON_SIZE_DP))
+        layoutParams = LinearLayout.LayoutParams(dp(OverlayStyle.ICON_BUTTON), dp(OverlayStyle.ICON_BUTTON))
     }
 
     private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
