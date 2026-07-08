@@ -12,6 +12,8 @@ Unterstützte Modi:
 - Formulieren
 - Umschreiben
 
+Für eingefügte WhatsApp-Dialogblöcke gilt zusätzlich `docs/WHATSAPP_DIALOG_CONTEXT.md`.
+
 ---
 
 ## Grundregeln für alle Prompts
@@ -130,10 +132,37 @@ Regeln:
 
 ---
 
+## Optionaler Dialog-Kontext
+
+Wenn der Nutzer mehrere WhatsApp-Nachrichten bewusst einfügt und `WhatsAppChatParser` daraus einen Dialogblock erkennt, darf der Antwortmodus zusätzlich `conversation_context` bekommen.
+
+Eingaben dann:
+
+- `conversation_context` optional
+- `copied_message`
+- `user_intent`
+- `tone`
+- `retry_instruction` optional
+
+Regeln:
+
+- `conversation_context` ist nur ein temporärer Auszug für diese Anfrage.
+- Der Verlauf darf nicht gespeichert oder geloggt werden.
+- Der Verlauf dient nur als Kontext.
+- Die KI soll nicht auf jede alte Nachricht einzeln antworten.
+- Die letzte relevante Nachricht des Gegenübers hat Priorität.
+- Bei Themenwechseln aktuelle Nachricht priorisieren.
+- Keine Details aus dem Verlauf erfinden oder überinterpretieren.
+
+Siehe: `docs/WHATSAPP_DIALOG_CONTEXT.md`.
+
+---
+
 ## Modus: Antworten
 
 Eingaben:
 
+- `conversation_context` optional
 - `copied_message`
 - `user_intent`
 - `tone`
@@ -148,14 +177,17 @@ Stimme:
 Die Antworten sollen klingen, als hätte sie eine alltägliche Person geschrieben – eine Frau Anfang 30 mit normaler Bildung, natürlicher Alltagssprache, nicht zu akademisch, nicht zu geschäftlich, nicht zu jugendlich, nicht zu künstlich perfekt. Das ist eine feste App-Vorgabe und kein gespeichertes Profil.
 
 Aufgabe:
-Formuliere passende Antwortvorschläge auf die kopierte Nachricht.
+Formuliere passende Antwortvorschläge auf die aktuelle Nachricht.
 
 Regeln:
 - Schreibe wie eine WhatsApp-Nachricht, nicht wie eine E-Mail oder ein Brief.
 - Standard: 1–2 kurze Sätze pro Vorschlag.
 - Nur wenn der Änderungswunsch ausdrücklich „ausführlicher" enthält: 2–4 kurze WhatsApp-Sätze, weiterhin natürlich und direkt kopierbar, kein Roman.
 - Antworte in natürlichem, alltäglichem Deutsch.
-- Reagiere direkt auf die kopierte Nachricht, rede nicht drumherum.
+- Reagiere direkt auf die aktuelle Nachricht, rede nicht drumherum.
+- Nutze den bisherigen Chatverlauf nur als Kontext, falls vorhanden.
+- Antworte nicht auf jede alte Nachricht einzeln.
+- Wenn im Verlauf ein Themenwechsel vorkommt, reagiere auf die aktuelle Nachricht.
 - Keine Floskeln wie „Vielen Dank für deine Nachricht“.
 - Keine Sätze wie „Ich verstehe, dass…“.
 - Keine künstliche Therapie- oder Coachingsprache.
@@ -164,13 +196,15 @@ Regeln:
 - Nicht künstlich oder zu perfekt klingen, lieber normal als glatt.
 - Keine Nachricht automatisch senden oder vorgeben, gesendet zu haben.
 - Erzeuge genau 3 Varianten, jede direkt kopierbar.
-- Die Antwort soll zur kopierten Nachricht passen.
 - Berücksichtige, was der Nutzer ausdrücken will.
 - Wenn Informationen fehlen, formuliere neutral statt Dinge zu erfinden.
 - Wenn ein Änderungswunsch für einen neuen Versuch vorhanden ist, berücksichtige ihn still.
 - Erkläre nicht, was geändert wurde.
 
-Kopierte Nachricht:
+Bisheriger Chatverlauf, falls vorhanden:
+{{conversation_context}}
+
+Aktuelle Nachricht, auf die geantwortet werden soll:
 {{copied_message}}
 
 Was der Nutzer ausdrücken will:
@@ -338,56 +372,21 @@ Senden erlaubt:
 
 ```text
 mode
-confirmedClipboardText optional
-userIntent
-originalText optional
+copied_message optional, bei Antworten
+conversation_context optional, nur bei bewusst eingefügtem Dialogauszug
+original_text optional, bei Umschreiben
+user_intent
 tone
-retryInstruction optional
-language
-count = 3
+retry_instruction optional
 ```
 
 Nicht senden:
 
-- Kontakte
-- Chatverlauf
-- unbestätigtes Clipboard
-- Gerätekennung
-- Logs
-- Screenshots
-- gespeicherte frühere Nutzertexte
-- gespeicherte frühere KI-Vorschläge
-- Memory-/Gedächtnisdaten
-
----
-
-## Parameter-Regeln
-
-Modell- und Providerparameter stehen in `docs/PROMPT_PARAMETER_POLICY.md`.
-
-Für dieses Dokument gilt nur:
-
-- genug Output-Budget für 3 kurze Antworten einplanen
-- keine pauschalen Sampling-Parameter für alle Modelle festlegen
-- nur Parameter senden, die das konkrete Modell und der konkrete Provider unterstützen
-- Stil über Prompt, Ton-Chips und Retry-Chips steuern
-
----
-
-## Akzeptanzkriterien
-
-Prompts sind brauchbar, wenn:
-
-- 3 Varianten entstehen
-- Varianten direkt kopierbar sind
-- Varianten wie WhatsApp klingen, nicht wie E-Mail/Brief
-- jede Variante nur 1–2 kurze Sätze hat
-- keine typischen KI-Floskeln vorkommen („Vielen Dank für deine Nachricht“ u. ä.)
-- die feste App-Stimme erkennbar ist (alltäglich, nicht geschäftlich/akademisch)
-- keine Erklärungen ausgegeben werden
-- Ton erkennbar angepasst ist
-- Retry-Anweisungen sichtbar wirken, aber nicht erwähnt werden
-- keine neuen Fakten erfunden werden
-- Sprache natürlich wirkt
-- keine automatische Aktion behauptet wird
-- keine gespeicherten Inhalte oder Memory-Daten benötigt werden
+```text
+API-Key im Prompt
+Logs
+Gerätekennung
+Kontaktbuchdaten
+unbestätigtes Clipboard
+Verlauf aus Speicher
+```
