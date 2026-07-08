@@ -313,6 +313,65 @@ Erwartet:
 
 ---
 
+## Antwortqualitäts-Testset (A/B)
+
+Quelle: `docs/RESPONSE_QUALITY_AUDIT.md`. Dieses Testset ist die Grundlage, um
+Prompt-/Persona-Kalibrierung zu bewerten und später Modelle zu vergleichen
+(offener Punkt in `docs/DECISIONS.md`). Es ist eine **manuelle** Bewertungsliste,
+kein automatisiertes A/B-Framework.
+
+### Bewertungsraster (jedes Kriterium 1–5)
+
+| Kriterium | Frage |
+|---|---|
+| Natürlichkeit | Klingt es wie WhatsApp? |
+| Kürze | Ist es kurz genug (1–2 Sätze)? |
+| Passung | Reagiert es wirklich auf den Kontext? |
+| Ton | Passt der gewählte Ton? |
+| Nicht-KI-Gefühl | Klingt es nicht nach ChatGPT/Brief/E-Mail? |
+| Kopierbarkeit | Kann man es direkt senden? |
+
+Ein Modellwechsel (siehe offener Punkt in DECISIONS.md) erfolgt nur, wenn ein
+Kandidat im Durchschnitt **deutlich** besser abschneidet als Sonnet 5 nach
+Prompt-Fix.
+
+### Antworten (REPLY) — 8 Fälle
+
+1. kopiert: „Hab gehört ihr haut morgen ab. Können wir uns nochmal treffen oder passt das eher schlecht?“ / Absicht: sagen dass es knapp ist aber vielleicht kurz geht / Erwartung: kurz, normal, nicht zu förmlich.
+2. kopiert: „Warum meldest du dich nie richtig?“ / Absicht: sagen dass es nicht böse gemeint war und ich gerade viel um die Ohren habe / Erwartung: ruhig, nicht defensiv, nicht therapeutisch.
+3. kopiert: „Kannst du mir das heute noch schicken?“ / Absicht: sagen ja später wenn ich zuhause bin / Erwartung: kurz und alltagstauglich.
+4. kopiert: „Bist du noch sauer wegen gestern?“ / Absicht: klar machen dass nicht mehr, ohne Drama / Erwartung: normal, nicht übererklärend.
+5. kopiert: „Wir sehen uns doch heute, oder?“ / Absicht: absagen aber freundlich bleiben / Erwartung: kurz, nicht zu entschuldigend.
+6. kopiert: „Hast du das eigentlich schon erledigt?“ / Absicht: nachfragen, ob es klappt, ohne Druck / Erwartung: locker, nicht fordernd.
+7. kopiert: „Alles klar bei dir?“ / Absicht: kurz beruhigen, dass alles ok ist / Erwartung: ganz normaler Chat-Satz.
+8. kopiert: „Können wir später telefonieren?“ / Absicht: sagen dass es gerade nicht geht, sondern später / Erwartung: direkt, freundlich, kurz.
+
+### Formulieren (COMPOSE) — 6 Fälle
+
+9. Absicht: fragen ob sie gut angekommen ist / Erwartung: normale kurze WhatsApp-Frage.
+10. Absicht: absagen weil ich zu müde bin, aber freundlich bleiben / Erwartung: nicht zu entschuldigend, nicht zu förmlich.
+11. Absicht: jemandem alles Gute zum Geburtstag wünschen, ohne kitschig zu sein / Erwartung: warm, aber kurz.
+12. Absicht: nachfragen, ob am Wochenende noch was geplant ist / Erwartung: locker, unaufdringlich.
+13. Absicht: mich für etwas Kleinigkeiten bedanken / Erwartung: kurz und ehrlich, nicht formell.
+14. Absicht: vorschlagen, sich nächste Woche mal zu treffen / Erwartung: direkt, ohne lange Vorrede.
+
+### Umschreiben (REWRITE) — 4 Fälle (Modus aktuell ausgeblendet, nur für Testzwecke)
+
+15. Original: „Keine Ahnung, mach halt was du willst.“ / Änderung: sanfter, aber trotzdem genervt / Erwartung: Kern bleibt, weniger hart.
+16. Original: „Schon gut, ist ja nicht so wichtig.“ / Änderung: klarer sagen was man will / Erwartung: konkreter, nicht passiv-aggressiv.
+17. Original: „Ja klar, kein Problem, mache ich sofort.“ / Änderung: ehrlicher, wenn es eigentlich nicht passt / Erwartung: höflich, aber ehrlich.
+18. Original: „Mir egal, such du aus.“ / Änderung: mitentscheiden, ohne Druck / Erwartung: aktiv, freundlich.
+
+### Negativ-Leitplanken (müssen bei jedem Fall erfüllt sein)
+
+- keine Floskeln wie „Vielen Dank für deine Nachricht“
+- keine Sätze wie „Ich verstehe, dass…“
+- keine E-Mail-/Brief-/Therapiesprache
+- maximal 1–2 kurze Sätze pro Vorschlag
+- die feste App-Stimme erkennbar (alltäglich, nicht geschäftlich/akademisch)
+
+---
+
 ## Retry-Tests
 
 UI-Test:
@@ -430,6 +489,7 @@ Prüfen gegen `docs/VISUAL_SCOPE.md`:
 | Vorschlagswechsel | ja |
 | Clipboard bewusst übernehmen | ja |
 | alle 3 Modi | ja |
+| Antwortqualität (A/B-Testset) | ja, manuell |
 | Retry-Bereich | ja |
 | KI-Fehlerfälle | ja |
 | Kopieren sichtbarer Vorschlag | ja |

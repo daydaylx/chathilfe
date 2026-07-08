@@ -8,6 +8,23 @@ Auslöser: Die App funktioniert technisch auf den ersten Blick, aber die generie
 
 Dieses Dokument bewertet die wahrscheinlichen Ursachen, den aktuellen Codepfad, die Ziel-Persona und eine Modellstrategie für natürlichere WhatsApp-nahe Antworten.
 
+### Umsetzungsstand (Stand 2026-07-08)
+
+Die fünf Qualitätsfehler werden wie folgt adressiert:
+
+| # | Fehler | Status |
+|---|---|---|
+| 1 | Modus und Kontext (sehr hoch) | **erledigt** durch Overlay-Redesign: `buildRequest()` mappt `REPLY→copiedMessage`, `COMPOSE→userIntent`, Default-Modus `REPLY` |
+| 2 | Clipboard ist kein Antwort-Kontext | **erledigt**: Eingabefeld = kopierte Nachricht (`copiedMessage`), Antwort-Chips = `userIntent`; UX folgt der Capsule-Ausrichtung |
+| 3 | Prompts zu allgemein | **erledigt**: härtere WhatsApp-Stilregeln in `PromptBuilder`/`docs/PROMPTS.md` (1–2 Sätze, keine Floskeln, keine Therapiesprache) |
+| 4 | Keine Persona | **entschieden als D-013**: feste App-Stimme im Prompt, klar abgegrenzt vom verbotenen Profilbegriff; dokumentiert in `docs/PRIVACY_SECURITY.md` |
+| 5 | Claude Sonnet 5 zu professionell | **offen** (siehe offener Punkt in `docs/DECISIONS.md`): Modell bleibt gepinnt, A/B nach Testset |
+
+Pflicht 1–5 aus „Konkrete nächste Umsetzung / Phase 7.5“ sind damit erledigt bzw.
+entschieden; Testset (Punkt 6) liegt in `docs/TEST_PLAN.md` (Abschnitt
+„Antwortqualitäts-Testset (A/B)“). Ein lokaler Modell-Testschalter (Punkt 7)
+ist im MVP nicht umgesetzt — der A/B-Vergleich läuft manuell über das Testset.
+
 ---
 
 ## Kurzurteil
