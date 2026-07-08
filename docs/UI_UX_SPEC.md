@@ -267,7 +267,7 @@ Anzeige im Ergebnis-Panel:
 Nicht passend?
 [Nochmal]
 [Kürzer] [Lockerer] [Direkter]
-[Sanfter] [Klarer] [Weniger künstlich]
+[Sanfter] [Klarer] [Weniger künstlich] [Ausführlicher]
 ```
 
 Regeln:
@@ -294,6 +294,7 @@ Zulässige Änderungs-Chips:
 | Sanfter | vorsichtiger, weniger hart |
 | Klarer | weniger schwammig, konkreter formuliert |
 | Weniger künstlich | keine typischen KI-Formulierungen, natürlicher Chatstil |
+| Ausführlicher | etwas ausführlicher, 2–4 natürliche WhatsApp-Sätze, aber kein Roman |
 
 ---
 

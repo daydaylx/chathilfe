@@ -8,6 +8,7 @@ import android.widget.FrameLayout
 import android.widget.HorizontalScrollView
 import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.core.content.ContextCompat
@@ -46,6 +47,8 @@ class ResultPanelView(context: Context) : FrameLayout(context) {
     private val positionLabel: TextView
     private val bodyText: TextView
     private val statusText: TextView
+    private val retryButton: TextView
+    private val retryProgress: ProgressBar
 
     init {
         background = ContextCompat.getDrawable(context, R.drawable.bg_result_panel)
@@ -138,17 +141,25 @@ class ResultPanelView(context: Context) : FrameLayout(context) {
             },
         )
         retryRow.addView(View(context).apply { layoutParams = LinearLayout.LayoutParams(0, 1, 1f) })
-        retryRow.addView(
-            TextView(context).apply {
-                OverlayStyle.applyTextPill(this)
-                text = context.getString(R.string.result_panel_retry_button)
-                setOnClickListener { onRetry() }
-                layoutParams = LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.WRAP_CONTENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT,
-                ).apply { marginStart = dp(OverlayStyle.SPACE_S) }
-            },
-        )
+        retryProgress = ProgressBar(context, null, android.R.attr.progressBarStyleSmall).apply {
+            indeterminateTintList = android.content.res.ColorStateList.valueOf(OverlayStyle.color(context, OverlayStyle.text))
+            visibility = GONE
+            layoutParams = LinearLayout.LayoutParams(
+                dp(OverlayStyle.ICON_SM),
+                dp(OverlayStyle.ICON_SM),
+            ).apply { marginStart = dp(OverlayStyle.SPACE_S) }
+        }
+        retryRow.addView(retryProgress)
+        retryButton = TextView(context).apply {
+            OverlayStyle.applyTextPill(this)
+            text = context.getString(R.string.result_panel_retry_button)
+            setOnClickListener { onRetry() }
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+            ).apply { marginStart = dp(OverlayStyle.SPACE_S) }
+        }
+        retryRow.addView(retryButton)
 
         val chipScroll = HorizontalScrollView(context).apply {
             isHorizontalScrollBarEnabled = false
@@ -209,6 +220,16 @@ class ResultPanelView(context: Context) : FrameLayout(context) {
     }
 
     fun setLoading(active: Boolean) {
+        retryButton.isEnabled = !active
+        retryButton.alpha = if (active) 0.5f else 1f
+        retryButton.text = context.getString(
+            if (active) R.string.result_panel_retry_button_loading else R.string.result_panel_retry_button,
+        )
+        retryProgress.visibility = if (active) VISIBLE else GONE
+        chipViews.values.forEach {
+            it.isEnabled = !active
+            it.alpha = if (active) 0.5f else 1f
+        }
         statusText.text = if (active) context.getString(R.string.result_panel_loading) else ""
         statusText.setTextColor(OverlayStyle.color(context, OverlayStyle.textMuted))
         statusText.visibility = if (active) VISIBLE else GONE

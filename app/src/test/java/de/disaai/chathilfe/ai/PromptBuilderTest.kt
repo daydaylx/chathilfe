@@ -89,7 +89,22 @@ class PromptBuilderTest {
     fun `hardened whatsapp style rules are present`() {
         val prompt = PromptBuilder.build(baseRequest(mode = ReplyMode.COMPOSE))
         assertTrue(prompt.contains("wie eine WhatsApp-Nachricht, nicht wie eine E-Mail oder ein Brief"))
-        assertTrue(prompt.contains("Maximal 1–2 kurze Sätze"))
+        assertTrue(prompt.contains("Standard: 1–2 kurze Sätze"))
+    }
+
+    @Test
+    fun `default length stays short and does not mention ausfuehrlicher wording`() {
+        val prompt = PromptBuilder.build(baseRequest())
+        assertTrue(prompt.contains("Standard: 1–2 kurze Sätze pro Vorschlag."))
+        assertFalse(prompt.contains("etwas ausführlicher, 2–4 natürliche WhatsApp-Sätze, aber kein Roman"))
+    }
+
+    @Test
+    fun `ausfuehrlicher chip adds longer-form retry wording`() {
+        val prompt = PromptBuilder.build(
+            baseRequest(retryInstructions = setOf(RetryInstruction.AUSFUEHRLICHER))
+        )
+        assertTrue(prompt.contains("etwas ausführlicher, 2–4 natürliche WhatsApp-Sätze, aber kein Roman"))
     }
 
     @Test
@@ -136,6 +151,20 @@ class PromptBuilderTest {
         assertTrue("KUERZER missing", idxKuerzer >= 0)
         assertTrue("KLARER missing", idxKlarer >= 0)
         assertTrue("ordinal order broken", idxKuerzer < idxKlarer)
+    }
+
+    @Test
+    fun `ausfuehrlicher combined with another chip sorts after it by ordinal`() {
+        val prompt = PromptBuilder.build(
+            baseRequest(
+                retryInstructions = setOf(RetryInstruction.AUSFUEHRLICHER, RetryInstruction.KUERZER)
+            )
+        )
+        val idxKuerzer = prompt.indexOf("kompakter, weniger Wörter")
+        val idxAusfuehrlicher = prompt.indexOf("etwas ausführlicher, 2–4 natürliche WhatsApp-Sätze, aber kein Roman")
+        assertTrue("KUERZER missing", idxKuerzer >= 0)
+        assertTrue("AUSFUEHRLICHER missing", idxAusfuehrlicher >= 0)
+        assertTrue("ordinal order broken", idxKuerzer < idxAusfuehrlicher)
     }
 
     @Test

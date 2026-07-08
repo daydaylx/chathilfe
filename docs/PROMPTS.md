@@ -118,6 +118,7 @@ Zulässige Werte für `retry_instruction`:
 | sanfter | vorsichtiger, weniger hart |
 | klarer | weniger schwammig, konkreter formuliert |
 | weniger künstlich | keine typischen KI-Formulierungen, natürlicher Chatstil |
+| ausführlicher | etwas ausführlicher, 2–4 natürliche WhatsApp-Sätze, aber kein Roman |
 
 Regeln:
 
@@ -151,7 +152,8 @@ Formuliere passende Antwortvorschläge auf die kopierte Nachricht.
 
 Regeln:
 - Schreibe wie eine WhatsApp-Nachricht, nicht wie eine E-Mail oder ein Brief.
-- Maximal 1–2 kurze Sätze pro Vorschlag.
+- Standard: 1–2 kurze Sätze pro Vorschlag.
+- Nur wenn der Änderungswunsch ausdrücklich „ausführlicher" enthält: 2–4 kurze WhatsApp-Sätze, weiterhin natürlich und direkt kopierbar, kein Roman.
 - Antworte in natürlichem, alltäglichem Deutsch.
 - Reagiere direkt auf die kopierte Nachricht, rede nicht drumherum.
 - Keine Floskeln wie „Vielen Dank für deine Nachricht“.
@@ -209,7 +211,8 @@ Formuliere aus dem Wunsch des Nutzers 3 sendbare Chatnachrichten.
 
 Regeln:
 - Schreibe wie eine WhatsApp-Nachricht, nicht wie eine E-Mail oder ein Brief.
-- Maximal 1–2 kurze Sätze pro Vorschlag.
+- Standard: 1–2 kurze Sätze pro Vorschlag.
+- Nur wenn der Änderungswunsch ausdrücklich „ausführlicher" enthält: 2–4 kurze WhatsApp-Sätze, weiterhin natürlich und direkt kopierbar, kein Roman.
 - Natürliches, alltägliches Deutsch, wie Menschen wirklich schreiben.
 - Keine Floskeln wie „Vielen Dank für deine Nachricht“.
 - Keine Sätze wie „Ich verstehe, dass…“.
@@ -262,7 +265,8 @@ Schreibe den vorhandenen Text passend um.
 
 Regeln:
 - Schreibe wie eine WhatsApp-Nachricht, nicht wie eine E-Mail oder ein Brief.
-- Maximal 1–2 kurze Sätze pro Vorschlag.
+- Standard: 1–2 kurze Sätze pro Vorschlag.
+- Nur wenn der Änderungswunsch ausdrücklich „ausführlicher" enthält: 2–4 kurze WhatsApp-Sätze, weiterhin natürlich und direkt kopierbar, kein Roman.
 - Bedeutung möglichst erhalten.
 - Ton gemäß Vorgabe anpassen.
 - Keine Floskeln wie „Vielen Dank für deine Nachricht“.

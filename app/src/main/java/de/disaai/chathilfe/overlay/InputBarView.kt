@@ -10,6 +10,7 @@ import android.widget.FrameLayout
 import android.widget.HorizontalScrollView
 import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.DrawableCompat
@@ -63,6 +64,7 @@ class InputBarView(context: Context) : FrameLayout(context) {
     private val intentChipViews = mutableMapOf<ReplyIntentChip, TextView>()
     private val pasteButton: ImageView
     private val startButton: TextView
+    private val startProgress: ProgressBar
     private val statusText: TextView
 
     init {
@@ -244,7 +246,16 @@ class InputBarView(context: Context) : FrameLayout(context) {
                 )
             }
         }
+        startProgress = ProgressBar(context, null, android.R.attr.progressBarStyleSmall).apply {
+            indeterminateTintList = android.content.res.ColorStateList.valueOf(OverlayStyle.color(context, OverlayStyle.onAccent))
+            visibility = GONE
+            layoutParams = LinearLayout.LayoutParams(
+                dp(OverlayStyle.ICON_SM),
+                dp(OverlayStyle.ICON_SM),
+            ).apply { marginEnd = dp(OverlayStyle.SPACE_S) }
+        }
         actionRow.addView(View(context).apply { layoutParams = LinearLayout.LayoutParams(0, 1, 1f) })
+        actionRow.addView(startProgress)
         actionRow.addView(startButton)
 
         statusText = TextView(context).apply {
@@ -266,6 +277,10 @@ class InputBarView(context: Context) : FrameLayout(context) {
 
     fun setLoading(active: Boolean) {
         startButton.isEnabled = !active
+        startButton.text = context.getString(
+            if (active) R.string.input_bar_start_button_loading else R.string.input_bar_start_button,
+        )
+        startProgress.visibility = if (active) VISIBLE else GONE
         pasteButton.isEnabled = !active
         statusText.text = if (active) context.getString(R.string.input_bar_loading) else ""
         statusText.setTextColor(OverlayStyle.color(context, OverlayStyle.textMuted))
