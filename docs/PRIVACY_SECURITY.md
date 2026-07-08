@@ -17,6 +17,7 @@ Erlaubt:
 - Nutzer tippt eine Absicht ein
 - Nutzer öffnet das ReplyPanel bewusst
 - Nutzer bestätigt eine kopierte Nachricht
+- Nutzer fügt bewusst einen kurzen WhatsApp-Dialogauszug ein
 - Nutzer startet die KI-Anfrage bewusst
 - Nutzer kopiert einen Vorschlag bewusst
 - Nutzer startet einen neuen Versuch bewusst
@@ -69,6 +70,9 @@ Lokal speichern erlaubt:
 Nur flüchtig im Speicher erlaubt:
 
 - bestätigte kopierte Nachricht
+- bewusst eingefügter kurzer WhatsApp-Dialogauszug
+- daraus abgeleiteter `ParsedChatContext`
+- daraus abgeleiteter temporärer `conversationContext`
 - Nutzerabsicht
 - Originaltext für Umschreiben
 - generierte Vorschläge
@@ -78,7 +82,7 @@ Nur flüchtig im Speicher erlaubt:
 Verboten:
 
 - API-Key in DataStore
-- vollständige WhatsApp-Chats
+- automatisch ausgelesene oder vollständige WhatsApp-Chats
 - Kontakte
 - Telefonnummern aus Kontaktbuch
 - Medien
@@ -92,8 +96,34 @@ Verboten:
 - gespeicherte generierte Vorschläge
 - gespeicherter Antwortverlauf
 - gespeicherte Retry-Anweisungen
+- gespeicherte Dialogauszüge oder Chatverläufe
 - Memory-/Gedächtnisdatenbank
 - Personen- oder Beziehungsprofile
+
+---
+
+## Bewusst eingefügte Dialogauszüge
+
+Ein kurzer WhatsApp-Dialogauszug darf nur verarbeitet werden, wenn der Nutzer ihn bewusst einfügt oder übernimmt.
+
+Erlaubt:
+
+- Dialogblock in der aktuellen Anfrage parsen
+- Sprecher, Datum/Uhrzeit und Nachrichtentext transient strukturieren
+- letzte relevante Nachricht als Antwortanlass bestimmen
+- vorherige Nachrichten als kompakten Kontext an die KI senden
+
+Verboten:
+
+- Dialogauszug speichern
+- Dialogauszug loggen
+- Namen aus dem Auszug speichern
+- daraus ein Kontakt-, Beziehungs- oder Nutzerprofil bauen
+- spätere Anfragen mit alten Dialogauszügen anreichern
+- WhatsApp automatisch lesen
+- Clipboard dauerhaft überwachen
+
+Siehe: `docs/WHATSAPP_DIALOG_CONTEXT.md`.
 
 ---
 
@@ -192,6 +222,7 @@ Eine KI-Anfrage darf enthalten:
 
 - gewählter Modus
 - bestätigter kopierter oder manuell eingefügter Text optional
+- bewusst eingefügter kurzer Dialogauszug als `conversationContext` optional
 - Nutzerabsicht
 - Ton
 - Sprache
@@ -200,7 +231,7 @@ Eine KI-Anfrage darf enthalten:
 
 Nicht senden:
 
-- komplette Chatverläufe
+- automatisch ausgelesene oder gespeicherte vollständige Chatverläufe
 - unbestätigtes Clipboard
 - Kontakte
 - Gerätekennung
@@ -219,61 +250,17 @@ KI-Anfragen dürfen nur nach Tippen auf „Vorschläge erstellen“ oder bewusst
 
 ## Retry-Datenschutz
 
-Retry-Optionen sind erlaubt, weil sie nur die nächste Anfrage präzisieren.
-
-Regeln:
-
-- Retry-Anweisungen bleiben flüchtig im Speicher.
-- Retry-Anweisungen werden nicht dauerhaft gespeichert.
-- Retry-Anweisungen werden nicht geloggt.
-- Retry-Anweisungen werden nicht als persönlicher Stil gelernt.
-- Retry-Anweisungen werden nicht als Profil oder Gedächtnis interpretiert.
-- Nach Schließen des ReplyPanels oder erfolgreicher neuer Anfrage dürfen Retry-Anweisungen verworfen werden.
-
----
-
-## Logging
-
-Nie loggen:
-
-- API-Key
-- Clipboard-Inhalt
-- kopierte Nachricht
-- Nutzerabsicht
-- Originaltext
-- generierte Antwort
-- Retry-Anweisung
-- vollständige Requests/Responses
-- Memory-/Gedächtnisdaten
+Retry-Anweisungen sind nur temporäre Änderungswünsche für die nächste Anfrage.
 
 Erlaubt:
 
-```text
-overlay_visible=true
-usage_access_granted=false
-ai_request_failed=http_429
-```
+- aktuelle Auswahl im ResultPanel halten
+- Auswahl an `ReplyRequest` übergeben
+- nach neuer Anfrage, Panel-Schließen oder App-Stopp verwerfen
 
----
+Nicht erlaubt:
 
-## Akzeptanzkriterien
-
-Datenschutz ist für den MVP akzeptabel, wenn:
-
-- keine verbotenen Berechtigungen vorhanden sind
-- kein Accessibility Service vorhanden ist
-- Clipboard nur nach Nutzeraktion gelesen wird
-- manueller Fallback funktioniert
-- Nutzertexte nicht gespeichert werden
-- Nutzertexte nicht geloggt werden
-- generierte Vorschläge nicht gespeichert werden
-- Retry-Anweisungen nicht gespeichert oder geloggt werden
-- kein Antwortverlauf existiert
-- kein Gedächtnis-/Memory-System existiert
-- keine Personen-, Kontakt- oder Beziehungsprofile existieren
-- die feste App-Stimme nur als statische Prompt-Vorgabe existiert und nicht gespeichert/gelernt wird
-- API-Key nicht geloggt wird
-- API-Key nicht im Repo steht
-- KI-Anfragen nur nach Button-Klick oder bewusstem Retry erfolgen
-- nur bestätigte Inhalte an KI gesendet werden
-- keine automatische WhatsApp-Aktion möglich ist
+- Retry-Anweisungen in DataStore speichern
+- Retry-Anweisungen als Nutzerpräferenz lernen
+- Retry-Historie aufbauen
+- Bewertung einzelner Vorschläge speichern
