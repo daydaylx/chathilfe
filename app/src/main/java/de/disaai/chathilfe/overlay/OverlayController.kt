@@ -7,6 +7,7 @@ import android.view.Gravity
 import android.view.View
 import android.view.WindowManager
 import android.view.inputmethod.InputMethodManager
+import de.disaai.chathilfe.model.ReplyMode
 import de.disaai.chathilfe.model.ReplySuggestion
 import de.disaai.chathilfe.model.ToneOption
 import kotlin.math.min
@@ -84,11 +85,12 @@ class OverlayController(private val context: Context) {
         }
     }
 
-    fun showInputBar(tone: ToneOption, listener: InputBarView.Listener) {
+    fun showInputBar(tone: ToneOption, mode: ReplyMode, listener: InputBarView.Listener) {
         replaceContent(focusable = true) {
             InputBarView(context).apply {
                 this.listener = listener
                 setTone(tone)
+                setMode(mode)
             }
         }
     }

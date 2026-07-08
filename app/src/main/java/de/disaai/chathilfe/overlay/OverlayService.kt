@@ -59,6 +59,8 @@ class OverlayService : Service() {
     // Never logged or persisted.
     private var pendingText: String = ""
     private var pendingTone: ToneOption = ToneOption.DEFAULT
+    private var pendingMode: ReplyMode = ReplyMode.REPLY
+    private var pendingReplyIntent: String? = null
 
     private val bubbleListener = object : FloatingBubbleView.BubbleListener {
         override fun onDragMove(newX: Int, newY: Int) {
@@ -75,14 +77,22 @@ class OverlayService : Service() {
     }
 
     private val inputBarListener = object : InputBarView.Listener {
+        override fun onModeSelected(mode: ReplyMode) {
+            pendingMode = visibleModeOrDefault(mode)
+            if (pendingMode != ReplyMode.REPLY) pendingReplyIntent = null
+            scope.launch { settingsStore.setLastMode(pendingMode.name) }
+        }
+
         override fun onToneSelected(tone: ToneOption) {
             pendingTone = tone
             scope.launch { settingsStore.setPreferredTone(tone.internalValue) }
         }
 
-        override fun onStart(text: String, tone: ToneOption) {
+        override fun onStart(text: String, tone: ToneOption, mode: ReplyMode, replyIntent: String?) {
             pendingText = text
             pendingTone = tone
+            pendingMode = visibleModeOrDefault(mode)
+            pendingReplyIntent = if (pendingMode == ReplyMode.REPLY) replyIntent else null
             runInitialRequest()
         }
 
@@ -171,25 +181,28 @@ class OverlayService : Service() {
         scope.launch {
             val settings = settingsStore.settings.first()
             val tone = ToneOption.fromInternalValue(settings.preferredTone)
+            val mode = settings.lastMode
+                ?.let { runCatching { ReplyMode.valueOf(it) }.getOrNull() }
+                ?.let(::visibleModeOrDefault)
+                ?: ReplyMode.REPLY
             pendingTone = tone
-            controller.showInputBar(tone, inputBarListener)
+            pendingMode = mode
+            pendingReplyIntent = null
+            controller.showInputBar(tone, mode, inputBarListener)
             overlayState = OverlayState.INPUT_BAR
         }
     }
 
     /**
-     * Starts the first AI request from the Input-Bar. Uses [ReplyMode.COMPOSE] (MVP wiring);
-     * the entered text is the user intent. Disables the bar + shows a loading hint; on success
-     * opens the Result-Panel, on error shows a compact message and keeps the Input-Bar open.
+     * Starts the first AI request from the Input-Bar. The pending mode decides how the entered
+     * text is mapped (Antworten→copiedMessage, Schreiben→userIntent); see [buildRequest].
+     * Disables the bar + shows a loading hint; on success opens the
+     * Result-Panel, on error shows a compact message and keeps the Input-Bar open.
      * At most one request runs at a time.
      */
     private fun runInitialRequest() {
         requestJob?.cancel()
-        val request = ReplyRequest(
-            mode = ReplyMode.COMPOSE,
-            userIntent = pendingText,
-            tone = pendingTone,
-        )
+        val request = buildRequest(retryInstructions = emptySet())
         controller.setInputBarError(null)
         controller.setInputBarLoading(true)
         requestJob = scope.launch {
@@ -217,12 +230,7 @@ class OverlayService : Service() {
      */
     private fun runRetry(chips: Set<RetryInstruction>) {
         requestJob?.cancel()
-        val request = ReplyRequest(
-            mode = ReplyMode.COMPOSE,
-            userIntent = pendingText,
-            tone = pendingTone,
-            retryInstructions = chips,
-        )
+        val request = buildRequest(retryInstructions = chips)
         controller.setResultPanelError(null)
         controller.setResultPanelLoading(true)
         requestJob = scope.launch {
@@ -241,6 +249,41 @@ class OverlayService : Service() {
         }
     }
 
+    /**
+     * Builds a [ReplyRequest] from the pending text/tone/mode, mapping the entered text to the
+     * field the active mode expects: Antworten(REPLY)→copiedMessage, Formulieren(COMPOSE)→
+     * userIntent. The optional Alltag-chip in REPLY contributes only a transient userIntent.
+     * Never logs or persists the text or chip selection.
+     */
+    private fun buildRequest(retryInstructions: Set<RetryInstruction>): ReplyRequest {
+        val text = pendingText
+        return when (pendingMode) {
+            ReplyMode.REPLY -> ReplyRequest(
+                mode = ReplyMode.REPLY,
+                userIntent = pendingReplyIntent.orEmpty(),
+                tone = pendingTone,
+                retryInstructions = retryInstructions,
+                copiedMessage = text,
+            )
+            ReplyMode.COMPOSE -> ReplyRequest(
+                mode = ReplyMode.COMPOSE,
+                userIntent = text,
+                tone = pendingTone,
+                retryInstructions = retryInstructions,
+            )
+            ReplyMode.REWRITE -> ReplyRequest(
+                mode = ReplyMode.REWRITE,
+                userIntent = "",
+                tone = pendingTone,
+                retryInstructions = retryInstructions,
+                originalText = text,
+            )
+        }
+    }
+
+    private fun visibleModeOrDefault(mode: ReplyMode): ReplyMode =
+        if (mode == ReplyMode.REPLY || mode == ReplyMode.COMPOSE) mode else ReplyMode.REPLY
+
     /** Closes Input-Bar/Result-Panel content and returns to the bubble (or hides fully). */
     private fun closeContent() {
         requestJob?.cancel()
@@ -248,6 +291,8 @@ class OverlayService : Service() {
         controller.hideContent()
         pendingText = ""
         pendingTone = ToneOption.DEFAULT
+        pendingMode = ReplyMode.REPLY
+        pendingReplyIntent = null
         overlayState = OverlayState.HIDDEN
         if (isWhatsappForeground) showBubble()
     }
@@ -260,6 +305,8 @@ class OverlayService : Service() {
         controller.remove()
         pendingText = ""
         pendingTone = ToneOption.DEFAULT
+        pendingMode = ReplyMode.REPLY
+        pendingReplyIntent = null
         overlayState = OverlayState.HIDDEN
     }
 
