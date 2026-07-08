@@ -20,6 +20,7 @@ Sicherstellen, dass:
 - Result-Panel erst nach KI-Antwort erscheint
 - Vorschlagswechsel zwischen 3 Varianten funktioniert
 - Clipboard nur nach Nutzeraktion verwendet wird
+- bewusst eingefügte WhatsApp-Dialogblöcke nur temporär verarbeitet werden
 - Retry-Bereich kompakt funktioniert und nichts speichert
 - KI-Vorschläge erzeugt und kopiert werden können
 - Fehler verständlich dargestellt werden
@@ -273,6 +274,76 @@ Erwartet:
 
 ---
 
+## WhatsApp-Dialogblock-Test
+
+Quelle: `docs/WHATSAPP_DIALOG_CONTEXT.md`.
+
+### Unit-Tests
+
+Testfall 1 — Dialog mit zwei Sprechern:
+
+```text
+[1.7., 18:02] D: Hey wie arbeitest du morgen?
+[1.7., 19:11] Anke Grunerr: Ich bin morgen zur Trauerfeier von Marco seiner mama
+[1.7., 22:16] D: Ach mist müssen morgen nämlich zur nach Untersuchung der Katzen weil die gestern kastriert wurden und weiß nicht ob die Bahn wieder fahren
+[1.7., 22:17] Anke Grunerr: Strassenbahn fährt im moment von taucha nach paunsdorf
+[1.7., 22:18] Anke Grunerr: Sbahn fährt
+[1.7., 22:43] D: Das reicht mir ka
+[3.7., 16:16] Anke Grunerr: Ihr habt noch eine kühltasche mit essen im garten
+```
+
+Erwartet:
+
+- Dialog erkannt
+- Sprecher `D` und `Anke Grunerr` extrahiert
+- letzte Nachricht von `Anke Grunerr` als aktueller Antwortanlass erkannt, soweit heuristisch möglich
+- alter Verlauf nur als `conversationContext`
+
+Testfall 2 — Einzeltext-Fallback:
+
+```text
+Kannst du mir das heute noch schicken?
+```
+
+Erwartet:
+
+- kein Dialogparser-Modus nötig
+- bestehender Antwortmodus bleibt unverändert
+
+Testfall 3 — Teilweise kaputtes Format:
+
+```text
+[1.7., 18:02] D: Hey
+Irgendeine freie Zeile
+[1.7., 18:05] Anke: Ja passt
+```
+
+Erwartet:
+
+- kein Crash
+- freie Zeile wird an vorherige Nachricht gehängt oder kontrollierter Einzeltext-Fallback
+
+### PromptBuilder-Test
+
+Erwartet:
+
+- `conversationContext` erscheint nur, wenn Dialog erkannt wurde
+- Prompt trennt bisherigen Verlauf von aktueller Nachricht
+- Prompt enthält Regel, nicht auf jede alte Nachricht einzeln zu antworten
+- normale Einzeltexte erzeugen weiterhin den bisherigen Prompt ohne Kontextsektion
+
+### Datenschutz-Test
+
+Erwartet:
+
+- kein Speichern des Dialogauszugs
+- kein Logging von Namen, Texten oder Vorschlägen
+- keine neue Permission
+- kein Accessibility Service
+- kein Kontaktzugriff
+
+---
+
 ## Modus-Tests
 
 Antworten:
@@ -418,109 +489,3 @@ Erwartet:
 - klare Fehlermeldung
 - kein Crash
 - bei Retry-Fehler bleiben bisherige Vorschläge sichtbar
-- keine sensiblen Daten in UI/Logs
-
----
-
-## Lifecycle-Tests
-
-Testen:
-
-- Sperren/Entsperren
-- App aus Recent Apps entfernen
-- Rotation
-- längere Inaktivität
-- Samsung-Akkuoptimierung
-
-Erwartet:
-
-- keine doppelten Views
-- kein hängendes Overlay
-- Einschränkungen dokumentiert
-
----
-
-## Datenschutz-Test
-
-Prüfen:
-
-- keine Chatnachrichten in DataStore
-- keine generierten Antworten gespeichert
-- keine Nutzerabsicht gespeichert
-- keine Clipboard-Historie
-- keine Retry-Anweisungen gespeichert
-- keine API-Keys in Logs
-- keine Nutzertexte in Logs
-- keine Retry-Anweisungen in Logs
-- kein Verlauf
-- kein Gedächtnis
-- keine Profile
-
----
-
-## Visueller Scope-Test
-
-Prüfen gegen `docs/VISUAL_SCOPE.md`:
-
-- Floating Button klein und verschiebbar
-- erster Zustand ist Input-Bar
-- Result-Panel erst nach KI-Antwort
-- ein sichtbarer Vorschlag statt drei gestapelter Karten
-- Vorschlagswechsel sichtbar und nutzbar
-- Retry klein und global
-- keine Modell-/Provider-/Prompt-Technik im Overlay
-- kein Dashboard
-
----
-
-## Abschluss-Testmatrix
-
-| Bereich | Pflicht |
-|---|---|
-| Build | ja |
-| Installation | ja |
-| Secret-/API-Key-Strategie | ja |
-| Overlay Permission | ja |
-| Usage Access | ja |
-| WhatsApp-Erkennung | ja |
-| Dragging | ja |
-| Input-Bar | ja |
-| Result-Panel | ja |
-| Vorschlagswechsel | ja |
-| Clipboard bewusst übernehmen | ja |
-| alle 3 Modi | ja |
-| Antwortqualität (A/B-Testset) | ja, manuell |
-| Retry-Bereich | ja |
-| KI-Fehlerfälle | ja |
-| Kopieren sichtbarer Vorschlag | ja |
-| Sperren/Entsperren | ja |
-| keine verbotenen Permissions | ja |
-| kein Accessibility | ja |
-| kein Verlauf/Gedächtnis/Profile | ja |
-| visueller Scope erfüllt | ja |
-
----
-
-## Testbericht-Format
-
-```text
-Test environment:
-- Gerät:
-- Android-Version:
-- App-Version/Commit:
-
-Passed:
-- ...
-
-Failed:
-- ...
-
-Not tested:
-- ...
-
-Risks:
-- ...
-
-Next fixes:
-- ...
-```
