@@ -25,6 +25,7 @@ Task-spezifisch zusätzlich:
 - Visueller Scope: `docs/VISUAL_SCOPE.md`
 - Datenschutz: `docs/PRIVACY_SECURITY.md`
 - Tests: `docs/TEST_PLAN.md`
+- Eingefügte WhatsApp-Dialogblöcke: `docs/WHATSAPP_DIALOG_CONTEXT.md`
 
 ---
 
@@ -375,6 +376,44 @@ Nicht tun:
 
 ---
 
+## Phase 7.6 — Eingefügte WhatsApp-Dialogblöcke als Kontext
+
+Quelle: `docs/WHATSAPP_DIALOG_CONTEXT.md` und Issue #19.
+
+Ziel: Wenn der Nutzer mehrere WhatsApp-Nachrichten bewusst einfügt, soll die App den Text als temporären Dialogauszug erkennen und den aktuellen Antwortanlass besser bestimmen.
+
+Aufgaben:
+
+- `WhatsAppChatParser` als pure Kotlin-Komponente bauen
+- WhatsApp-Zeilen im Muster `[Datum, Uhrzeit] Sprecher: Nachricht` erkennen
+- mindestens zwei passende Zeilen verlangen, sonst Einzeltext-Fallback
+- mehrzeilige Nachrichten tolerant behandeln
+- `ParsedChatMessage` und `ParsedChatContext` ergänzen
+- Sprecher nur heuristisch als `likelySelfSender` / `likelyOtherSender` markieren, keine harte Identität behaupten
+- `ReplyRequest.conversationContext` optional ergänzen
+- `PromptBuilder` um getrennte Kontextsektion erweitern
+- `OverlayService.buildRequest()` so anbinden, dass die letzte relevante Nachricht des Gegenübers als Antwortanlass genutzt wird
+- Unit-Tests für Parser, Fallback und PromptBuilder ergänzen
+
+Akzeptanz:
+
+- Dialogblock wird erkannt und strukturiert
+- normale Einzeltexte funktionieren unverändert
+- alter Verlauf wird nur als Kontext genutzt
+- keine Chattexte, Namen oder Vorschläge werden gespeichert oder geloggt
+- kein neues großes UI
+- kein automatisches WhatsApp-Lesen
+- kein Accessibility Service
+
+Nicht tun:
+
+- kein Chatverlauf-Import
+- kein Verlauf/Gedächtnis
+- kein Kontakt-/Beziehungsprofil
+- kein Speichern von Chattexten
+
+---
+
 ## Phase 8 — Stabilisierung und Gerätetest
 
 Ziel: private APK ist real nutzbar.
@@ -395,6 +434,7 @@ Aufgaben:
 - Vorschlagswechsel testen
 - Retry-Bereich testen
 - Clipboard und manuellen Fallback testen
+- bewusst eingefügten WhatsApp-Dialogblock testen
 - Sperren/Entsperren testen
 - Internetfehler testen
 - fehlende Berechtigungen testen
