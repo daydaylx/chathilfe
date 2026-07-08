@@ -41,6 +41,7 @@
     <string name="input_bar_hint_reply">Nachricht, auf die du antworten willst</string>
     <string name="input_bar_paste_button">Einfügen</string>
     <string name="input_bar_start_button">Los</string>
+    <string name="input_bar_start_button_loading">Erstelle…</string>
     <string name="input_bar_mode_description">Modus wählen</string>
     <string name="input_bar_mode_compose_short">Schreiben</string>
     <string name="input_bar_tone_button_description">Ton auswählen</string>
@@ -51,6 +52,7 @@
     <string name="result_panel_copied_toast">In Zwischenablage kopiert</string>
     <string name="result_panel_retry_prompt">Nicht passend?</string>
     <string name="result_panel_retry_button">Nochmal</string>
+    <string name="result_panel_retry_button_loading">Erstelle neu…</string>
     <string name="result_panel_close_description">Schließen</string>
     <string name="result_panel_previous_description">Vorheriger Vorschlag</string>
     <string name="result_panel_next_description">Nächster Vorschlag</string>

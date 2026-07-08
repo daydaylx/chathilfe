@@ -157,7 +157,13 @@ class OverlayController(private val context: Context) {
         // Horizontally centered: on phones width == fullWidth (centered via equal margins);
         // on wide screens the cap keeps the panel compact and centered.
         val x = (metrics.widthPixels - width) / 2
-        val flags = if (focusable) 0 else WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+        // FLAG_NOT_TOUCH_MODAL lets touches outside this window's bounds fall through to
+        // WhatsApp underneath instead of being swallowed, so WhatsApp stays scrollable.
+        val flags = if (focusable) {
+            WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
+        } else {
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
+        }
         val params = WindowManager.LayoutParams(
             width,
             WindowManager.LayoutParams.WRAP_CONTENT,

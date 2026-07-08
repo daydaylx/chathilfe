@@ -9,6 +9,7 @@ enum class RetryInstruction(val internalValue: String, val label: String) {
     SANFTER("sanfter", "Sanfter"),
     KLARER("klarer", "Klarer"),
     WENIGER_KUENSTLICH("weniger_kuenstlich", "Weniger künstlich"),
+    AUSFUEHRLICHER("ausfuehrlicher", "Ausführlicher"),
 }
 
 /**
