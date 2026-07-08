@@ -18,6 +18,7 @@ import de.disaai.chathilfe.model.ReplyRequest
 import de.disaai.chathilfe.model.ReplySuggestion
 import de.disaai.chathilfe.model.RetryInstruction
 import de.disaai.chathilfe.model.ToneOption
+import de.disaai.chathilfe.model.WritingStyleSettings
 import de.disaai.chathilfe.settings.SettingsStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -58,9 +59,10 @@ class OverlayService : Service() {
     // Transient, in-memory only for the current Input-Bar -> Result-Panel round trip.
     // Never logged or persisted.
     private var pendingText: String = ""
-    private var pendingTone: ToneOption = ToneOption.DEFAULT
     private var pendingMode: ReplyMode = ReplyMode.REPLY
-    private var pendingReplyIntent: String? = null
+    private var pendingTone: ToneOption = ToneOption.DEFAULT
+    private var pendingStyle: WritingStyleSettings = WritingStyleSettings()
+    private var pendingIntentHint: String? = null
 
     private val bubbleListener = object : FloatingBubbleView.BubbleListener {
         override fun onDragMove(newX: Int, newY: Int) {
@@ -79,21 +81,20 @@ class OverlayService : Service() {
     private val inputBarListener = object : InputBarView.Listener {
         override fun onModeSelected(mode: ReplyMode) {
             pendingMode = visibleModeOrDefault(mode)
-            if (pendingMode != ReplyMode.REPLY) pendingReplyIntent = null
             scope.launch { settingsStore.setLastMode(pendingMode.name) }
         }
 
-        override fun onToneSelected(tone: ToneOption) {
-            pendingTone = tone
-            scope.launch { settingsStore.setPreferredTone(tone.internalValue) }
+        override fun onStart(text: String, mode: ReplyMode, intentHint: String?) {
+            pendingText = text
+            pendingMode = visibleModeOrDefault(mode)
+            pendingIntentHint = intentHint
+            runInitialRequest()
         }
 
-        override fun onStart(text: String, tone: ToneOption, mode: ReplyMode, replyIntent: String?) {
-            pendingText = text
-            pendingTone = tone
-            pendingMode = visibleModeOrDefault(mode)
-            pendingReplyIntent = if (pendingMode == ReplyMode.REPLY) replyIntent else null
-            runInitialRequest()
+        override fun onStyleChanged(style: WritingStyleSettings) {
+            pendingStyle = style
+            // Persist eagerly so the next overlay open picks up the last values.
+            scope.launch { settingsStore.setWritingStyle(style) }
         }
 
         override fun onClose() {
@@ -180,15 +181,15 @@ class OverlayService : Service() {
         controller.remove()
         scope.launch {
             val settings = settingsStore.settings.first()
-            val tone = ToneOption.fromInternalValue(settings.preferredTone)
             val mode = settings.lastMode
                 ?.let { runCatching { ReplyMode.valueOf(it) }.getOrNull() }
                 ?.let(::visibleModeOrDefault)
                 ?: ReplyMode.REPLY
-            pendingTone = tone
             pendingMode = mode
-            pendingReplyIntent = null
-            controller.showInputBar(tone, mode, inputBarListener)
+            pendingTone = ToneOption.fromInternalValue(settings.preferredTone)
+            pendingStyle = settings.writingStyle
+            pendingIntentHint = null
+            controller.showInputBar(mode, inputBarListener, pendingStyle)
             overlayState = OverlayState.INPUT_BAR
         }
     }
@@ -202,11 +203,11 @@ class OverlayService : Service() {
      */
     private fun runInitialRequest() {
         requestJob?.cancel()
-        val request = buildRequest(retryInstructions = emptySet())
         controller.setInputBarError(null)
         controller.setInputBarLoading(true)
         requestJob = scope.launch {
-            val result = aiClient.request(request)
+            val request = buildRequest(pendingTone, retryInstructions = emptySet())
+            val result = aiClient.request(request, pendingStyle)
             controller.setInputBarLoading(false)
             val suggestions = when (result) {
                 is ParseResult.Success -> result.suggestions
@@ -230,11 +231,11 @@ class OverlayService : Service() {
      */
     private fun runRetry(chips: Set<RetryInstruction>) {
         requestJob?.cancel()
-        val request = buildRequest(retryInstructions = chips)
         controller.setResultPanelError(null)
         controller.setResultPanelLoading(true)
         requestJob = scope.launch {
-            val result = aiClient.request(request)
+            val request = buildRequest(pendingTone, retryInstructions = chips)
+            val result = aiClient.request(request, pendingStyle)
             controller.setResultPanelLoading(false)
             val suggestions = when (result) {
                 is ParseResult.Success -> result.suggestions
@@ -250,36 +251,41 @@ class OverlayService : Service() {
     }
 
     /**
-     * Builds a [ReplyRequest] from the pending text/tone/mode, mapping the entered text to the
+     * Builds a [ReplyRequest] from the pending text/mode, mapping the entered text to the
      * field the active mode expects: Antworten(REPLY)→copiedMessage, Formulieren(COMPOSE)→
-     * userIntent. The optional Alltag-chip in REPLY contributes only a transient userIntent.
-     * Never logs or persists the text or chip selection.
+     * userIntent. An optional intent hint (reply chips) is prepended to the userIntent field.
+     * Tone is taken from the transient [pendingTone], not read from [SettingsStore] each time.
+     * Never logs or persists the text.
      */
-    private fun buildRequest(retryInstructions: Set<RetryInstruction>): ReplyRequest {
+    private fun buildRequest(tone: ToneOption, retryInstructions: Set<RetryInstruction>): ReplyRequest {
         val text = pendingText
         return when (pendingMode) {
             ReplyMode.REPLY -> ReplyRequest(
                 mode = ReplyMode.REPLY,
-                userIntent = pendingReplyIntent.orEmpty(),
-                tone = pendingTone,
+                userIntent = buildUserIntentWithHint(pendingIntentHint),
+                tone = tone,
                 retryInstructions = retryInstructions,
                 copiedMessage = text,
             )
             ReplyMode.COMPOSE -> ReplyRequest(
                 mode = ReplyMode.COMPOSE,
                 userIntent = text,
-                tone = pendingTone,
+                tone = tone,
                 retryInstructions = retryInstructions,
             )
             ReplyMode.REWRITE -> ReplyRequest(
                 mode = ReplyMode.REWRITE,
-                userIntent = "",
-                tone = pendingTone,
+                userIntent = buildUserIntentWithHint(pendingIntentHint),
+                tone = tone,
                 retryInstructions = retryInstructions,
                 originalText = text,
             )
         }
     }
+
+    /** Prepends an intent hint (reply chip) to a base user intent if both are present. */
+    private fun buildUserIntentWithHint(hint: String?): String =
+        if (hint != null) "$hint." else ""
 
     private fun visibleModeOrDefault(mode: ReplyMode): ReplyMode =
         if (mode == ReplyMode.REPLY || mode == ReplyMode.COMPOSE) mode else ReplyMode.REPLY
@@ -290,9 +296,8 @@ class OverlayService : Service() {
         requestJob = null
         controller.hideContent()
         pendingText = ""
-        pendingTone = ToneOption.DEFAULT
         pendingMode = ReplyMode.REPLY
-        pendingReplyIntent = null
+        pendingIntentHint = null
         overlayState = OverlayState.HIDDEN
         if (isWhatsappForeground) showBubble()
     }
@@ -304,9 +309,8 @@ class OverlayService : Service() {
         controller.hideContent()
         controller.remove()
         pendingText = ""
-        pendingTone = ToneOption.DEFAULT
         pendingMode = ReplyMode.REPLY
-        pendingReplyIntent = null
+        pendingIntentHint = null
         overlayState = OverlayState.HIDDEN
     }
 

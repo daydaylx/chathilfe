@@ -220,6 +220,8 @@ Erwartet:
 - Input-Bar ist schmal und verdeckt WhatsApp möglichst wenig
 - Ton/Stil ist links oder klar sichtbar erreichbar
 - Textfeld ist direkt nutzbar
+- im Antworten-Modus zeigt vorhandener Text eine kompakte Kontext-Vorschau
+- Kontext-Vorschau kann per „Entfernen" geleert werden
 - Einfügen ist optional und blockiert manuelle Eingabe nicht
 - Start-Button heißt nicht `Senden`
 - keine Eingabe wird dauerhaft gespeichert
@@ -269,6 +271,8 @@ Erwartet:
 
 - Clipboard erst nach Nutzeraktion
 - Text erst nach Nutzeraktion übernehmen
+- im Antworten-Modus wird der übernommene Text als Antwort-Kontext sichtbar
+- „Kontext entfernen" leert nur die aktuelle Eingabe transient
 - kein Speichern
 - kein Logging
 
@@ -401,10 +405,27 @@ kein automatisiertes A/B-Framework.
 | Ton | Passt der gewählte Ton? |
 | Nicht-KI-Gefühl | Klingt es nicht nach ChatGPT/Brief/E-Mail? |
 | Kopierbarkeit | Kann man es direkt senden? |
+| Kosten/Latenz | Ist es für private Nutzung bezahlbar und schnell genug? |
 
-Ein Modellwechsel (siehe offener Punkt in DECISIONS.md) erfolgt nur, wenn ein
-Kandidat im Durchschnitt **deutlich** besser abschneidet als Sonnet 5 nach
-Prompt-Fix.
+### Modellkandidaten (Slugs geprüft am 2026-07-08)
+
+Geprüft via OpenRouter `/api/v1/models`; noch **nicht** A/B-getestet:
+
+| Rolle | Slug | A/B-Status |
+|---|---|---|
+| Default | `deepseek/deepseek-v4-flash` | gepinnt, noch nicht manuell bewertet |
+| Referenz | `anthropic/claude-sonnet-5` | nicht erneut bewertet nach Schreibstil-Fix |
+| Haiku | `anthropic/claude-haiku-4.5` | offen |
+| GPT Mini | `openai/gpt-5-mini` | offen |
+| optionaler Mini-Kandidat | `openai/gpt-4.1-mini` | offen |
+
+Aliases wie `~anthropic/claude-haiku-latest` oder `~openai/gpt-mini-latest`
+dürfen zum Explorieren genutzt, aber nicht dauerhaft als Release-Default gepinnt
+werden.
+
+DeepSeek ist aktuell gepinnt. Ein erneuter Modellwechsel (siehe offener Punkt in
+DECISIONS.md) erfolgt nur, wenn ein Kandidat im Durchschnitt **deutlich** besser
+abschneidet als DeepSeek nach Prompt-/Persona-/Schreibstil-Fix.
 
 ### Antworten (REPLY) — 8 Fälle
 
@@ -489,3 +510,166 @@ Erwartet:
 - klare Fehlermeldung
 - kein Crash
 - bei Retry-Fehler bleiben bisherige Vorschläge sichtbar
+
+---
+
+## Abschluss-Testmatrix
+
+| Bereich | Pflicht |
+|---|---|
+| Build | ja |
+| Installation | ja |
+| Secret-/API-Key-Strategie | ja |
+| Overlay Permission | ja |
+| Usage Access | ja |
+| WhatsApp-Erkennung | ja |
+| Dragging | ja |
+| Input-Bar | ja |
+| Result-Panel | ja |
+| Vorschlagswechsel | ja |
+| Clipboard bewusst übernehmen | ja |
+| alle 3 Modi | ja |
+| Antwortqualität (A/B-Testset) | ja, manuell |
+| Retry-Bereich | ja |
+| KI-Fehlerfälle | ja |
+| Kopieren sichtbarer Vorschlag | ja |
+| Sperren/Entsperren | ja |
+| keine verbotenen Permissions | ja |
+| kein Accessibility | ja |
+| kein Verlauf/Gedächtnis/Profile | ja |
+| visueller Scope erfüllt | ja |
+
+---
+
+## Testbericht-Format
+
+```text
+Test environment:
+- Gerät:
+- Android-Version:
+- App-Version/Commit:
+
+Passed:
+- ...
+
+Failed:
+- ...
+
+Not tested:
+- ...
+
+Risks:
+- ...
+
+Next fixes:
+- ...
+```
+=======
+- keine sensiblen Daten in UI/Logs
+
+---
+
+## Lifecycle-Tests
+
+Testen:
+
+- Sperren/Entsperren
+- App aus Recent Apps entfernen
+- Rotation
+- längere Inaktivität
+- Samsung-Akkuoptimierung
+
+Erwartet:
+
+- keine doppelten Views
+- kein hängendes Overlay
+- Einschränkungen dokumentiert
+
+---
+
+## Datenschutz-Test
+
+Prüfen:
+
+- keine Chatnachrichten in DataStore
+- keine generierten Antworten gespeichert
+- keine Nutzerabsicht gespeichert
+- keine Clipboard-Historie
+- keine Retry-Anweisungen gespeichert
+- Schreibstil-Settings speichern nur neutrale Enum-Werte, keine Persona und keine Texte
+- keine API-Keys in Logs
+- keine Nutzertexte in Logs
+- keine Retry-Anweisungen in Logs
+- kein Verlauf
+- kein Gedächtnis
+- keine Profile
+
+---
+
+## Visueller Scope-Test
+
+Prüfen gegen `docs/VISUAL_SCOPE.md`:
+
+- Floating Button klein und verschiebbar
+- erster Zustand ist Input-Bar
+- Result-Panel erst nach KI-Antwort
+- ein sichtbarer Vorschlag statt drei gestapelter Karten
+- Vorschlagswechsel sichtbar und nutzbar
+- Retry klein und global
+- keine Modell-/Provider-/Prompt-Technik im Overlay
+- kein Dashboard
+
+---
+
+## Abschluss-Testmatrix
+
+| Bereich | Pflicht |
+|---|---|
+| Build | ja |
+| Installation | ja |
+| Secret-/API-Key-Strategie | ja |
+| Overlay Permission | ja |
+| Usage Access | ja |
+| WhatsApp-Erkennung | ja |
+| Dragging | ja |
+| Input-Bar | ja |
+| Result-Panel | ja |
+| Vorschlagswechsel | ja |
+| Clipboard bewusst übernehmen | ja |
+| alle 3 Modi | ja |
+| Antwortqualität (A/B-Testset) | ja, manuell |
+| Retry-Bereich | ja |
+| KI-Fehlerfälle | ja |
+| Kopieren sichtbarer Vorschlag | ja |
+| Sperren/Entsperren | ja |
+| keine verbotenen Permissions | ja |
+| kein Accessibility | ja |
+| kein Verlauf/Gedächtnis/Profile | ja |
+| visueller Scope erfüllt | ja |
+
+---
+
+## Testbericht-Format
+
+```text
+Test environment:
+- Gerät:
+- Android-Version:
+- App-Version/Commit:
+
+Passed:
+- ...
+
+Failed:
+- ...
+
+Not tested:
+- ...
+
+Risks:
+- ...
+
+Next fixes:
+- ...
+```
+>>>>>>> 4c292de (feat(overlay): writing-style menu, intent chips, and UX refinements)

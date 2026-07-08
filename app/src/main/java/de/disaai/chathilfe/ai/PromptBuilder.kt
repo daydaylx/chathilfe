@@ -1,9 +1,15 @@
 package de.disaai.chathilfe.ai
 
+import de.disaai.chathilfe.model.AnswerLength
+import de.disaai.chathilfe.model.CapitalizationStyle
+import de.disaai.chathilfe.model.EmojiUsage
+import de.disaai.chathilfe.model.Naturalness
+import de.disaai.chathilfe.model.PunctuationStyle
 import de.disaai.chathilfe.model.ReplyMode
 import de.disaai.chathilfe.model.ReplyRequest
 import de.disaai.chathilfe.model.RetryInstruction
 import de.disaai.chathilfe.model.ToneOption
+import de.disaai.chathilfe.model.WritingStyleSettings
 
 /**
  * Builds the prompt string for a single AI request from a [ReplyRequest], following the
@@ -16,7 +22,12 @@ import de.disaai.chathilfe.model.ToneOption
  */
 object PromptBuilder {
 
-    fun build(request: ReplyRequest): String {
+    /**
+     * Builds the prompt for [request], injecting the user's [WritingStyleSettings] (Issue #8) as
+     * a "Schreibstil" block. Defaults to [WritingStyleSettings] when omitted, so callers without
+     * explicit style still get the documented MVP defaults.
+     */
+    fun build(request: ReplyRequest, style: WritingStyleSettings = WritingStyleSettings()): String {
         val tone = TONE_MEANINGS[request.tone] ?: request.tone.label
         val retry = retryText(request.retryInstructions)
         return templateFor(request.mode)
@@ -25,7 +36,20 @@ object PromptBuilder {
             .replace("{{user_intent}}", request.userIntent)
             .replace("{{tone}}", tone)
             .replace("{{retry_instruction}}", retry)
+            .replace("{{style_rules}}", styleRules(style))
     }
+
+    /**
+     * Builds the deterministic "Schreibstil" prompt block from the user's style settings
+     * (Issue #8). Pure style values only — no user text, no persona (D-013).
+     */
+    private fun styleRules(style: WritingStyleSettings): String = listOf(
+        "- Länge: " + (LENGTH_MEANINGS[style.length] ?: style.length.label),
+        "- Emojis: " + (EMOJI_MEANINGS[style.emojiUsage] ?: style.emojiUsage.label),
+        "- Satzzeichen: " + (PUNCTUATION_MEANINGS[style.punctuation] ?: style.punctuation.label),
+        "- Groß-/Kleinschreibung: " + (CAPITALIZATION_MEANINGS[style.capitalization] ?: style.capitalization.label),
+        "- Natürlichkeit: " + (NATURALNESS_MEANINGS[style.naturalness] ?: style.naturalness.label),
+    ).joinToString("\n")
 
     private fun templateFor(mode: ReplyMode): String = when (mode) {
         ReplyMode.REPLY -> TEMPLATE_REPLY
@@ -67,6 +91,37 @@ object PromptBuilder {
         RetryInstruction.AUSFUEHRLICHER to "etwas ausführlicher, 2–4 natürliche WhatsApp-Sätze, aber kein Roman",
     )
 
+    // --- Writing-style meanings from the "Schreibstil" table in `docs/PROMPTS.md` (Issue #8). ---
+
+    private val LENGTH_MEANINGS: Map<AnswerLength, String> = mapOf(
+        AnswerLength.SHORT to "sehr kurz, möglichst ein Satz",
+        AnswerLength.NORMAL to "knapp halten, 1–2 kurze Sätze",
+        AnswerLength.LONGER to "etwas ausführlicher darf sein, aber nicht lang",
+    )
+
+    private val EMOJI_MEANINGS: Map<EmojiUsage, String> = mapOf(
+        EmojiUsage.NONE to "keine Emojis",
+        EmojiUsage.SPARING to "sparsam Emojis, nur wenn es natürlich passt",
+        EmojiUsage.NORMAL to "Emojis dürfen, aber nicht überladen",
+    )
+
+    private val PUNCTUATION_MEANINGS: Map<PunctuationStyle, String> = mapOf(
+        PunctuationStyle.CLEAN to "saubere Satzzeichen",
+        PunctuationStyle.RELAXED to "lockere Satzzeichen, wie im echten Chat",
+        PunctuationStyle.VERY_RELAXED to "sehr lockere Satzzeichen, oft ohne Punkte",
+    )
+
+    private val CAPITALIZATION_MEANINGS: Map<CapitalizationStyle, String> = mapOf(
+        CapitalizationStyle.CORRECT to "Groß-/Kleinschreibung korrekt",
+        CapitalizationStyle.RELAXED to "Groß-/Kleinschreibung darf locker sein",
+    )
+
+    private val NATURALNESS_MEANINGS: Map<Naturalness, String> = mapOf(
+        Naturalness.NORMAL to "natürliche Sprache",
+        Naturalness.LESS_AI to "natürlicher Chatstil, keine typischen KI-Formulierungen",
+        Naturalness.VERY_RELAXED to "sehr lockerer, umgangssprachlicher Stil",
+    )
+
     // Templates are verbatim copies of docs/PROMPTS.md. They contain no '$' characters, so
     // they are safe inside Kotlin raw strings.
 
@@ -75,6 +130,9 @@ Du bist ein Formulierungsassistent für private Chatnachrichten.
 
 Stimme:
 Die Antworten sollen klingen, als hätte sie eine alltägliche Person geschrieben – eine Frau Anfang 30 mit normaler Bildung, natürlicher Alltagssprache, nicht zu akademisch, nicht zu geschäftlich, nicht zu jugendlich, nicht zu künstlich perfekt. Das ist eine feste App-Vorgabe und kein gespeichertes Profil.
+
+Schreibstil (Nutzervorgabe):
+{{style_rules}}
 
 Aufgabe:
 Formuliere passende Antwortvorschläge auf die kopierte Nachricht.
@@ -123,6 +181,9 @@ Du bist ein Formulierungsassistent für private Chatnachrichten.
 Stimme:
 Die Antworten sollen klingen, als hätte sie eine alltägliche Person geschrieben – eine Frau Anfang 30 mit normaler Bildung, natürlicher Alltagssprache, nicht zu akademisch, nicht zu geschäftlich, nicht zu jugendlich, nicht zu künstlich perfekt. Das ist eine feste App-Vorgabe und kein gespeichertes Profil.
 
+Schreibstil (Nutzervorgabe):
+{{style_rules}}
+
 Aufgabe:
 Formuliere aus dem Wunsch des Nutzers 3 sendbare Chatnachrichten.
 
@@ -163,6 +224,9 @@ Du bist ein Formulierungsassistent für private Chatnachrichten.
 
 Stimme:
 Die Antworten sollen klingen, als hätte sie eine alltägliche Person geschrieben – eine Frau Anfang 30 mit normaler Bildung, natürlicher Alltagssprache, nicht zu akademisch, nicht zu geschäftlich, nicht zu jugendlich, nicht zu künstlich perfekt. Das ist eine feste App-Vorgabe und kein gespeichertes Profil.
+
+Schreibstil (Nutzervorgabe):
+{{style_rules}}
 
 Aufgabe:
 Schreibe den vorhandenen Text passend um.

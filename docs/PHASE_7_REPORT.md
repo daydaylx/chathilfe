@@ -2,12 +2,18 @@
 
 ## Status
 
-Phase 7 ist code-seitig umgesetzt: echte KI-Vorschläge über OpenRouter (einziges Provider/Modell
-`anthropic/claude-sonnet-5`), `AiConfig`/`AiClient` ohne neue Dependency, `DummySuggestionSource`
+Phase 7 ist code-seitig umgesetzt: echte KI-Vorschläge über OpenRouter (ein Provider/ein Modell;
+aktueller Default laut D-012: `deepseek/deepseek-v4-flash`), `AiConfig`/`AiClient` ohne neue Dependency, `DummySuggestionSource`
 ersetzt. Das Overlay ist jetzt an die echte KI verdrahtet (Initial-Anfrage + Retry), mit
 Lade-/Fehlerzuständen. `./gradlew assembleDebug test lintDebug` ✅ wurden in dieser Sitzung lokal
 ausgeführt. Echte Modellqualität, Lade-/Fehler-UX und Netzwerk-/Rate-Limit-Verhalten bleiben dem
 Gerätetest in Phase 8 vorbehalten.
+
+**Nachtrag 2026-07-08:** Das gepinnte App-Default-Modell wurde auf ausdrücklichen
+Nutzerauftrag von `anthropic/claude-sonnet-5` auf `deepseek/deepseek-v4-flash`
+geändert (siehe `AiConfig.MODEL` und `docs/DECISIONS.md` D-012). Phase-7-
+Implementierungsarchitektur bleibt unverändert: ein Provider, ein Modell, kein
+Routing/Fallback, keine Sampling-Parameter.
 
 ## Summary
 
@@ -15,9 +21,9 @@ Phase 7 schließt die KI-Anbindung an: ein Provider (OpenRouter), ein gepinntes 
 Routing/Fallback, keine Sampling-Parameter. Die Provider-Logik ist in drei schlanke,
 provider-spezifische Klassen aufgeteilt und an das bestehende Overlay gekoppelt.
 
-- **Modell gepinnt (D-012):** `anthropic/claude-sonnet-5`, gegen OpenRouter-Modell-Metadaten
-  verifiziert (2026-07-07): `supported_parameters` enthält `max_tokens`, **nicht** `temperature`/
-  `top_p`/`top_k` — passt exakt zu `docs/PROMPT_PARAMETER_POLICY.md`.
+- **Modell gepinnt (D-012):** In Phase 7 ursprünglich `anthropic/claude-sonnet-5`; aktueller
+  Default nach Nutzerauftrag ist `deepseek/deepseek-v4-flash`. `AiClient` bleibt unverändert:
+  ein Modell, `max_tokens`, genau eine User-Message, keine Sampling-/Reasoning-Parameter.
 - **Keine neue Dependency:** HTTP via `HttpURLConnection`, JSON per eigener Minimal-Implementierung
   `OpenRouterJson` (RFC-8259-Escaping + tolerante `content`-Extraktion). Kein `org.json`/OkHttp/
   Retrofit. Damit ist die Logik auf der reinen JVM unit-testbar.
@@ -116,7 +122,7 @@ grep -rniE "DataStore|SharedPreferences" ai/                  → nur Doku-Komme
 
 ### Akzeptanzkriterien (`docs/IMPLEMENTATION_PLAN.md` Phase 7)
 
-- konkretes OpenRouter-Default-Modell in `AiConfig` gepinnt ✅ (`anthropic/claude-sonnet-5`, D-012).
+- konkretes OpenRouter-Default-Modell in `AiConfig` gepinnt ✅ (aktuell `deepseek/deepseek-v4-flash`, D-012).
 - API-Key aus lokaler Build-Time-Konfiguration gelesen ✅ (`BuildConfig.OPENROUTER_API_KEY`).
 - `AiClient`, OpenRouter einziger Provider, genau ein Modell ✅.
 - Ladezustand ✅ (Input-Bar + Result-Panel, Start deaktiviert).
@@ -148,7 +154,7 @@ grep -rniE "DataStore|SharedPreferences" ai/                  → nur Doku-Komme
 
 ## Known risks
 
-- **Modell-ID-Verfügbarkeit:** `anthropic/claude-sonnet-5` war am 2026-07-07 über
+- **Modell-ID-Verfügbarkeit:** `deepseek/deepseek-v4-flash` war am 2026-07-08 über
   `https://openrouter.ai/api/v1/models` verfügbar. Sollte OpenRouter die ID ändern/entfernen,
   liefert `AiClient` einen sauberen `ParseResult.Error`; die ID ist nur in `AiConfig.MODEL`
   (D-012) zu aktualisieren.

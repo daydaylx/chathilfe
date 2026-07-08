@@ -316,29 +316,39 @@ Für Coding-Agenten gelten separate Modellregeln in `docs/AGENT_MODEL_POLICY.md`
 
 ---
 
-## D-012 — Gepinntes OpenRouter-Default-Modell für Phase 7
+## D-012 — Gepinntes OpenRouter-Default-Modell
 
-**Status:** entschieden (schließt den offenen Punkt aus D-001/D-009)
+**Status:** entschieden / aktualisiert auf Nutzerauftrag (2026-07-08)
 
 **Entscheidung:**
 
-Das konkrete MVP-Default-Modell ist **`anthropic/claude-sonnet-5`** über den einzigen Provider OpenRouter.
+Das konkrete MVP-Default-Modell ist **`deepseek/deepseek-v4-flash`** über den einzigen Provider OpenRouter.
 
-**Verifikation (gegen OpenRouter-Modell-Metadaten, 2026-07-07):**
+Grund: Für kurze private WhatsApp-Antworten soll testweise ein schnelles DeepSeek-
+Flash-Modell genutzt werden, das ggf. weniger professionell/glatt formuliert als Sonnet.
+
+**Verifikation (gegen OpenRouter-Modell-Metadaten, 2026-07-08):**
 
 - Modell verfügbar via `https://openrouter.ai/api/v1/models`.
-- `supported_parameters`: `max_tokens`/`max_completion_tokens` vorhanden; **kein** `temperature`/`top_p`/`top_k`.
-- Das passt exakt zu `docs/PROMPT_PARAMETER_POLICY.md`: für Claude Sonnet 5 werden keine non-default Sampling-Parameter gesendet. Stil wird ausschließlich über Prompt, Ton-Chips und Retry-Chips gesteuert.
+- Name laut OpenRouter: `DeepSeek: DeepSeek V4 Flash`.
+- `context_length`: 1048576.
+- `supported_parameters` enthält u. a. `max_tokens`, `temperature`, `top_p`, `top_k`
+  sowie optionale `reasoning`-/`include_reasoning`-Parameter.
+- Der MVP sendet weiterhin nur `model`, `max_tokens` und eine User-Message; **keine**
+  non-default Sampling-Parameter und kein Reasoning-/Thinking-Parameter. Stil wird über Prompt,
+  Ton-Chips, Schreibstil-Settings und Retry-Chips gesteuert.
 
 **Konsequenz:**
 
 - `AiConfig` hält genau diese Modell-ID; kein Routing, kein Fallback.
-- `AiClient` sendet `model`, `max_tokens` (Output-Budget) und genau eine User-Message; **keine** Sampling-Parameter, kein Reasoning-/Thinking-Parameter.
+- `AiClient` sendet `model`, `max_tokens` (Output-Budget) und genau eine User-Message.
 - Keine Modell-/Provider-Auswahl im Overlay.
+- Sonnet 5 bleibt Referenzkandidat für spätere Qualitätsvergleiche, aber nicht mehr App-Default.
 
 **Nicht erlaubt:**
 
-- abweichende Modell-IDs, Mehrfachmodelle, Modell-Fallback, Tonfall-Routing.
+- weitere Modell-IDs, Mehrfachmodelle, Modell-Fallback, Tonfall-Routing.
+- Reasoning-/Thinking-Parameter ohne eigene Entscheidung.
 
 ---
 
@@ -380,15 +390,68 @@ gespeichert werden.
 
 ---
 
+## D-014 — Schreibstil-Einstellungen als reine lokale Stilwerte
+
+**Status:** entschieden / umgesetzt (Issue #8)
+
+**Entscheidung:**
+
+Die Settings enthalten einen kompakten Bereich **Schreibstil** mit fünf lokal
+gespeicherten Enum-Werten:
+
+- Antwortlänge
+- Emojis
+- Satzzeichen
+- Groß-/Kleinschreibung
+- Natürlichkeit
+
+Diese Werte werden in `PromptBuilder` als `{{style_rules}}`-Block ergänzt. Sie
+sind reine Komfort-/Stilpräferenzen und werden in DataStore gespeichert.
+
+**Wichtige Abgrenzung zu D-013:**
+
+Die feste App-Stimme / Persona bleibt **keine** Nutzereinstellung. Es gibt kein
+freies Persona-Feld und kein speicherbares Personen-, Stil- oder Kontaktprofil.
+
+**Konsequenz:**
+
+- `WritingStyleSettings` enthält nur neutrale Stilwerte.
+- `SettingsStore` speichert nur Enum-`internalValue`-Strings.
+- `PromptBuilder` übersetzt die Werte in klare Prompt-Regeln.
+- Keine Nutzertexte, kopierten Nachrichten, Vorschläge oder Retry-Anweisungen
+  werden gespeichert.
+- Keine Stilwerte werden aus Nutzertexten gelernt.
+
+**Nicht erlaubt:**
+
+- freie Persona-Eingabe
+- gespeichertes Stilprofil aus echten Nachrichten
+- automatisches Lernen/Training aus Nutzertexten
+- Overlay-Bedienung für Modell-/Provider-/Prompttechnik
+
+---
+
 ## Offene Punkte
 
-**Modell-A/B nach Testset (Audit-Empfehlung):** Nach Prompt-/Persona-Kalibrierung
-und Aufbau eines Testsets (`docs/TEST_PLAN.md`) soll `anthropic/claude-sonnet-5`
-(D-012) gegen Kandidaten wie `~anthropic/claude-haiku-latest` und
-`~openai/gpt-mini-latest` verglichen werden. Danach wird ein **konkreter
-Modell-Slug** (kein `latest`-Alias) in `AiConfig` / D-012 gepinnt. Bis dahin
-bleibt Sonnet 5 das gepinnte Modell; ein Provider-/Routing-/Fallback-System
-bleibt weiterhin ausgeschlossen (D-009).
+**Modell-A/B nach Testset (Audit-Empfehlung):** Der Default wurde auf ausdrücklichen
+Nutzerauftrag bereits auf `deepseek/deepseek-v4-flash` geändert. Ein manueller A/B-Test
+bleibt offen, um DeepSeek nach Prompt-/Persona-/Schreibstil-Fix gegen die Referenz
+`anthropic/claude-sonnet-5` und weitere Kandidaten zu bewerten.
+
+Geprüfte OpenRouter-Slugs (2026-07-08 via `/api/v1/models`, noch **nicht** A/B-getestet):
+
+| Rolle | Slug | Status |
+|---|---|---|
+| Default | `deepseek/deepseek-v4-flash` | gepinnt in `AiConfig` |
+| Referenz | `anthropic/claude-sonnet-5` | verfügbar, A/B offen |
+| Haiku | `anthropic/claude-haiku-4.5` | verfügbar, A/B offen |
+| GPT Mini | `openai/gpt-5-mini` | verfügbar, A/B offen |
+| weiterer Mini-Kandidat | `openai/gpt-4.1-mini` | verfügbar, optionaler A/B-Kandidat |
+
+Aliases wie `~anthropic/claude-haiku-latest` oder `~openai/gpt-mini-latest`
+sind für Exploration verfügbar, dürfen aber nicht dauerhaft als Release-Default
+gepinnt werden. Ein Provider-/Routing-/Fallback-System bleibt weiterhin
+ausgeschlossen (D-009).
 
 Weitere offene Punkte für den MVP-Scope: keine.
 

@@ -128,7 +128,10 @@ Der Eingabebalken ist der primäre Startzustand nach dem Öffnen über den Float
 Beispielstruktur:
 
 ```text
-[Ton]  Was willst du sagen?  [Einfügen] [Los]
+[Antworten] [Schreiben]                         [×]
+Antwort auf: "..."                              [×]
+[Ton]  Nachricht, auf die du antworten willst    [Einfügen]
+[Zustimmen] [Absagen] [Entschuldigen] ...        [Los]
 ```
 
 Alternativ ist ein Icon-Button für Start erlaubt:
@@ -139,9 +142,12 @@ Alternativ ist ein Icon-Button für Start erlaubt:
 
 Pflichtelemente:
 
+- kompakte Modusauswahl: `Antworten` / `Schreiben` (Default: `Antworten`)
 - Ton-/Stil-Button links
 - einzeiliges oder kompakt wachsendes Texteingabefeld
 - Einfügen-Button
+- im Antworten-Modus: optionale Kurz-Chips als transienter `userIntent`
+- im Antworten-Modus bei vorhandenem Text: kompakte Kontext-Vorschau + Entfernen
 - Start-Button für KI-Vorschläge
 
 Regeln:
@@ -152,6 +158,7 @@ Regeln:
 - Der Start-Button darf nicht „Senden“ heißen, weil die App nichts in WhatsApp sendet.
 - Erlaubte Start-Labels: `Los`, `Erstellen` oder ein schlichtes Pfeil-Icon.
 - Wenn das Textfeld mehr Platz braucht, darf der Balken moderat wachsen, aber nicht zum Vollbild werden.
+- Kurz-Chips, kopierter Text und Kontext-Vorschau werden nicht gespeichert.
 
 ---
 

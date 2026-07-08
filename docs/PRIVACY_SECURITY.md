@@ -66,6 +66,7 @@ Lokal speichern erlaubt:
 - bevorzugter Ton
 - letzter Modus optional
 - Floating-Button-Position
+- Schreibstil-Werte (nur Stil-Enums: Länge, Emojis, Satzzeichen, Groß-/Kleinschreibung, Natürlichkeit)
 
 Nur flüchtig im Speicher erlaubt:
 
@@ -167,6 +168,24 @@ Grenze:
 
 Erlaubt bleibt ausschließlich dieser eine hart codierte Prompt-Block. Ein
 speicherbares, nutzerbezogenes Stil- oder Personenprofil ist weiterhin verboten.
+
+## Schreibstil-Einstellungen (Issue #8)
+
+Die nutzende Person kann fünf reine Stilwerte wählen (Antwortlänge, Emojis,
+Satzzeichen, Groß-/Kleinschreibung, Natürlichkeit). Diese steuern ausschließlich
+den Prompt-Text; sie sind **keine** Persona und kein Profil.
+
+Grenze:
+
+- gespeichert werden **nur** die Enum-Werte (z. B. `length=normal`) in DataStore
+- es werden **keine** Nutzertexte, kopierten Nachrichten, Vorschläge oder
+  Retry-Anweisungen gespeichert
+- die Werte werden **nicht** mit Nutzertexten zusammen geloggt
+- die feste App-Stimme (D-013) bleibt hart codiert und ist **keine** Nutzereinstellung
+- die Werte sind nicht profilbildend und werden nicht aus Texten gelernt
+
+Die Persona ist bewusst **keine** Nutzereinstellung (D-013); nur die fünf
+neutralen Stilwerte sind einstellbar.
 
 ---
 

@@ -19,14 +19,15 @@ object AiConfig {
     const val ENDPOINT = "https://openrouter.ai/api/v1/chat/completions"
 
     /**
-     * The single pinned MVP model: Anthropic Claude Sonnet 5 via OpenRouter (D-012).
+     * The single pinned MVP model: DeepSeek V4 Flash via OpenRouter (D-012).
      *
-     * Verified against OpenRouter model metadata (2026-07-07): `supported_parameters` contains
-     * `max_tokens`/`max_completion_tokens` but NOT `temperature`/`top_p`/`top_k` — which matches
-     * `docs/PROMPT_PARAMETER_POLICY.md` ("keine non-default temperature/top_p/top_k für Claude
-     * Sonnet 5"). Style is controlled only via prompt, tone chips and retry chips.
+     * Verified against OpenRouter model metadata (2026-07-08): `deepseek/deepseek-v4-flash` is
+     * available and supports `max_tokens`. Although this model also exposes sampling and reasoning
+     * parameters, the MVP still sends no non-default temperature/top_p/top_k and no reasoning
+     * parameter; style is controlled only via prompt, tone chips, writing-style settings and retry
+     * chips.
      */
-    const val MODEL = "anthropic/claude-sonnet-5"
+    const val MODEL = "deepseek/deepseek-v4-flash"
 
     /**
      * Output budget for exactly 3 short chat replies. `max_tokens` is an allowed output-budget

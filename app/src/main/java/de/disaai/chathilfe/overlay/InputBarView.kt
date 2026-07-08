@@ -2,6 +2,7 @@ package de.disaai.chathilfe.overlay
 
 import android.content.Context
 import android.text.InputType
+import android.text.TextWatcher
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
@@ -14,58 +15,78 @@ import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.DrawableCompat
+import androidx.core.view.isVisible
 import de.disaai.chathilfe.R
 import de.disaai.chathilfe.clipboard.ClipboardHelper
+import de.disaai.chathilfe.model.AnswerLength
+import de.disaai.chathilfe.model.CapitalizationStyle
+import de.disaai.chathilfe.model.EmojiUsage
+import de.disaai.chathilfe.model.Naturalness
+import de.disaai.chathilfe.model.PunctuationStyle
 import de.disaai.chathilfe.model.ReplyMode
 import de.disaai.chathilfe.model.ToneOption
+import de.disaai.chathilfe.model.WritingStyleSettings
 
 /**
- * Classic Android View for the Input-Bar (no Compose, per D-003).
+ * Messenger-native capsule Input-Bar (classic Android Views, per D-003).
  *
- * Messenger-native capsule v2:
- * - top row: mode segmented control (Antworten / Schreiben) + close
- * - input row: tone pill + text field + paste
- * - reply-only intent chips: Zustimmen, Absagen, Entschuldigen, Nachfragen, Beruhigen, Grenze
- * - primary Los action
+ * Layout:
+ * - top row: [Ton/Stil] [Antworten|Schreiben] [×]
+ * - style panel (collapsible): compact chip rows for tone + 5 writing-style dimensions
+ * - context preview (reply mode only)
+ * - intent chips (reply mode only): single-select intent hints
+ * - input row: text field + paste + arrow start
+ * - status line for loading/error
  *
- * Never logs or stores typed text, clipboard content, selected reply intents or suggestions.
+ * Never logs or stores typed text, clipboard content or suggestions.
  */
 class InputBarView(context: Context) : FrameLayout(context) {
 
     interface Listener {
         fun onModeSelected(mode: ReplyMode)
-        fun onToneSelected(tone: ToneOption)
-        fun onStart(text: String, tone: ToneOption, mode: ReplyMode, replyIntent: String?)
+        fun onStart(text: String, mode: ReplyMode, intentHint: String?)
+        fun onStyleChanged(style: WritingStyleSettings)
         fun onClose()
-    }
-
-    private enum class ReplyIntentChip(val label: String, val promptText: String) {
-        ZUSTIMMEN("Zustimmen", "zustimmen"),
-        ABSAGEN("Absagen", "absagen"),
-        ENTSCHULDIGEN("Entschuldigen", "sich entschuldigen"),
-        NACHFRAGEN("Nachfragen", "nachfragen"),
-        BERUHIGEN("Beruhigen", "beruhigen und deeskalieren"),
-        GRENZE("Grenze", "eine klare Grenze setzen"),
     }
 
     var listener: Listener? = null
 
     private val visibleModes = listOf(ReplyMode.REPLY, ReplyMode.COMPOSE)
     private var currentMode: ReplyMode = ReplyMode.REPLY
-    private var currentTone: ToneOption = ToneOption.DEFAULT
-    private var selectedReplyIntent: ReplyIntentChip? = null
 
-    private val toneButton: TextView
+    // Transient writing-style state — initialised from defaults, mutated via chip taps,
+    // reported to the service through onStyleChanged.
+    private var styleState = WritingStyleSettings()
+    private var currentTone: ToneOption = ToneOption.DEFAULT
+
+    // Single-select intent hint for reply mode. null = none selected.
+    private var selectedIntentHint: String? = null
+
+    // --- Views ---
     private val editText: EditText
-    private val toneScroll: HorizontalScrollView
-    private val replyIntentScroll: HorizontalScrollView
-    private val toneChips = mutableListOf<TextView>()
-    private val segmentViews = mutableListOf<TextView>()
-    private val intentChipViews = mutableMapOf<ReplyIntentChip, TextView>()
     private val pasteButton: ImageView
     private val startButton: TextView
     private val startProgress: ProgressBar
     private val statusText: TextView
+    private val contextPreviewRow: LinearLayout
+    private val contextCaption: TextView
+    private val segmentViews = mutableListOf<TextView>()
+
+    // Style panel
+    private val stylePanel: LinearLayout
+    private val stylePanelVisible: Boolean get() = stylePanel.isVisible
+    private val toneChipViews = mutableMapOf<ToneOption, TextView>()
+
+    // Dimension chip rows: each maps enum entries → chip views
+    private val lengthChipViews = mutableMapOf<AnswerLength, TextView>()
+    private val emojiChipViews = mutableMapOf<EmojiUsage, TextView>()
+    private val punctuationChipViews = mutableMapOf<PunctuationStyle, TextView>()
+    private val capitalizationChipViews = mutableMapOf<CapitalizationStyle, TextView>()
+    private val naturalnessChipViews = mutableMapOf<Naturalness, TextView>()
+
+    // Intent chips
+    private val intentChipRow: LinearLayout
+    private val intentChipViews = mutableMapOf<String, TextView>()
 
     init {
         background = ContextCompat.getDrawable(context, R.drawable.bg_input_bar)
@@ -80,29 +101,41 @@ class InputBarView(context: Context) : FrameLayout(context) {
             )
         }
 
-        // --- Top capsule row: [Antworten | Schreiben] … [close] ---
+        // --- Top row: [Ton/Stil] [Antworten | Schreiben] [×] ---
         val topRow = LinearLayout(context).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
         }
+
+        // Ton/Stil button — toggles the style sub-panel
+        val styleButton = TextView(context).apply {
+            OverlayStyle.applyTextPill(this)
+            text = context.getString(R.string.input_bar_style_button)
+            setOnClickListener { toggleStylePanel() }
+        }
+
         val modeRow = LinearLayout(context).apply {
             orientation = LinearLayout.HORIZONTAL
             background = ContextCompat.getDrawable(context, R.drawable.bg_segmented)
             contentDescription = context.getString(R.string.input_bar_mode_description)
-            setPadding(dp(OverlayStyle.SPACE_XS), dp(OverlayStyle.SPACE_XS), dp(OverlayStyle.SPACE_XS), dp(OverlayStyle.SPACE_XS))
-            layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
+            setPadding(
+                dp(OverlayStyle.SPACE_XS), dp(OverlayStyle.SPACE_XS),
+                dp(OverlayStyle.SPACE_XS), dp(OverlayStyle.SPACE_XS),
+            )
+            layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f).apply {
+                marginStart = dp(OverlayStyle.SPACE_S)
+            }
         }
         visibleModes.forEachIndexed { index, mode ->
-            val label = if (mode == ReplyMode.COMPOSE) context.getString(R.string.input_bar_mode_compose_short) else mode.label
+            val label = if (mode == ReplyMode.COMPOSE)
+                context.getString(R.string.input_bar_mode_compose_short) else mode.label
             val segment = TextView(context).apply {
                 OverlayStyle.applySegment(this, mode == currentMode)
                 text = label
                 setOnClickListener {
                     if (currentMode != mode) {
                         currentMode = mode
-                        if (mode != ReplyMode.REPLY) selectedReplyIntent = null
                         refreshSegments()
-                        refreshReplyIntentChips()
                         applyModeState()
                         listener?.onModeSelected(mode)
                     }
@@ -114,33 +147,89 @@ class InputBarView(context: Context) : FrameLayout(context) {
             segmentViews.add(segment)
             modeRow.addView(segment)
         }
-        val closeButton = iconButton(R.drawable.ic_close, R.string.input_bar_close_description) {
-            listener?.onClose()
-        }.apply {
-            layoutParams = LinearLayout.LayoutParams(dp(OverlayStyle.ICON_BUTTON), dp(OverlayStyle.ICON_BUTTON)).apply {
-                marginStart = dp(OverlayStyle.SPACE_S)
-            }
+
+        val closeButton = ImageView(context).apply {
+            OverlayStyle.applyIconButton(this, R.drawable.ic_close)
+            contentDescription = context.getString(R.string.input_bar_close_description)
+            setOnClickListener { listener?.onClose() }
+            layoutParams = LinearLayout.LayoutParams(
+                dp(OverlayStyle.ICON_BUTTON), dp(OverlayStyle.ICON_BUTTON),
+            ).apply { marginStart = dp(OverlayStyle.SPACE_S) }
         }
+
+        topRow.addView(styleButton)
         topRow.addView(modeRow)
         topRow.addView(closeButton)
 
-        // --- Input row: tone | message/intent field | paste ---
+        // --- Style panel: compact, collapsible chip grid for tone + writing-style dimensions ---
+        stylePanel = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            visibility = GONE
+            setPadding(0, dp(OverlayStyle.SPACE_S), 0, 0)
+        }
+        stylePanel.addView(buildStylePanelContent())
+
+        // --- Context preview (Antworten only) ---
+        contextPreviewRow = LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            visibility = GONE
+            setPadding(0, dp(OverlayStyle.SPACE_S), 0, 0)
+        }
+        contextCaption = TextView(context).apply {
+            OverlayStyle.applySectionLabel(this)
+            maxLines = 1
+            ellipsize = android.text.TextUtils.TruncateAt.END
+            layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f).apply {
+                marginEnd = dp(OverlayStyle.SPACE_S)
+            }
+        }
+        val contextRemoveButton = ImageView(context).apply {
+            OverlayStyle.applyIconButton(this, R.drawable.ic_close)
+            contentDescription = context.getString(R.string.input_bar_context_remove)
+            setOnClickListener {
+                editText.setText("")
+                updateContextPreview()
+            }
+        }
+        contextPreviewRow.addView(contextCaption)
+        contextPreviewRow.addView(contextRemoveButton)
+
+        // --- Intent chips (Antworten mode only) ---
+        intentChipRow = LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            visibility = GONE
+            setPadding(0, dp(OverlayStyle.SPACE_S), 0, 0)
+        }
+        val intentScroll = HorizontalScrollView(context).apply {
+            isHorizontalScrollBarEnabled = false
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT,
+            )
+        }
+        REPLY_INTENT_CHIPS.forEach { intentLabel ->
+            val chip = TextView(context).apply {
+                OverlayStyle.applyChip(this, selected = false)
+                text = intentLabel
+                setOnClickListener {
+                    val wasSelected = selectedIntentHint == intentLabel
+                    selectedIntentHint = if (wasSelected) null else intentLabel
+                    refreshIntentChips()
+                }
+                layoutParams = LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT,
+                ).apply { marginEnd = dp(OverlayStyle.SPACE_S) }
+            }
+            intentChipViews[intentLabel] = chip
+            intentChipRow.addView(chip)
+        }
+        intentScroll.addView(intentChipRow)
+
+        // --- Input row: [EditText] [Einfügen] [→] ---
         val inputRow = LinearLayout(context).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
             setPadding(0, dp(OverlayStyle.SPACE_S), 0, 0)
-        }
-        toneButton = TextView(context).apply {
-            OverlayStyle.applyTextPill(this)
-            text = currentTone.label
-            contentDescription = context.getString(R.string.input_bar_tone_button_description)
-            setOnClickListener {
-                toneScroll.visibility = if (toneScroll.visibility == VISIBLE) GONE else VISIBLE
-            }
-            layoutParams = LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-            ).apply { marginEnd = dp(OverlayStyle.SPACE_S) }
         }
         editText = EditText(context).apply {
             setHintTextColor(OverlayStyle.color(context, OverlayStyle.textMuted))
@@ -149,86 +238,35 @@ class InputBarView(context: Context) : FrameLayout(context) {
             maxLines = 3
             minHeight = dp(OverlayStyle.ICON_BUTTON)
             background = ContextCompat.getDrawable(context, R.drawable.bg_input_field)
-            setPadding(dp(OverlayStyle.SPACE_M), dp(OverlayStyle.SPACE_S), dp(OverlayStyle.SPACE_M), dp(OverlayStyle.SPACE_S))
+            setPadding(
+                dp(OverlayStyle.SPACE_M), dp(OverlayStyle.SPACE_S),
+                dp(OverlayStyle.SPACE_M), dp(OverlayStyle.SPACE_S),
+            )
             textSize = OverlayStyle.TEXT_BODY
             layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f).apply {
                 marginEnd = dp(OverlayStyle.SPACE_S)
             }
-        }
-        pasteButton = iconButton(R.drawable.ic_paste, R.string.input_bar_paste_button) {
-            val pasted = ClipboardHelper.readText(context)
-            if (!pasted.isNullOrBlank()) {
-                editText.setText(pasted)
-                editText.setSelection(editText.text.length)
-            }
-        }
-        inputRow.addView(toneButton)
-        inputRow.addView(editText)
-        inputRow.addView(pasteButton)
-
-        // --- Reply intent chips (only visible in Antworten mode) ---
-        replyIntentScroll = HorizontalScrollView(context).apply {
-            isHorizontalScrollBarEnabled = false
-            setPadding(0, dp(OverlayStyle.SPACE_S), 0, 0)
-        }
-        val replyIntentRow = LinearLayout(context).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER_VERTICAL
-        }
-        ReplyIntentChip.entries.forEach { chip ->
-            val chipView = TextView(context).apply {
-                OverlayStyle.applyChip(this, selectedReplyIntent == chip)
-                text = chip.label
-                setOnClickListener {
-                    selectedReplyIntent = if (selectedReplyIntent == chip) null else chip
-                    refreshReplyIntentChips()
+            addTextChangedListener(object : TextWatcher {
+                override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+                override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+                override fun afterTextChanged(s: android.text.Editable?) {
+                    if (currentMode == ReplyMode.REPLY) updateContextPreview()
                 }
-                layoutParams = LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.WRAP_CONTENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT,
-                ).apply { marginEnd = dp(OverlayStyle.SPACE_S) }
-            }
-            intentChipViews[chip] = chipView
-            replyIntentRow.addView(chipView)
+            })
         }
-        replyIntentScroll.addView(replyIntentRow)
-
-        // --- Tone picker (hidden until tone pill is tapped) ---
-        toneScroll = HorizontalScrollView(context).apply {
-            isHorizontalScrollBarEnabled = false
-            visibility = GONE
-            setPadding(0, dp(OverlayStyle.SPACE_S), 0, 0)
-        }
-        val toneRow = LinearLayout(context).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER_VERTICAL
-        }
-        ToneOption.entries.forEach { tone ->
-            val chip = TextView(context).apply {
-                OverlayStyle.applyChip(this, tone == currentTone)
-                text = tone.label
-                setOnClickListener {
-                    currentTone = tone
-                    toneButton.text = tone.label
-                    refreshToneChips()
-                    toneScroll.visibility = GONE
-                    listener?.onToneSelected(tone)
+        pasteButton = ImageView(context).apply {
+            OverlayStyle.applyIconButton(this, R.drawable.ic_paste)
+            contentDescription = context.getString(R.string.input_bar_paste_button)
+            setOnClickListener {
+                val pasted = ClipboardHelper.readText(context)
+                if (!pasted.isNullOrBlank()) {
+                    editText.setText(pasted)
+                    editText.setSelection(editText.text.length)
                 }
-                layoutParams = LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.WRAP_CONTENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT,
-                ).apply { marginEnd = dp(OverlayStyle.SPACE_S) }
             }
-            toneChips.add(chip)
-            toneRow.addView(chip)
-        }
-        toneScroll.addView(toneRow)
-
-        // --- Action row: … Los → ---
-        val actionRow = LinearLayout(context).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER_VERTICAL or Gravity.END
-            setPadding(0, dp(OverlayStyle.SPACE_S), 0, 0)
+            layoutParams = LinearLayout.LayoutParams(
+                dp(OverlayStyle.ICON_BUTTON), dp(OverlayStyle.ICON_BUTTON),
+            ).apply { marginEnd = dp(OverlayStyle.SPACE_S) }
         }
         startButton = TextView(context).apply {
             OverlayStyle.applyAccentPill(this)
@@ -238,12 +276,7 @@ class InputBarView(context: Context) : FrameLayout(context) {
             setCompoundDrawablesRelativeWithIntrinsicBounds(null, null, arrowDrawable, null)
             compoundDrawablePadding = dp(OverlayStyle.SPACE_XS)
             setOnClickListener {
-                listener?.onStart(
-                    editText.text.toString(),
-                    currentTone,
-                    currentMode,
-                    selectedReplyIntent?.promptText,
-                )
+                listener?.onStart(editText.text.toString(), currentMode, selectedIntentHint)
             }
         }
         startProgress = ProgressBar(context, null, android.R.attr.progressBarStyleSmall).apply {
@@ -254,10 +287,12 @@ class InputBarView(context: Context) : FrameLayout(context) {
                 dp(OverlayStyle.ICON_SM),
             ).apply { marginEnd = dp(OverlayStyle.SPACE_S) }
         }
-        actionRow.addView(View(context).apply { layoutParams = LinearLayout.LayoutParams(0, 1, 1f) })
-        actionRow.addView(startProgress)
-        actionRow.addView(startButton)
+        inputRow.addView(editText)
+        inputRow.addView(pasteButton)
+        inputRow.addView(startProgress)
+        inputRow.addView(startButton)
 
+        // --- Status text ---
         statusText = TextView(context).apply {
             OverlayStyle.applySectionLabel(this)
             setPadding(dp(OverlayStyle.SPACE_XS), dp(OverlayStyle.SPACE_S), dp(OverlayStyle.SPACE_XS), 0)
@@ -265,15 +300,18 @@ class InputBarView(context: Context) : FrameLayout(context) {
         }
 
         root.addView(topRow)
+        root.addView(stylePanel)
+        root.addView(contextPreviewRow)
+        root.addView(intentScroll)
         root.addView(inputRow)
-        root.addView(replyIntentScroll)
-        root.addView(toneScroll)
-        root.addView(actionRow)
         root.addView(statusText)
         addView(root)
 
         applyModeState()
+        refreshAllStyleChips()
     }
+
+    // --- Public API ---
 
     fun setLoading(active: Boolean) {
         startButton.isEnabled = !active
@@ -293,21 +331,24 @@ class InputBarView(context: Context) : FrameLayout(context) {
         statusText.visibility = if (message != null) VISIBLE else GONE
     }
 
-    fun setTone(tone: ToneOption) {
-        currentTone = tone
-        toneButton.text = tone.label
-        refreshToneChips()
-    }
-
     fun setMode(mode: ReplyMode) {
         currentMode = if (mode in visibleModes) mode else ReplyMode.REPLY
-        if (currentMode != ReplyMode.REPLY) selectedReplyIntent = null
         refreshSegments()
-        refreshReplyIntentChips()
         applyModeState()
     }
 
     fun currentText(): String = editText.text.toString()
+
+    /** Returns the current transient style state. */
+    fun currentStyle(): WritingStyleSettings = styleState
+
+    /** Applies an external style (e.g. restored from SettingsStore on open). */
+    fun setStyle(style: WritingStyleSettings) {
+        styleState = style
+        refreshAllStyleChips()
+    }
+
+    // --- Private helpers ---
 
     private fun applyModeState() {
         editText.hint = context.getString(
@@ -317,7 +358,24 @@ class InputBarView(context: Context) : FrameLayout(context) {
                 ReplyMode.REWRITE -> R.string.input_bar_hint
             },
         )
-        replyIntentScroll.visibility = if (currentMode == ReplyMode.REPLY) VISIBLE else GONE
+        intentChipRow.parent?.let { parent ->
+            (parent as? View)?.isVisible = currentMode == ReplyMode.REPLY
+        }
+        if (currentMode != ReplyMode.REPLY) {
+            selectedIntentHint = null
+            refreshIntentChips()
+        }
+        updateContextPreview()
+    }
+
+    private fun updateContextPreview() {
+        val show = currentMode == ReplyMode.REPLY && editText.text.isNotBlank()
+        contextPreviewRow.isVisible = show
+        if (show) {
+            contextCaption.text = context.getString(
+                R.string.input_bar_context_value, editText.text.toString(),
+            )
+        }
     }
 
     private fun refreshSegments() {
@@ -326,29 +384,199 @@ class InputBarView(context: Context) : FrameLayout(context) {
         }
     }
 
-    private fun refreshReplyIntentChips() {
-        intentChipViews.forEach { (chip, view) ->
-            OverlayStyle.applyChip(view, selectedReplyIntent == chip)
+    // --- Style panel ---
+
+    private fun buildStylePanelContent(): View {
+        val panel = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            background = ContextCompat.getDrawable(context, R.drawable.bg_input_field)
+            setPadding(dp(OverlayStyle.SPACE_M), dp(OverlayStyle.SPACE_S), dp(OverlayStyle.SPACE_M), dp(OverlayStyle.SPACE_M))
+        }
+
+        // Header: "Schreibstil" label + close button
+        val header = LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+        }
+        header.addView(TextView(context).apply {
+            OverlayStyle.applySectionLabel(this)
+            text = context.getString(R.string.input_bar_style_panel_description)
+            layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
+        })
+        header.addView(ImageView(context).apply {
+            OverlayStyle.applyIconButton(this, R.drawable.ic_close)
+            contentDescription = context.getString(R.string.input_bar_style_panel_close)
+            setOnClickListener { toggleStylePanel() }
+            layoutParams = LinearLayout.LayoutParams(dp(OverlayStyle.ICON_XS), dp(OverlayStyle.ICON_XS))
+        })
+        panel.addView(header)
+
+        // Tone row
+        panel.addView(buildChipRow(
+            label = context.getString(R.string.settings_style_tone),
+            entries = ToneOption.entries.toList(),
+            chipViews = toneChipViews,
+            defaultGetter = { ToneOption.DEFAULT },
+            currentGetter = { currentTone },
+            labelOf = { it.label },
+            onSelect = { tone ->
+                currentTone = tone
+                refreshChipRow(toneChipViews) { it == currentTone }
+                listener?.onStyleChanged(styleState)
+            },
+        ))
+
+        // Writing-style dimension rows
+        panel.addView(buildChipRow(
+            label = context.getString(R.string.settings_style_length),
+            entries = AnswerLength.entries.toList(),
+            chipViews = lengthChipViews,
+            defaultGetter = { AnswerLength.DEFAULT },
+            currentGetter = { styleState.length },
+            labelOf = { it.label },
+            onSelect = { v ->
+                styleState = styleState.copy(length = v)
+                refreshChipRow(lengthChipViews) { it == styleState.length }
+                listener?.onStyleChanged(styleState)
+            },
+        ))
+
+        panel.addView(buildChipRow(
+            label = context.getString(R.string.settings_style_emoji),
+            entries = EmojiUsage.entries.toList(),
+            chipViews = emojiChipViews,
+            defaultGetter = { EmojiUsage.DEFAULT },
+            currentGetter = { styleState.emojiUsage },
+            labelOf = { it.label },
+            onSelect = { v ->
+                styleState = styleState.copy(emojiUsage = v)
+                refreshChipRow(emojiChipViews) { it == styleState.emojiUsage }
+                listener?.onStyleChanged(styleState)
+            },
+        ))
+
+        panel.addView(buildChipRow(
+            label = context.getString(R.string.settings_style_punctuation),
+            entries = PunctuationStyle.entries.toList(),
+            chipViews = punctuationChipViews,
+            defaultGetter = { PunctuationStyle.DEFAULT },
+            currentGetter = { styleState.punctuation },
+            labelOf = { it.label },
+            onSelect = { v ->
+                styleState = styleState.copy(punctuation = v)
+                refreshChipRow(punctuationChipViews) { it == styleState.punctuation }
+                listener?.onStyleChanged(styleState)
+            },
+        ))
+
+        panel.addView(buildChipRow(
+            label = context.getString(R.string.settings_style_capitalization),
+            entries = CapitalizationStyle.entries.toList(),
+            chipViews = capitalizationChipViews,
+            defaultGetter = { CapitalizationStyle.DEFAULT },
+            currentGetter = { styleState.capitalization },
+            labelOf = { it.label },
+            onSelect = { v ->
+                styleState = styleState.copy(capitalization = v)
+                refreshChipRow(capitalizationChipViews) { it == styleState.capitalization }
+                listener?.onStyleChanged(styleState)
+            },
+        ))
+
+        panel.addView(buildChipRow(
+            label = context.getString(R.string.settings_style_naturalness),
+            entries = Naturalness.entries.toList(),
+            chipViews = naturalnessChipViews,
+            defaultGetter = { Naturalness.DEFAULT },
+            currentGetter = { styleState.naturalness },
+            labelOf = { it.label },
+            onSelect = { v ->
+                styleState = styleState.copy(naturalness = v)
+                refreshChipRow(naturalnessChipViews) { it == styleState.naturalness }
+                listener?.onStyleChanged(styleState)
+            },
+        ))
+
+        return panel
+    }
+
+    /** Builds a labelled horizontal chip row wrapped in a [HorizontalScrollView]. */
+    private fun <T> buildChipRow(
+        label: String,
+        entries: List<T>,
+        chipViews: MutableMap<T, TextView>,
+        defaultGetter: () -> T,
+        currentGetter: () -> T,
+        onSelect: (T) -> Unit,
+        labelOf: (T) -> String,
+    ): LinearLayout {
+        val container = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(0, dp(OverlayStyle.SPACE_S), 0, 0)
+        }
+        container.addView(TextView(context).apply {
+            OverlayStyle.applySectionLabel(this)
+            text = label
+            setPadding(0, 0, 0, dp(OverlayStyle.SPACE_XS))
+        })
+        val scroll = HorizontalScrollView(context).apply {
+            isHorizontalScrollBarEnabled = false
+        }
+        val chipRow = LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+        }
+        entries.forEach { entry ->
+            val chip = TextView(context).apply {
+                OverlayStyle.applyChip(this, selected = currentGetter() == entry)
+                text = labelOf(entry)
+                setOnClickListener { onSelect(entry) }
+                layoutParams = LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT,
+                ).apply { marginEnd = dp(OverlayStyle.SPACE_S) }
+            }
+            chipViews[entry] = chip
+            chipRow.addView(chip)
+        }
+        scroll.addView(chipRow)
+        container.addView(scroll)
+        return container
+    }
+
+    /** Refreshes a single chip row's selected state. */
+    private fun <T> refreshChipRow(chipViews: Map<T, TextView>, isSelected: (T) -> Boolean) {
+        chipViews.forEach { (entry, view) ->
+            OverlayStyle.applyChip(view, isSelected(entry))
         }
     }
 
-    private fun refreshToneChips() {
-        toneChips.forEachIndexed { index, view ->
-            OverlayStyle.applyChip(view, ToneOption.entries[index] == currentTone)
-        }
+    private fun refreshAllStyleChips() {
+        refreshChipRow(toneChipViews) { it == currentTone }
+        refreshChipRow(lengthChipViews) { it == styleState.length }
+        refreshChipRow(emojiChipViews) { it == styleState.emojiUsage }
+        refreshChipRow(punctuationChipViews) { it == styleState.punctuation }
+        refreshChipRow(capitalizationChipViews) { it == styleState.capitalization }
+        refreshChipRow(naturalnessChipViews) { it == styleState.naturalness }
     }
 
-    private fun iconButton(
-        iconRes: Int,
-        descriptionRes: Int,
-        accent: Boolean = false,
-        onClick: () -> Unit,
-    ): ImageView = ImageView(context).apply {
-        OverlayStyle.applyIconButton(this, iconRes, accent)
-        contentDescription = context.getString(descriptionRes)
-        setOnClickListener { onClick() }
-        layoutParams = LinearLayout.LayoutParams(dp(OverlayStyle.ICON_BUTTON), dp(OverlayStyle.ICON_BUTTON))
+    private fun toggleStylePanel() {
+        stylePanel.isVisible = !stylePanel.isVisible
+    }
+
+    // --- Intent chips ---
+
+    private fun refreshIntentChips() {
+        intentChipViews.forEach { (label, view) ->
+            OverlayStyle.applyChip(view, selected = label == selectedIntentHint)
+        }
     }
 
     private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
+
+    companion object {
+        /** Alltags-Set for reply intent chips (Decision Brief). Single-select, never stored. */
+        val REPLY_INTENT_CHIPS = listOf(
+            "Zustimmen", "Absagen", "Entschuldigen",
+            "Nachfragen", "Beruhigen", "Grenze",
+        )
+    }
 }

@@ -10,6 +10,7 @@ import android.view.inputmethod.InputMethodManager
 import de.disaai.chathilfe.model.ReplyMode
 import de.disaai.chathilfe.model.ReplySuggestion
 import de.disaai.chathilfe.model.ToneOption
+import de.disaai.chathilfe.model.WritingStyleSettings
 import kotlin.math.min
 
 /**
@@ -85,12 +86,16 @@ class OverlayController(private val context: Context) {
         }
     }
 
-    fun showInputBar(tone: ToneOption, mode: ReplyMode, listener: InputBarView.Listener) {
+    fun showInputBar(
+        mode: ReplyMode,
+        listener: InputBarView.Listener,
+        style: WritingStyleSettings = WritingStyleSettings(),
+    ) {
         replaceContent(focusable = true) {
             InputBarView(context).apply {
                 this.listener = listener
-                setTone(tone)
                 setMode(mode)
+                setStyle(style)
             }
         }
     }

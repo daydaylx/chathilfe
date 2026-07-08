@@ -44,9 +44,15 @@
     <string name="input_bar_start_button_loading">Erstelle…</string>
     <string name="input_bar_mode_description">Modus wählen</string>
     <string name="input_bar_mode_compose_short">Schreiben</string>
-    <string name="input_bar_tone_button_description">Ton auswählen</string>
+
     <string name="input_bar_close_description">Schließen</string>
     <string name="input_bar_loading">Vorschläge werden erstellt …</string>
+    <string name="input_bar_context_value">Antwort auf: "%1$s"</string>
+    <string name="input_bar_context_remove">Kontext entfernen</string>
+    <string name="input_bar_style_button">Ton/Stil</string>
+    <string name="input_bar_style_panel_close">Stil-Menü schließen</string>
+    <string name="input_bar_style_panel_description">Schreibstil anpassen</string>
+    <string name="input_bar_settings_button">Einstellungen öffnen</string>
 
     <string name="result_panel_copy_button">Kopieren</string>
     <string name="result_panel_copied_toast">In Zwischenablage kopiert</string>
@@ -57,4 +63,13 @@
     <string name="result_panel_previous_description">Vorheriger Vorschlag</string>
     <string name="result_panel_next_description">Nächster Vorschlag</string>
     <string name="result_panel_loading">Neue Vorschläge werden erstellt …</string>
+
+    <string name="settings_style_title">Stil</string>
+    <string name="settings_style_intro">Steuert, wie die Vorschläge klingen. Nur Stilwerte, keine Texte gespeichert.</string>
+    <string name="settings_style_tone">Ton</string>
+    <string name="settings_style_length">Antwortlänge</string>
+    <string name="settings_style_emoji">Emojis</string>
+    <string name="settings_style_punctuation">Satzzeichen</string>
+    <string name="settings_style_capitalization">Groß-/Kleinschreibung</string>
+    <string name="settings_style_naturalness">Natürlichkeit</string>
 </resources>

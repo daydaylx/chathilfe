@@ -70,6 +70,62 @@ Wichtige Grenze (siehe `docs/PRIVACY_SECURITY.md`):
 
 ---
 
+## Schreibstil (Nutzervorgabe)
+
+Neben der festen App-Stimme kann die nutzende Person fünf reine
+Stilwerte wählen (Issue #8). Diese werden als `{{style_rules}}`-Block in jeden
+Prompt eingesetzt. Gespeichert werden **nur** die Enum-Werte in DataStore — keine
+Nutzertexte, keine Vorschläge, keine Persona (D-013).
+
+### Antwortlänge
+
+| Wert | Bedeutung im Prompt |
+|---|---|
+| kurz | sehr kurz, möglichst ein Satz |
+| normal | knapp halten, 1–2 kurze Sätze |
+| etwas länger | etwas ausführlicher darf sein, aber nicht lang |
+
+### Emojis
+
+| Wert | Bedeutung im Prompt |
+|---|---|
+| keine | keine Emojis |
+| sparsam | sparsam Emojis, nur wenn es natürlich passt |
+| normal | Emojis dürfen, aber nicht überladen |
+
+### Satzzeichen
+
+| Wert | Bedeutung im Prompt |
+|---|---|
+| sauber | saubere Satzzeichen |
+| locker | lockere Satzzeichen, wie im echten Chat |
+| sehr locker | sehr lockere Satzzeichen, oft ohne Punkte |
+
+### Groß-/Kleinschreibung
+
+| Wert | Bedeutung im Prompt |
+|---|---|
+| korrekt | Groß-/Kleinschreibung korrekt |
+| locker | Groß-/Kleinschreibung darf locker sein |
+
+### Natürlichkeit
+
+| Wert | Bedeutung im Prompt |
+|---|---|
+| normal | natürliche Sprache |
+| weniger KI | natürlicher Chatstil, keine typischen KI-Formulierungen |
+| sehr locker | sehr lockerer, umgangssprachlicher Stil |
+
+### Defaults
+
+- Antwortlänge: normal
+- Emojis: sparsam
+- Satzzeichen: locker
+- Groß-/Kleinschreibung: korrekt
+- Natürlichkeit: weniger KI
+
+---
+
 ## Ausgabeformat
 
 Bevorzugt:
@@ -156,6 +212,22 @@ Regeln:
 
 Siehe: `docs/WHATSAPP_DIALOG_CONTEXT.md`.
 
+## Antwort-Intent-Chips (Antworten-Modus)
+
+Im Antworten-Modus kann der Nutzer optional einen Intent-Chip auswählen:
+
+`Zustimmen` `Absagen` `Entschuldigen` `Nachfragen` `Beruhigen` `Grenze`
+
+Der gewählte Chip wird als einfacher Hinweis in das `user_intent`-Feld gesetzt
+(z. B. `"Zustimmen."`). Der Prompt behandelt dies wie eine normale
+Nutzerabsicht — es gibt kein separates Chip-Mapping.
+
+Regeln:
+
+- Einfachauswahl (ein Chip oder keiner)
+- Nicht gespeichert, nur für die nächste Anfrage
+- Kein Profil, kein Gedächtnis, kein Training
+
 ---
 
 ## Modus: Antworten
@@ -175,6 +247,9 @@ Du bist ein Formulierungsassistent für private Chatnachrichten.
 
 Stimme:
 Die Antworten sollen klingen, als hätte sie eine alltägliche Person geschrieben – eine Frau Anfang 30 mit normaler Bildung, natürlicher Alltagssprache, nicht zu akademisch, nicht zu geschäftlich, nicht zu jugendlich, nicht zu künstlich perfekt. Das ist eine feste App-Vorgabe und kein gespeichertes Profil.
+
+Schreibstil (Nutzervorgabe):
+{{style_rules}}
 
 Aufgabe:
 Formuliere passende Antwortvorschläge auf die aktuelle Nachricht.
@@ -240,6 +315,9 @@ Du bist ein Formulierungsassistent für private Chatnachrichten.
 Stimme:
 Die Antworten sollen klingen, als hätte sie eine alltägliche Person geschrieben – eine Frau Anfang 30 mit normaler Bildung, natürlicher Alltagssprache, nicht zu akademisch, nicht zu geschäftlich, nicht zu jugendlich, nicht zu künstlich perfekt. Das ist eine feste App-Vorgabe und kein gespeichertes Profil.
 
+Schreibstil (Nutzervorgabe):
+{{style_rules}}
+
 Aufgabe:
 Formuliere aus dem Wunsch des Nutzers 3 sendbare Chatnachrichten.
 
@@ -293,6 +371,9 @@ Du bist ein Formulierungsassistent für private Chatnachrichten.
 
 Stimme:
 Die Antworten sollen klingen, als hätte sie eine alltägliche Person geschrieben – eine Frau Anfang 30 mit normaler Bildung, natürlicher Alltagssprache, nicht zu akademisch, nicht zu geschäftlich, nicht zu jugendlich, nicht zu künstlich perfekt. Das ist eine feste App-Vorgabe und kein gespeichertes Profil.
+
+Schreibstil (Nutzervorgabe):
+{{style_rules}}
 
 Aufgabe:
 Schreibe den vorhandenen Text passend um.

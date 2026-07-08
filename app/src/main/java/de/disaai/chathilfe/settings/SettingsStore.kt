@@ -8,6 +8,12 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import de.disaai.chathilfe.model.AnswerLength
+import de.disaai.chathilfe.model.CapitalizationStyle
+import de.disaai.chathilfe.model.EmojiUsage
+import de.disaai.chathilfe.model.Naturalness
+import de.disaai.chathilfe.model.PunctuationStyle
+import de.disaai.chathilfe.model.WritingStyleSettings
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -19,6 +25,13 @@ private object Keys {
     val LAST_MODE = stringPreferencesKey("last_mode")
     val BUBBLE_X = intPreferencesKey("bubble_x")
     val BUBBLE_Y = intPreferencesKey("bubble_y")
+
+    // Writing-style values (Issue #8): enum internalValue strings only. No user text, no persona.
+    val STYLE_LENGTH = stringPreferencesKey("style_length")
+    val STYLE_EMOJI = stringPreferencesKey("style_emoji")
+    val STYLE_PUNCTUATION = stringPreferencesKey("style_punctuation")
+    val STYLE_CAPITALIZATION = stringPreferencesKey("style_capitalization")
+    val STYLE_NATURALNESS = stringPreferencesKey("style_naturalness")
 }
 
 data class Settings(
@@ -27,6 +40,7 @@ data class Settings(
     val lastMode: String? = null,
     val bubbleX: Int? = null,
     val bubbleY: Int? = null,
+    val writingStyle: WritingStyleSettings = WritingStyleSettings(),
 )
 
 /**
@@ -42,6 +56,13 @@ class SettingsStore(private val context: Context) {
             lastMode = prefs[Keys.LAST_MODE],
             bubbleX = prefs[Keys.BUBBLE_X],
             bubbleY = prefs[Keys.BUBBLE_Y],
+            writingStyle = WritingStyleSettings(
+                length = AnswerLength.fromInternalValue(prefs[Keys.STYLE_LENGTH]),
+                emojiUsage = EmojiUsage.fromInternalValue(prefs[Keys.STYLE_EMOJI]),
+                punctuation = PunctuationStyle.fromInternalValue(prefs[Keys.STYLE_PUNCTUATION]),
+                capitalization = CapitalizationStyle.fromInternalValue(prefs[Keys.STYLE_CAPITALIZATION]),
+                naturalness = Naturalness.fromInternalValue(prefs[Keys.STYLE_NATURALNESS]),
+            ),
         )
     }
 
@@ -66,6 +87,21 @@ class SettingsStore(private val context: Context) {
         context.dataStore.edit { prefs ->
             prefs[Keys.BUBBLE_X] = x
             prefs[Keys.BUBBLE_Y] = y
+        }
+    }
+
+    /**
+     * Persists the user's writing-style values (Issue #8). Stores only enum internalValue
+     * strings — never user text, suggestions or a persona. The fixed app voice is a static
+     * prompt rule (D-013), not a stored setting.
+     */
+    suspend fun setWritingStyle(style: WritingStyleSettings) {
+        context.dataStore.edit { prefs ->
+            prefs[Keys.STYLE_LENGTH] = style.length.internalValue
+            prefs[Keys.STYLE_EMOJI] = style.emojiUsage.internalValue
+            prefs[Keys.STYLE_PUNCTUATION] = style.punctuation.internalValue
+            prefs[Keys.STYLE_CAPITALIZATION] = style.capitalization.internalValue
+            prefs[Keys.STYLE_NATURALNESS] = style.naturalness.internalValue
         }
     }
 }

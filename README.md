@@ -10,7 +10,7 @@ Die App ist kein Messenger-Ersatz. Sie hilft nur beim Formulieren, Umschreiben u
 
 | Punkt | Stand |
 |---|---|
-| Projektphase | Phase 7 code-seitig umgesetzt (OpenRouter-KI-Anbindung: `AiConfig`/`AiClient`/`OpenRouterJson`, Modell `anthropic/claude-sonnet-5` gepinnt, `DummySuggestionSource` ersetzt); nächster Schritt ist Phase 8 (Gerätetest) |
+| Projektphase | Phase 7 code-seitig umgesetzt (OpenRouter-KI-Anbindung: `AiConfig`/`AiClient`/`OpenRouterJson`, Modell `deepseek/deepseek-v4-flash` gepinnt, `DummySuggestionSource` ersetzt); nächster Schritt ist Phase 8 (Gerätetest) |
 | Ziel | private Android-APK |
 | Primäres Gerät | Samsung Galaxy S25 |
 | Zielplattform | Android 15/16 |
@@ -28,7 +28,7 @@ Wenn WhatsApp geöffnet ist, erscheint ein kleiner Floating Button am Bildschirm
 
 Beim Antippen öffnet sich zuerst ein schmaler Eingabebalken. Dort kann der Nutzer:
 
-1. einen Ton/Stil wählen,
+1. über den [Ton/Stil]-Button direkt im Overlay Ton, Länge, Emojis, Satzzeichen und Natürlichkeit anpassen (kein Wechsel zur Settings-Seite nötig),
 2. Text eingeben oder bewusst einfügen,
 3. KI-Vorschläge starten,
 4. nach der KI-Antwort ein kompaktes Ergebnis-Panel sehen,
@@ -70,6 +70,7 @@ Der Retry ist nur ein temporärer neuer Versuch. Es gibt keinen Verlauf, kein Ge
 | [`docs/PROMPTS.md`](docs/PROMPTS.md) | KI-Prompts und Parser-Regeln |
 | [`docs/UI_UX_SPEC.md`](docs/UI_UX_SPEC.md) | UI/UX-Regeln für Button, Eingabebalken, Ergebnis-Panel und Fehlerzustände |
 | [`docs/VISUAL_SCOPE.md`](docs/VISUAL_SCOPE.md) | verbindlicher visueller Scope für Input-Bar, Result-Panel und Vorschlagswechsel |
+| [`docs/OVERLAY_WRITING_STYLE_MENU.md`](docs/OVERLAY_WRITING_STYLE_MENU.md) | Overlay-Schreibstilmenü: Flow, Einstellungen, PromptBuilder-Anbindung |
 
 ---
 
@@ -105,7 +106,7 @@ Nicht alle Dokumente pauschal laden. Das reduziert Kontext-Bloat.
 | Laufzeit | Foreground Service, aus sichtbarer Nutzeraktion gestartet |
 | Lokale Einstellungen | DataStore für UI-/Overlay-Settings, keine Texte/API-Keys |
 | KI-Anbieter | OpenRouter, ein Provider im MVP |
-| KI-Modell | `anthropic/claude-sonnet-5` (OpenRouter), in Phase 7 gepinnt (D-012) |
+| KI-Modell | `deepseek/deepseek-v4-flash` (OpenRouter), als Default gepinnt (D-012) |
 | API-Key | lokaler Build-Time-Key, nicht im Repo, kein UI-Feld |
 | Agentenmodell-Policy | Claude Sonnet 5 / GLM-5.2 in `docs/AGENT_MODEL_POLICY.md` |
 | Prompt-Parameter | modellabhängig in `docs/PROMPT_PARAMETER_POLICY.md` |
@@ -169,10 +170,10 @@ Ein Agent darf erfolgreiche Builds oder Tests nur behaupten, wenn sie tatsächli
 ## Aktueller nächster Schritt
 
 Phase 7 (KI-Anbindung) ist code-seitig umgesetzt: ein Provider (OpenRouter), ein gepinntes Modell
-(`anthropic/claude-sonnet-5`, siehe [`docs/DECISIONS.md`](docs/DECISIONS.md) D-012), **keine** neue
+(`deepseek/deepseek-v4-flash`, siehe [`docs/DECISIONS.md`](docs/DECISIONS.md) D-012), **keine** neue
 Dependency (`HttpURLConnection` + eigene `OpenRouterJson`-Logik). `AiClient` sendet `model`/
-`max_tokens` und genau eine User-Message — bewusst **ohne** Sampling-Parameter (Claude Sonnet 5,
-[`docs/PROMPT_PARAMETER_POLICY.md`](docs/PROMPT_PARAMETER_POLICY.md)). Das Overlay ist an die echte
+`max_tokens` und genau eine User-Message — bewusst **ohne** Sampling-Parameter (Stilsteuerung per
+Prompt/Ton/Schreibstil/Retry, [`docs/PROMPT_PARAMETER_POLICY.md`](docs/PROMPT_PARAMETER_POLICY.md)). Das Overlay ist an die echte
 KI verdrahtet (Initial-Anfrage aus der Input-Bar, Retry aus dem Result-Panel), `DummySuggestionSource`
 ist entfernt. Lade-/Fehlerzustände sind kompakt umgesetzt. `assembleDebug` ✅, `test` ✅ (46 Tests),
 `lint` ✅ (0 errors) — Details in [`docs/PHASE_7_REPORT.md`](docs/PHASE_7_REPORT.md).

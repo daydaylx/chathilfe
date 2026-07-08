@@ -27,7 +27,7 @@ class AiConfigTest {
 
     @Test
     fun `model and endpoint are pinned`() {
-        assertEquals("anthropic/claude-sonnet-5", AiConfig.MODEL)
+        assertEquals("deepseek/deepseek-v4-flash", AiConfig.MODEL)
         assertTrue(AiConfig.ENDPOINT.startsWith("https://openrouter.ai/api/v1/"))
         assertTrue(AiConfig.MAX_TOKENS > 0)
     }

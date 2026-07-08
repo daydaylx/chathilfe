@@ -14,16 +14,19 @@ Die fünf Qualitätsfehler werden wie folgt adressiert:
 
 | # | Fehler | Status |
 |---|---|---|
-| 1 | Modus und Kontext (sehr hoch) | **erledigt** durch Overlay-Redesign: `buildRequest()` mappt `REPLY→copiedMessage`, `COMPOSE→userIntent`, Default-Modus `REPLY` |
+| 1 | Modus und Kontext (sehr hoch) | **erledigt** durch Overlay-Redesign: `buildRequest()` mappt `REPLY→copiedMessage`, `COMPOSE→userIntent`, Default-Modus `REPLY`; Kontext-Vorschau + Entfernen in der Input-Bar ergänzt |
 | 2 | Clipboard ist kein Antwort-Kontext | **erledigt**: Eingabefeld = kopierte Nachricht (`copiedMessage`), Antwort-Chips = `userIntent`; UX folgt der Capsule-Ausrichtung |
 | 3 | Prompts zu allgemein | **erledigt**: härtere WhatsApp-Stilregeln in `PromptBuilder`/`docs/PROMPTS.md` (1–2 Sätze, keine Floskeln, keine Therapiesprache) |
 | 4 | Keine Persona | **entschieden als D-013**: feste App-Stimme im Prompt, klar abgegrenzt vom verbotenen Profilbegriff; dokumentiert in `docs/PRIVACY_SECURITY.md` |
-| 5 | Claude Sonnet 5 zu professionell | **offen** (siehe offener Punkt in `docs/DECISIONS.md`): Modell bleibt gepinnt, A/B nach Testset |
+| 5 | Claude Sonnet 5 zu professionell | **Default geändert**: `deepseek/deepseek-v4-flash` ist auf Nutzerauftrag gepinnt; A/B gegen Sonnet/Haiku/GPT Mini bleibt offen |
 
 Pflicht 1–5 aus „Konkrete nächste Umsetzung / Phase 7.5“ sind damit erledigt bzw.
 entschieden; Testset (Punkt 6) liegt in `docs/TEST_PLAN.md` (Abschnitt
-„Antwortqualitäts-Testset (A/B)“). Ein lokaler Modell-Testschalter (Punkt 7)
-ist im MVP nicht umgesetzt — der A/B-Vergleich läuft manuell über das Testset.
+„Antwortqualitäts-Testset (A/B)“). Issue #8 ist zusätzlich umgesetzt:
+Schreibstil-Werte werden lokal als reine Enum-Settings gespeichert und als
+`{{style_rules}}` in den Prompt eingebunden (D-014). Ein lokaler Modell-
+Testschalter (Punkt 7) ist im MVP nicht umgesetzt — der A/B-Vergleich läuft
+manuell über das Testset.
 
 ---
 
@@ -37,7 +40,7 @@ Das Hauptproblem ist sehr wahrscheinlich **nicht nur das Modell**, sondern die K
 4. fehlender Zielnutzer-/Sprech-Persona,
 5. einem sehr leistungsfähigen, aber tendenziell zu professionell formulierenden Modell.
 
-Aktuell ist `anthropic/claude-sonnet-5` nicht grundsätzlich falsch, aber für kurze private WhatsApp-Antworten vermutlich **nicht der beste Default**, solange keine starke Persona- und Stilkalibrierung aktiv ist.
+Der aktuelle App-Default ist jetzt `deepseek/deepseek-v4-flash`. `anthropic/claude-sonnet-5` bleibt als starke Referenz wichtig, wirkte aber für kurze private WhatsApp-Antworten tendenziell zu professionell/glatt.
 
 ---
 
@@ -57,7 +60,7 @@ Phase 7 ist umgesetzt:
 Aktuell gepinntes Modell:
 
 ```text
-anthropic/claude-sonnet-5
+deepseek/deepseek-v4-flash
 ```
 
 OpenRouter-Konfiguration:
@@ -79,37 +82,26 @@ Die Codebasis kennt drei Modi:
 - `COMPOSE` — neue Nachricht aus Nutzerabsicht formulieren
 - `REWRITE` — vorhandenen Text umschreiben
 
-Der tatsächliche Overlay-Flow baut die erste Anfrage aktuell aber fest als:
+Dieser Fehler war vor Phase 7.5 der Hauptverdacht: die erste Anfrage wurde fest als
+`COMPOSE` gebaut und Retry nutzte ebenfalls `COMPOSE`. Das ist inzwischen behoben.
+
+Aktueller Stand:
 
 ```kotlin
-ReplyRequest(
-    mode = ReplyMode.COMPOSE,
-    userIntent = pendingText,
-    tone = pendingTone,
-)
+ReplyMode.REPLY   -> copiedMessage = text, userIntent = replyIntentChip
+ReplyMode.COMPOSE -> userIntent = text
 ```
 
-Retry nutzt ebenfalls fest `COMPOSE`.
-
-### Auswirkung
-
-Wenn der Nutzer eine WhatsApp-Nachricht kopiert und einfügt, behandelt die App diesen Text nicht sauber als **Nachricht der anderen Person**, sondern als normalen Nutzerwunsch.
-
-Das erklärt viele komische Antworten:
-
-```text
-Eigentlich gemeint:
-"Das ist die Nachricht, auf die ich antworten will."
-
-Aktuell interpretiert:
-"Das ist der Wunsch/Text, aus dem ich eine neue Nachricht formulieren soll."
-```
+Retry baut erneut aus demselben transienten Modus/Kontext und verwendet damit
+denselben Antwort-Kontext. Zusätzlich zeigt der Antworten-Modus eine kompakte
+Kontext-Vorschau und bietet „Kontext entfernen".
 
 ### Bewertung
 
-Priorität: **sehr hoch**
+Priorität war: **sehr hoch**
 
-Ohne echten Antwort-Modus mit getrenntem Kontext kann kein Modell zuverlässig natürlich antworten.
+Status: **erledigt**. Ohne diese Trennung konnte kein Modell zuverlässig
+natürlich antworten; sie ist jetzt Grundlage für weitere Qualitätsarbeit.
 
 ---
 
@@ -117,31 +109,18 @@ Ohne echten Antwort-Modus mit getrenntem Kontext kann kein Modell zuverlässig n
 
 Der Einfügen-Button liest die Zwischenablage bewusst nach Nutzeraktion. Das ist Datenschutz-technisch korrekt.
 
-Aktuell landet der kopierte Text aber direkt im normalen Eingabefeld.
-
-Es fehlt eine Trennung:
+Der Capsule-Flow trennt die Bedeutung inzwischen so:
 
 ```text
-copiedMessage = Nachricht der anderen Person
-userIntent    = was ich ungefähr antworten will
+copiedMessage = Nachricht der anderen Person (Textfeld im Antworten-Modus)
+userIntent    = optionaler Antwort-Hinweis aus Kurz-Chip
 ```
 
-### Zielzustand
+Der Nutzer sieht bei vorhandenem Antworttext eine kompakte Kontext-Vorschau und
+kann den Kontext entfernen. „Ändern" bleibt über das editierbare Feld bzw. erneutes
+Einfügen möglich.
 
-Für Antworten sollte die UI so arbeiten:
-
-```text
-[Antworten] [Formulieren] [Umschreiben optional später]
-
-Antwort auf:
-"Hab gehört ihr haut morgen ab. Können wir uns nochmal treffen...?"
-[ändern] [entfernen]
-
-Was willst du grob sagen?
-[...]
-```
-
-Dann muss der Request so entstehen:
+Der Request entsteht so:
 
 ```kotlin
 ReplyRequest(
@@ -255,16 +234,16 @@ Quelle der Modell-Lage: OpenRouter Modellliste und aktuelle Repo-Konfiguration. 
 
 | Modell | Einschätzung |
 |---|---|
-| `anthropic/claude-sonnet-5` | Sehr stark, aber für private Kurzantworten vermutlich zu professionell. Gut als Qualitätsmodell, nicht zwingend bester Default für WhatsApp-Ton. |
+| `deepseek/deepseek-v4-flash` | Aktueller Default auf Nutzerauftrag. Schnelles DeepSeek-V4-Flash-Modell mit guter Chance auf kürzere, natürlichere WhatsApp-Antworten. A/B noch offen. |
 
-### Bessere Kandidaten für ChatHilfe
+### Vergleichskandidaten für ChatHilfe
 
 | Priorität | Modell | Einschätzung |
 |---:|---|---|
-| 1 | `~anthropic/claude-haiku-latest` oder konkretes Haiku-Modell nach Test | Wahrscheinlich besser für schnelle, kurze, natürlichere Alltagsantworten. Günstiger und weniger „großes Profi-Schreibmodell“ als Sonnet. Muss mit echten Beispielen getestet werden. |
-| 2 | `~openai/gpt-mini-latest` oder konkretes GPT-Mini-Modell nach Test | Gute Chance auf natürlicheren Chatstil. Potenziell besser für kurze Messenger-Antworten als Sonnet. Muss hinsichtlich Kosten, Verfügbarkeit und Parameter geprüft werden. |
-| 3 | `~openai/gpt-latest` oder konkretes GPT-Modell nach Test | Wahrscheinlich sehr gute Antwortqualität, aber teurer/überdimensionierter. Eher Premium-Testkandidat. |
-| 4 | `anthropic/claude-sonnet-5` | Behalten als Referenzmodell, aber erst nach Prompt-/Persona-Tuning erneut bewerten. |
+| 1 | `anthropic/claude-sonnet-5` | Sehr starke Referenz, aber für private Kurzantworten vermutlich zu professionell/glatt. |
+| 2 | `anthropic/claude-haiku-4.5` | Wahrscheinlich besser für schnelle, kurze, natürlichere Alltagsantworten. Muss mit echten Beispielen getestet werden. |
+| 3 | `openai/gpt-5-mini` | Gute Chance auf natürlichen Chatstil. Muss hinsichtlich Kosten, Verfügbarkeit und Parameter geprüft werden. |
+| 4 | `openai/gpt-4.1-mini` | Optionaler Mini-Vergleichskandidat. |
 | 5 | `~google/gemini-flash-latest` | Schnell und stark, aber wegen Reasoning-/Parameterverhalten für simple Chatantworten nicht automatisch ideal. Nur als Testkandidat. |
 
 ### Empfehlung
@@ -282,9 +261,10 @@ Besser:
 Wenn sofort ein alternatives Testmodell gewählt werden soll:
 
 ```text
-Test 1: ~anthropic/claude-haiku-latest
-Test 2: ~openai/gpt-mini-latest
+Default: deepseek/deepseek-v4-flash
 Referenz: anthropic/claude-sonnet-5
+Test 1: anthropic/claude-haiku-4.5
+Test 2: openai/gpt-5-mini
 ```
 
 Für den endgültigen MVP sollte kein `latest`-Alias dauerhaft gepinnt bleiben. `latest` ist gut zum Testen, aber nicht stabil genug für reproduzierbare APK-Builds. Nach dem Test sollte ein konkreter Modell-Slug in `AiConfig.MODEL` dokumentiert werden.
@@ -375,25 +355,26 @@ Jede Antwort mit 1–5 bewerten:
 | Ton | Passt der gewählte Ton? |
 | Nicht-KI-Gefühl | Klingt es nicht nach ChatGPT/Brief/E-Mail? |
 | Kopierbarkeit | Kann man es direkt senden? |
+| Kosten/Latenz | Ist es für private Nutzung bezahlbar und schnell genug? |
 
-Modell nur wechseln, wenn es im Schnitt deutlich besser ist als Sonnet nach Prompt-Fix.
+DeepSeek ist jetzt als Default gepinnt; ein erneuter Wechsel erfolgt nur, wenn ein Kandidat im Schnitt deutlich besser abschneidet.
 
 ---
 
-## Konkrete nächste Umsetzung
+## Umsetzungsstand Phase 7.5
 
-### Phase 7.5 — Antwortmodus und Qualitätskalibrierung
+### Antwortmodus und Qualitätskalibrierung
 
-Pflichtpunkte:
+Erledigt:
 
-1. Modusauswahl in der Input-Bar oder als kompakter Chip:
+1. Modusauswahl in der Input-Bar:
    - Antworten
-   - Formulieren
-   - Umschreiben optional später
-2. Clipboard-Kontext separat verwalten:
+   - Schreiben/Formulieren
+   - Umschreiben bleibt vorerst ausgeblendet
+2. Clipboard-/Antwort-Kontext separat verwalten:
    - `copiedMessage`
-   - Vorschau anzeigen
-   - entfernen möglich
+   - Kontext-Vorschau anzeigen
+   - Kontext entfernen möglich
 3. `ReplyRequest(REPLY, copiedMessage, userIntent, tone)` korrekt bauen.
 4. `PromptBuilder` stilistisch schärfen:
    - WhatsApp
@@ -405,8 +386,11 @@ Pflichtpunkte:
    - normaler Bildungsstand
    - Alltagssprache
    - nicht künstlich perfekt
-6. Testset ergänzen.
-7. Optional Modell-Testschalter nur für lokale Entwicklung, nicht als Nutzer-UI.
+6. Schreibstil-Einstellungen ergänzen (D-014): Länge, Emojis, Satzzeichen,
+   Groß-/Kleinschreibung, Natürlichkeit.
+7. Testset ergänzen.
+8. Modellvergleich vorbereiten: konkrete Slugs geprüft; A/B läuft manuell über
+   `docs/TEST_PLAN.md`, kein lokaler Modell-Testschalter als Nutzerfeature.
 
 ---
 
@@ -417,7 +401,7 @@ Pflichtpunkte:
 | Modellwechsel ohne Modus-Fix | hoch — löst Hauptproblem wahrscheinlich nicht |
 | Persona zu hart codiert | mittel — kann unpassend sein, daher als Stilannahme formulieren |
 | `latest`-Alias dauerhaft nutzen | mittel — Ergebnis kann sich ohne Codeänderung ändern |
-| Sonnet weiter nutzen ohne Prompt-Fix | hoch — Antworten bleiben vermutlich zu glatt |
+| Modellwechsel ohne A/B | mittel — DeepSeek ist gepinnt, Qualität muss aber noch manuell geprüft werden |
 | Zu viele Regeln im Prompt | mittel — kann Antworten steif machen |
 
 ---
@@ -433,7 +417,7 @@ Nicht Modell sofort ersetzen, sondern erst Antwortmodus + Persona + Promptstil f
 Danach:
 
 ```text
-A/B-Test mit Sonnet 5, Claude Haiku Latest und GPT Mini Latest.
+A/B-Test mit DeepSeek Chat, Sonnet 5, Claude Haiku 4.5 und GPT Mini.
 ```
 
 Wahrscheinlich bester Default nach aktuellem Stand:

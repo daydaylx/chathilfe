@@ -4,6 +4,9 @@ import de.disaai.chathilfe.model.ReplyMode
 import de.disaai.chathilfe.model.ReplyRequest
 import de.disaai.chathilfe.model.RetryInstruction
 import de.disaai.chathilfe.model.ToneOption
+import de.disaai.chathilfe.model.WritingStyleSettings
+import de.disaai.chathilfe.model.AnswerLength
+import de.disaai.chathilfe.model.EmojiUsage
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -173,5 +176,51 @@ class PromptBuilderTest {
         assertFalse(prompt.contains("{{"))
         assertFalse(prompt.contains("kompakter"))
         assertFalse(prompt.contains("weniger steif"))
+    }
+
+    @Test
+    fun `default writing style block is present and placeholder free`() {
+        val prompt = PromptBuilder.build(baseRequest(mode = ReplyMode.COMPOSE))
+        // Defaults from Issue #8: length=normal, emoji=sparing, punctuation=relaxed,
+        // capitalization=correct, naturalness=less AI.
+        assertTrue(prompt.contains("Schreibstil (Nutzervorgabe)"))
+        assertTrue(prompt.contains("Länge: knapp halten, 1–2 kurze Sätze"))
+        assertTrue(prompt.contains("Emojis: sparsam Emojis, nur wenn es natürlich passt"))
+        assertTrue(prompt.contains("Natürlichkeit: natürlicher Chatstil, keine typischen KI-Formulierungen"))
+        assertFalse(prompt.contains("{{"))
+    }
+
+    @Test
+    fun `default style equals explicit default writing style`() {
+        val a = PromptBuilder.build(baseRequest(mode = ReplyMode.COMPOSE))
+        val b = PromptBuilder.build(baseRequest(mode = ReplyMode.COMPOSE), WritingStyleSettings())
+        assertEquals(a, b)
+    }
+
+    @Test
+    fun `custom writing style changes the style block`() {
+        val prompt = PromptBuilder.build(
+            baseRequest(mode = ReplyMode.REPLY, copiedMessage = "Hallo?"),
+            WritingStyleSettings(
+                length = AnswerLength.SHORT,
+                emojiUsage = EmojiUsage.NONE,
+            ),
+        )
+        assertTrue(prompt.contains("Länge: sehr kurz, möglichst ein Satz"))
+        assertTrue(prompt.contains("Emojis: keine Emojis"))
+        // Non-overridden values keep their defaults.
+        assertTrue(prompt.contains("Groß-/Kleinschreibung korrekt"))
+        assertFalse(prompt.contains("{{"))
+    }
+
+    @Test
+    fun `style block is present in all three modes`() {
+        val reply = PromptBuilder.build(baseRequest(mode = ReplyMode.REPLY, copiedMessage = "?"))
+        val compose = PromptBuilder.build(baseRequest(mode = ReplyMode.COMPOSE))
+        val rewrite = PromptBuilder.build(baseRequest(mode = ReplyMode.REWRITE, originalText = "x"))
+        listOf(reply, compose, rewrite).forEach {
+            assertTrue("style block missing", it.contains("Schreibstil (Nutzervorgabe)"))
+            assertFalse("placeholder left", it.contains("{{"))
+        }
     }
 }

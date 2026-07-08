@@ -26,7 +26,10 @@ Beim Tippen auf den Floating Button öffnet sich zuerst nur ein schmaler Textbal
 Beispiel:
 
 ```text
-[Ton]  Was willst du sagen?  [Einfügen] [Los]
+[Antworten] [Schreiben]                       [×]
+Antwort auf: "..."                            [×]
+[Ton] Nachricht, auf die du antworten willst   [Einfügen]
+[Zustimmen] [Absagen] [Nachfragen] ...         [Los]
 ```
 
 Alternativ:
@@ -37,9 +40,12 @@ Alternativ:
 
 Pflichtelemente:
 
+- kompakte Modusauswahl `Antworten` / `Schreiben` (Default: `Antworten`)
 - links ein kleiner Ton-/Stil-Button
 - kompaktes Texteingabefeld
 - Einfügen-Option
+- im Antworten-Modus optionale Kurz-Chips
+- im Antworten-Modus bei vorhandenem Text: kompakte Kontext-Vorschau + Entfernen
 - Start-Button für KI-Vorschläge
 - rechts eine kleine Schließen-/Zurück-Aktion (z. B. `×`), die zur Bubble zurückführt
 
@@ -52,6 +58,7 @@ Regeln:
 - kein großes Formular beim Öffnen
 - kein Modell-/Provider-/Prompt-Menü
 - Start-Button nicht „Senden“ nennen
+- keine Speicherung von kopiertem Text, Kurz-Chips oder Kontext-Vorschau
 
 Erlaubte Start-Labels:
 

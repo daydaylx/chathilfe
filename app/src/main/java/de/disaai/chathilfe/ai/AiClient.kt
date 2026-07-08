@@ -1,6 +1,7 @@
 package de.disaai.chathilfe.ai
 
 import de.disaai.chathilfe.model.ReplyRequest
+import de.disaai.chathilfe.model.WritingStyleSettings
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.IOException
@@ -19,11 +20,14 @@ import java.net.URL
  */
 class AiClient {
 
-    suspend fun request(req: ReplyRequest): ParseResult = withContext(Dispatchers.IO) {
+    suspend fun request(
+        req: ReplyRequest,
+        style: WritingStyleSettings = WritingStyleSettings(),
+    ): ParseResult = withContext(Dispatchers.IO) {
         if (!AiConfig.isKeyConfigured) {
             return@withContext ParseResult.Error("Kein API-Key konfiguriert.")
         }
-        val prompt = PromptBuilder.build(req)
+        val prompt = PromptBuilder.build(req, style)
         val body = OpenRouterJson.buildRequestBody(prompt, AiConfig.MODEL, AiConfig.MAX_TOKENS)
 
         var conn: HttpURLConnection? = null

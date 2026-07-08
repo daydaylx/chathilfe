@@ -355,24 +355,29 @@ geschäftlich/künstlich, sondern wie echte WhatsApp-Nachrichten.
 
 Aufgaben (Stand 2026-07-08):
 
-- korrekte Modus-Verdrahtung (`REPLY→copiedMessage`, `COMPOSE→userIntent`) — bereits durch Overlay-Redesign erledigt
-- Trennung kopierte Nachricht vs. Nutzerabsicht — bereits erledigt (Feld = `copiedMessage`, Antwort-Chips = `userIntent`)
+- korrekte Modus-Verdrahtung (`REPLY→copiedMessage`, `COMPOSE→userIntent`) — durch Overlay-Redesign erledigt
+- Trennung kopierte Nachricht vs. Nutzerabsicht — erledigt (Feld = `copiedMessage`, Antwort-Chips = `userIntent`)
+- Kontext-Vorschau + „Kontext entfernen" im Antworten-Modus — erledigt in `InputBarView`
 - härtere WhatsApp-Stilregeln in `PromptBuilder`/`docs/PROMPTS.md` (1–2 Sätze, keine Floskeln, keine Therapiesprache)
 - feste App-Stimme (Persona) als statische Prompt-Vorgabe — entschieden in `docs/DECISIONS.md` D-013, dokumentiert in `docs/PRIVACY_SECURITY.md`
+- Schreibstil-Einstellungen — erledigt als reine lokale Enum-Werte (D-014), keine Persona-Nutzereinstellung
 - Antwortqualitäts-Testset in `docs/TEST_PLAN.md` (manuell, ~18 Fälle + Bewertungsraster)
+- Modellvergleich vorbereitet: konkrete OpenRouter-Slugs geprüft, A/B bleibt manuell/offen
 
 Akzeptanz:
 
 - PromptBuilder ↔ `docs/PROMPTS.md` konsistent
 - Persona ist hart codiert und nirgendwo gespeichert/gelernt
-- bestehende `PromptBuilder`-Unit-Tests grün, Persona-Assertion vorhanden
-- Modell bleibt `anthropic/claude-sonnet-5` (D-012); A/B-Modelltest ist offener Punkt
+- Schreibstil-Settings speichern nur neutrale Enum-Werte, keine Texte und keine Persona
+- bestehende `PromptBuilder`-Unit-Tests grün, Persona- und Schreibstil-Assertions vorhanden
+- Modell ist `deepseek/deepseek-v4-flash` (D-012); A/B-Modelltest gegen Sonnet/Haiku/GPT Mini bleibt offener Qualitätstest
 
 Nicht tun:
 
 - kein Modellwechsel vor Testset/A/B
 - kein speicherbares Stil-/Personenprofil
 - kein automatisiertes A/B-Framework
+- kein lokaler Modell-Testschalter als Nutzerfeature
 
 ---
 

@@ -10,12 +10,15 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.FlowRowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -36,6 +39,13 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import de.disaai.chathilfe.BuildConfig
 import de.disaai.chathilfe.R
+import de.disaai.chathilfe.model.AnswerLength
+import de.disaai.chathilfe.model.CapitalizationStyle
+import de.disaai.chathilfe.model.EmojiUsage
+import de.disaai.chathilfe.model.Naturalness
+import de.disaai.chathilfe.model.PunctuationStyle
+import de.disaai.chathilfe.model.ToneOption
+import de.disaai.chathilfe.model.WritingStyleSettings
 import de.disaai.chathilfe.overlay.OverlayService
 import kotlinx.coroutines.launch
 
@@ -124,6 +134,18 @@ fun SettingsScreen(
                 id = if (isApiKeyConfigured) R.string.api_key_configured else R.string.api_key_not_configured,
             ),
             description = stringResource(id = R.string.api_key_description),
+        )
+
+        val currentTone = ToneOption.fromInternalValue(settings.preferredTone)
+        StyleCard(
+            tone = currentTone,
+            style = settings.writingStyle,
+            onToneChange = { tone ->
+                coroutineScope.launch { settingsStore.setPreferredTone(tone.internalValue) }
+            },
+            onStyleChange = { updated ->
+                coroutineScope.launch { settingsStore.setWritingStyle(updated) }
+            },
         )
 
         OverlayToggleCard(
@@ -228,6 +250,88 @@ private fun OverlayToggleCard(
             Switch(checked = checked, onCheckedChange = onCheckedChange)
         }
     }
+}
+
+/**
+ * Combined Stil-Card with Tone + Writing Style dimensions (Issue #8).
+ * Tone and style are stored via [SettingsStore]; never user text or a persona (D-013).
+ */
+@Composable
+private fun StyleCard(
+    tone: ToneOption,
+    style: WritingStyleSettings,
+    onToneChange: (ToneOption) -> Unit,
+    onStyleChange: (WritingStyleSettings) -> Unit,
+) {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Text(
+                text = stringResource(id = R.string.settings_style_title),
+                style = MaterialTheme.typography.titleMedium,
+            )
+            Text(
+                text = stringResource(id = R.string.settings_style_intro),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            // Tone selection
+            ChipRow(label = stringResource(id = R.string.settings_style_tone)) {
+                ToneOption.entries.forEach { option ->
+                    FilterChipItem(option.label, option == tone) { onToneChange(option) }
+                }
+            }
+            // Writing-style dimensions
+            ChipRow(label = stringResource(id = R.string.settings_style_length)) {
+                AnswerLength.entries.forEach { option ->
+                    FilterChipItem(option.label, option == style.length) { onStyleChange(style.copy(length = option)) }
+                }
+            }
+            ChipRow(label = stringResource(id = R.string.settings_style_emoji)) {
+                EmojiUsage.entries.forEach { option ->
+                    FilterChipItem(option.label, option == style.emojiUsage) { onStyleChange(style.copy(emojiUsage = option)) }
+                }
+            }
+            ChipRow(label = stringResource(id = R.string.settings_style_punctuation)) {
+                PunctuationStyle.entries.forEach { option ->
+                    FilterChipItem(option.label, option == style.punctuation) { onStyleChange(style.copy(punctuation = option)) }
+                }
+            }
+            ChipRow(label = stringResource(id = R.string.settings_style_capitalization)) {
+                CapitalizationStyle.entries.forEach { option ->
+                    FilterChipItem(option.label, option == style.capitalization) { onStyleChange(style.copy(capitalization = option)) }
+                }
+            }
+            ChipRow(label = stringResource(id = R.string.settings_style_naturalness)) {
+                Naturalness.entries.forEach { option ->
+                    FilterChipItem(option.label, option == style.naturalness) { onStyleChange(style.copy(naturalness = option)) }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ChipRow(label: String, content: @Composable FlowRowScope.() -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Text(text = label, style = MaterialTheme.typography.labelLarge)
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+            content = content,
+        )
+    }
+}
+
+@Composable
+private fun FilterChipItem(label: String, selected: Boolean, onSelect: () -> Unit) {
+    FilterChip(
+        selected = selected,
+        onClick = onSelect,
+        label = { Text(label) },
+    )
 }
 
 private fun startSettingsActivity(context: Context, intent: Intent) {
