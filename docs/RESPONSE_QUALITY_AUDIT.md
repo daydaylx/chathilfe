@@ -394,6 +394,27 @@ Erledigt:
 
 ---
 
+## Umsetzungsstand Phase 7.6 (Dialog-Kontext, Issue #19)
+
+Erledigt (Commit `145524b`, 2026-07-09):
+
+- `WhatsAppChatParser` (pure Kotlin) erkennt eingefügte Dialogblöcke im Export-Layout
+  `[Datum, Uhrzeit] Sprecher: Nachricht`, tolerant bei Datum-/Uhrzeitvarianten und
+  mehrzeiligen Nachrichten; ab zwei Treffern, sonst Einzeltext-Fallback.
+- `ParsedChatMessage`/`ParsedChatContext` mit heuristischen `likelySelf/likelyOtherSender`
+  (keine harte Identität, keine Speicherung).
+- `ReplyRequest.conversationContext` (rein transient).
+- `PromptBuilder`: Antworten-Template mit optionaler Verlaufssektion, an `docs/PROMPTS.md`
+  angepasst; `OverlayService.buildRequest()` nutzt die letzte Nachricht des Gegenübers als
+  Antwortanlass und den Rest als Kontext.
+- Unit-Tests für Parser, Fallback und PromptBuilder.
+
+Damit ist einer der im Abschlussfazit genannten Hebel („Gesprächskontext richtig
+modellieren") strukturtechnisch umgesetzt. Offen bis Phase 8: Wirkung auf echte Antworten
+mit echtem Key sowie Parser-Verhalten gegen reale WhatsApp-Exporte auf Gerät.
+
+---
+
 ## Risiken
 
 | Risiko | Bewertung |

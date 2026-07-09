@@ -387,6 +387,8 @@ Quelle: `docs/WHATSAPP_DIALOG_CONTEXT.md` und Issue #19.
 
 Ziel: Wenn der Nutzer mehrere WhatsApp-Nachrichten bewusst einfügt, soll die App den Text als temporären Dialogauszug erkennen und den aktuellen Antwortanlass besser bestimmen.
 
+Stand: **umgesetzt** (Commit `145524b`, 2026-07-09). Parser, Modelle, `conversationContext`, PromptBuilder-Kontextsektion, `OverlayService.buildRequest()`-Anbindung und Unit-Tests stehen; `./gradlew assembleDebug test lint` ist grün (9 bekannte Lint-Warnungen, keine neu). Offen bis Phase 8: Verhalten auf Gerät, insb. Parser gegen echte WhatsApp-Exporte und die Wirkung des Kontexts auf die Antwortqualität.
+
 Aufgaben:
 
 - `WhatsAppChatParser` als pure Kotlin-Komponente bauen
