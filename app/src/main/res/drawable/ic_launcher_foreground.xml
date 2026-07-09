@@ -1,10 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- ChatHilfe adaptive-icon foreground (Issue #17): a light chat bubble with a small
+     4-point "AI spark" at the top-right. Everything sits inside the adaptive-icon safe
+     zone (radius ~36 around 54,54) so launcher masks never crop the symbol. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
+
+    <!-- Chat bubble body (rounded rect) -->
     <path
-        android:fillColor="#FF8AB4F8"
-        android:pathData="M54,29 a25,25 0 1,0 0.1,0 z" />
+        android:fillColor="#FFF2F5F9"
+        android:pathData="M40,40 L61,40 A9,9 0 0,1 70,49 L70,59 A9,9 0 0,1 61,68 L40,68 A9,9 0 0,1 31,59 L31,49 A9,9 0 0,1 40,40 Z" />
+
+    <!-- Chat bubble tail (bottom-left) -->
+    <path
+        android:fillColor="#FFF2F5F9"
+        android:pathData="M38,66 L33,77 L51,66 Z" />
+
+    <!-- KI spark (4-point star, top-right accent) -->
+    <path
+        android:fillColor="#FF8EC9FF"
+        android:pathData="M77,29 L78.8,34.2 L84,36 L78.8,37.8 L77,43 L75.2,37.8 L70,36 L75.2,34.2 Z" />
 </vector>
