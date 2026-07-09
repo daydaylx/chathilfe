@@ -90,12 +90,14 @@ class OverlayController(private val context: Context) {
         mode: ReplyMode,
         listener: InputBarView.Listener,
         style: WritingStyleSettings = WritingStyleSettings(),
+        tone: ToneOption = ToneOption.DEFAULT,
     ) {
         replaceContent(focusable = true) {
             InputBarView(context).apply {
                 this.listener = listener
                 setMode(mode)
                 setStyle(style)
+                setTone(tone)
             }
         }
     }

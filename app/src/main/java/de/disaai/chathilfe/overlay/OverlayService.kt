@@ -98,6 +98,12 @@ class OverlayService : Service() {
             scope.launch { settingsStore.setWritingStyle(style) }
         }
 
+        override fun onToneSelected(tone: ToneOption) {
+            pendingTone = tone
+            // Remember the last preferred tone so the next overlay open restores it (Issue #22).
+            scope.launch { settingsStore.setPreferredTone(tone.internalValue) }
+        }
+
         override fun onClose() {
             closeContent()
         }
@@ -190,7 +196,7 @@ class OverlayService : Service() {
             pendingTone = ToneOption.fromInternalValue(settings.preferredTone)
             pendingStyle = settings.writingStyle
             pendingIntentHint = null
-            controller.showInputBar(mode, inputBarListener, pendingStyle)
+            controller.showInputBar(mode, inputBarListener, pendingStyle, pendingTone)
             overlayState = OverlayState.INPUT_BAR
         }
     }

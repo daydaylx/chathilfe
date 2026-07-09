@@ -46,6 +46,7 @@ class InputBarView(context: Context) : FrameLayout(context) {
         fun onModeSelected(mode: ReplyMode)
         fun onStart(text: String, mode: ReplyMode, intentHint: String?)
         fun onStyleChanged(style: WritingStyleSettings)
+        fun onToneSelected(tone: ToneOption)
         fun onClose()
     }
 
@@ -350,6 +351,12 @@ class InputBarView(context: Context) : FrameLayout(context) {
         refreshAllStyleChips()
     }
 
+    /** Applies an external tone (e.g. restored preferred tone from SettingsStore on open). */
+    fun setTone(tone: ToneOption) {
+        currentTone = tone
+        refreshChipRow(toneChipViews) { it == currentTone }
+    }
+
     // --- Private helpers ---
 
     private fun applyModeState() {
@@ -424,7 +431,7 @@ class InputBarView(context: Context) : FrameLayout(context) {
             onSelect = { tone ->
                 currentTone = tone
                 refreshChipRow(toneChipViews) { it == currentTone }
-                listener?.onStyleChanged(styleState)
+                listener?.onToneSelected(tone)
             },
         ))
 
