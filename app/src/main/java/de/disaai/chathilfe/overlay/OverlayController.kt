@@ -107,7 +107,9 @@ class OverlayController(private val context: Context) {
         listener: ResultPanelView.Listener,
     ) {
         hideKeyboardFromContent()
-        replaceContent(focusable = false) {
+        // Issue #21: the visible suggestion is directly editable, so the panel must be focusable.
+        // SOFT_INPUT_STATE_HIDDEN keeps the IME down until the user taps the body to edit it.
+        replaceContent(focusable = true, softInputMode = WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN) {
             ResultPanelView(context).apply {
                 this.listener = listener
                 show(suggestions, originalText, tone)
@@ -152,7 +154,7 @@ class OverlayController(private val context: Context) {
         (contentView as? ResultPanelView)?.replaceSuggestions(suggestions)
     }
 
-    private fun replaceContent(focusable: Boolean, factory: () -> View) {
+    private fun replaceContent(focusable: Boolean, softInputMode: Int = 0, factory: () -> View) {
         hideContent()
 
         val metrics = context.resources.displayMetrics
@@ -179,6 +181,7 @@ class OverlayController(private val context: Context) {
             gravity = Gravity.TOP or Gravity.START
             this.x = x
             this.y = margin
+            if (softInputMode != 0) this.softInputMode = softInputMode
         }
 
         try {

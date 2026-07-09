@@ -235,7 +235,9 @@ class InputBarView(context: Context) : FrameLayout(context) {
             setHintTextColor(OverlayStyle.color(context, OverlayStyle.textMuted))
             setTextColor(OverlayStyle.color(context, OverlayStyle.text))
             inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
-            maxLines = 3
+            // Issue #20: let pasted WhatsApp dialogs grow up to 5 lines, then scroll internally.
+            maxLines = 5
+            isVerticalScrollBarEnabled = true
             minHeight = dp(OverlayStyle.ICON_BUTTON)
             background = ContextCompat.getDrawable(context, R.drawable.bg_input_field)
             setPadding(

@@ -1,9 +1,12 @@
 package de.disaai.chathilfe.overlay
 
 import android.content.Context
+import android.text.InputType
+import android.text.TextWatcher
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
+import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.HorizontalScrollView
 import android.widget.ImageView
@@ -41,11 +44,26 @@ class ResultPanelView(context: Context) : FrameLayout(context) {
     private var originalText: String = ""
     private var tone: ToneOption = ToneOption.DEFAULT
     private val pager = SuggestionPager()
+    /**
+     * Per-pager-index local edits for the current panel session (Issue #21). Never persisted;
+     * cleared on [show] / [replaceSuggestions]. Falls back to the original suggestion text when
+     * no edit exists for an index.
+     */
+    private val editedTexts = mutableMapOf<Int, String>()
+
+    private val editWatcher = object : TextWatcher {
+        override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+        override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+        override fun afterTextChanged(s: android.text.Editable?) {
+            val idx = pager.index
+            if (idx >= 0) editedTexts[idx] = s?.toString().orEmpty()
+        }
+    }
     private val chipSelector = RetryChipSelector()
     private val chipViews = mutableMapOf<RetryInstruction, TextView>()
 
     private val positionLabel: TextView
-    private val bodyText: TextView
+    private val bodyEdit: EditText
     private val statusText: TextView
     private val retryButton: TextView
     private val retryProgress: ProgressBar
@@ -90,18 +108,28 @@ class ResultPanelView(context: Context) : FrameLayout(context) {
         headerRow.addView(spacer)
         headerRow.addView(closeButton)
 
-        // --- Suggestion body: capped and internally scrollable ---
-        bodyText = TextView(context).apply {
+        // --- Suggestion body: directly editable (Issue #21), capped and internally scrollable (#20) ---
+        bodyEdit = EditText(context).apply {
             OverlayStyle.applyBodyText(this)
+            inputType = InputType.TYPE_CLASS_TEXT or
+                InputType.TYPE_TEXT_FLAG_MULTI_LINE or
+                InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
+            setSingleLine(false)
+            setHorizontallyScrolling(false)
+            isVerticalScrollBarEnabled = true
+            // No underline: looks like body text but stays editable on tap (no separate edit mode).
+            background = null
+            isCursorVisible = true
             layoutParams = LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT,
             )
         }
+        bodyEdit.addTextChangedListener(editWatcher)
         val bodyScroll = MaxHeightScrollView(context).apply {
             maxHeightPx = (resources.displayMetrics.heightPixels * (OverlayStyle.BODY_MAX_HEIGHT_FRACTION_PERCENT / 100f)).toInt()
             isVerticalScrollBarEnabled = true
-            addView(bodyText)
+            addView(bodyEdit)
             layoutParams = LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT,
@@ -118,8 +146,8 @@ class ResultPanelView(context: Context) : FrameLayout(context) {
             setCompoundDrawablesRelativeWithIntrinsicBounds(copyDrawable, null, null, null)
             compoundDrawablePadding = dp(OverlayStyle.SPACE_S)
             setOnClickListener {
-                val current = suggestions.getOrNull(pager.index) ?: return@setOnClickListener
-                ClipboardHelper.writeText(context, current.text)
+                // Issue #21: copy the currently visible, possibly edited text — not the stored original.
+                ClipboardHelper.writeText(context, bodyEdit.text.toString())
                 Toast.makeText(context, R.string.result_panel_copied_toast, Toast.LENGTH_SHORT).show()
             }
             layoutParams = LinearLayout.LayoutParams(
@@ -207,14 +235,18 @@ class ResultPanelView(context: Context) : FrameLayout(context) {
         this.tone = tone
         pager.reset(suggestions.size)
         chipSelector.clear()
+        editedTexts.clear()
         refreshBody()
         refreshChips()
+        // Avoid stealing focus / popping the IME the moment results appear.
+        bodyEdit.clearFocus()
     }
 
     fun replaceSuggestions(suggestions: List<ReplySuggestion>) {
         this.suggestions = suggestions
         pager.reset(suggestions.size)
         chipSelector.clear()
+        editedTexts.clear()
         refreshBody()
         refreshChips()
     }
@@ -247,7 +279,14 @@ class ResultPanelView(context: Context) : FrameLayout(context) {
 
     private fun refreshBody() {
         positionLabel.text = pager.positionLabel()
-        bodyText.text = suggestions.getOrNull(pager.index)?.text.orEmpty()
+        val idx = pager.index
+        val text = editedTexts[idx] ?: suggestions.getOrNull(idx)?.text.orEmpty()
+        bodyEdit.removeTextChangedListener(editWatcher)
+        bodyEdit.setText(text)
+        if (text.isNotEmpty()) {
+            bodyEdit.setSelection(text.length)
+        }
+        bodyEdit.addTextChangedListener(editWatcher)
     }
 
     private fun refreshChips() {
