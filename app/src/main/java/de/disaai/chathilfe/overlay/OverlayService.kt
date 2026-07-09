@@ -12,6 +12,7 @@ import androidx.core.content.ContextCompat
 import de.disaai.chathilfe.R
 import de.disaai.chathilfe.ai.AiClient
 import de.disaai.chathilfe.ai.ParseResult
+import de.disaai.chathilfe.chat.WhatsAppChatParser
 import de.disaai.chathilfe.detection.ForegroundAppDetector
 import de.disaai.chathilfe.model.ReplyMode
 import de.disaai.chathilfe.model.ReplyRequest
@@ -255,18 +256,27 @@ class OverlayService : Service() {
      * field the active mode expects: Antworten(REPLY)→copiedMessage, Formulieren(COMPOSE)→
      * userIntent. An optional intent hint (reply chips) is prepended to the userIntent field.
      * Tone is taken from the transient [pendingTone], not read from [SettingsStore] each time.
-     * Never logs or persists the text.
+     * In REPLY mode, a pasted WhatsApp dialog block (Issue #19) is structured first: the
+     * counterpart's latest message becomes the copied reply trigger, the rest is passed as
+     * transient conversation context. Never logs or persists the text.
      */
     private fun buildRequest(tone: ToneOption, retryInstructions: Set<RetryInstruction>): ReplyRequest {
         val text = pendingText
         return when (pendingMode) {
-            ReplyMode.REPLY -> ReplyRequest(
-                mode = ReplyMode.REPLY,
-                userIntent = buildUserIntentWithHint(pendingIntentHint),
-                tone = tone,
-                retryInstructions = retryInstructions,
-                copiedMessage = text,
-            )
+            ReplyMode.REPLY -> {
+                // If the pasted text is a WhatsApp dialog block (Issue #19), use the counterpart's
+                // latest message as the reply trigger and pass the rest as transient context.
+                // Otherwise the parser returns null and the plain single-text flow is kept.
+                val parsed = WhatsAppChatParser.parse(text)
+                ReplyRequest(
+                    mode = ReplyMode.REPLY,
+                    userIntent = buildUserIntentWithHint(pendingIntentHint),
+                    tone = tone,
+                    retryInstructions = retryInstructions,
+                    copiedMessage = parsed?.latestOtherMessage?.text ?: text,
+                    conversationContext = parsed?.formatContext(),
+                )
+            }
             ReplyMode.COMPOSE -> ReplyRequest(
                 mode = ReplyMode.COMPOSE,
                 userIntent = text,

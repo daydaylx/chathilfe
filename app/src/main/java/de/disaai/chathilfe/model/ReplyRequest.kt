@@ -15,6 +15,10 @@ package de.disaai.chathilfe.model
  *           text to the prompt.
  * @property copiedMessage the copied/pasted message; used for [ReplyMode.REPLY].
  * @property originalText the text to rewrite; used for [ReplyMode.REWRITE].
+ * @property conversationContext optional transcript of a pasted WhatsApp dialog block
+ *           (Issue #19 / docs/WHATSAPP_DIALOG_CONTEXT.md). Transient only: used solely as
+ *           prompt context for the next request, never stored or logged. When present, the
+ *           counterpart's latest message is carried via [copiedMessage] as the reply trigger.
  */
 data class ReplyRequest(
     val mode: ReplyMode,
@@ -23,4 +27,5 @@ data class ReplyRequest(
     val retryInstructions: Set<RetryInstruction> = emptySet(),
     val copiedMessage: String? = null,
     val originalText: String? = null,
+    val conversationContext: String? = null,
 )

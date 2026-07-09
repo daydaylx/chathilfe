@@ -21,7 +21,8 @@ class PromptBuilderTest {
         retryInstructions: Set<RetryInstruction> = emptySet(),
         copiedMessage: String? = null,
         originalText: String? = null,
-    ) = ReplyRequest(mode, userIntent, tone, retryInstructions, copiedMessage, originalText)
+        conversationContext: String? = null,
+    ) = ReplyRequest(mode, userIntent, tone, retryInstructions, copiedMessage, originalText, conversationContext)
 
     @Test
     fun `reply mode contains copied message, intent and tone meaning`() {
@@ -222,5 +223,47 @@ class PromptBuilderTest {
             assertTrue("style block missing", it.contains("Schreibstil (Nutzervorgabe)"))
             assertFalse("placeholder left", it.contains("{{"))
         }
+    }
+
+    @Test
+    fun `reply with conversation context includes history and current message section`() {
+        val prompt = PromptBuilder.build(
+            baseRequest(
+                mode = ReplyMode.REPLY,
+                userIntent = "zusage",
+                copiedMessage = "Ihr habt noch eine kühltasche mit essen im garten",
+                conversationContext = "D: Hey\nAnke Grunerr: ja klar",
+            )
+        )
+        assertTrue(prompt.contains("Bisheriger Chatverlauf, falls vorhanden:"))
+        assertTrue(prompt.contains("D: Hey"))
+        assertTrue(prompt.contains("Anke Grunerr: ja klar"))
+        assertTrue(prompt.contains("Aktuelle Nachricht, auf die geantwortet werden soll:"))
+        assertTrue(prompt.contains("Ihr habt noch eine kühltasche mit essen im garten"))
+        assertFalse(prompt.contains("{{"))
+    }
+
+    @Test
+    fun `reply without conversation context omits history section`() {
+        val prompt = PromptBuilder.build(
+            baseRequest(mode = ReplyMode.REPLY, copiedMessage = "Hallo?")
+        )
+        assertFalse(prompt.contains("Bisheriger Chatverlauf"))
+        assertFalse(prompt.contains("{{"))
+        assertTrue(prompt.contains("Aktuelle Nachricht, auf die geantwortet werden soll:"))
+    }
+
+    @Test
+    fun `reply with empty user intent still builds a clean prompt`() {
+        // Issue #22: a pasted message alone is enough; the user intent may be empty.
+        val prompt = PromptBuilder.build(
+            baseRequest(
+                mode = ReplyMode.REPLY,
+                userIntent = "",
+                copiedMessage = "Wann hast du Zeit?",
+            )
+        )
+        assertTrue(prompt.contains("Wann hast du Zeit?"))
+        assertFalse(prompt.contains("{{"))
     }
 }

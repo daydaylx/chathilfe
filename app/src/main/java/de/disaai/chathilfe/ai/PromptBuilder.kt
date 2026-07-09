@@ -31,12 +31,24 @@ object PromptBuilder {
         val tone = TONE_MEANINGS[request.tone] ?: request.tone.label
         val retry = retryText(request.retryInstructions)
         return templateFor(request.mode)
+            .replace("{{conversation_context_section}}", contextSection(request))
             .replace("{{copied_message}}", request.copiedMessage.orEmpty())
             .replace("{{original_text}}", request.originalText.orEmpty())
             .replace("{{user_intent}}", request.userIntent)
             .replace("{{tone}}", tone)
             .replace("{{retry_instruction}}", retry)
             .replace("{{style_rules}}", styleRules(style))
+    }
+
+    /**
+     * Optional conversation-context section for the reply template (Issue #19 /
+     * docs/WHATSAPP_DIALOG_CONTEXT.md). Returns "" when no pasted dialog block is present so
+     * the prompt stays clean; otherwise the documented `Bisheriger Chatverlauf, falls vorhanden:`
+     * block. Transient only — never stored or logged.
+     */
+    private fun contextSection(request: ReplyRequest): String {
+        val context = request.conversationContext
+        return if (context.isNullOrBlank()) "" else "Bisheriger Chatverlauf, falls vorhanden:\n$context\n\n"
     }
 
     /**
@@ -122,8 +134,10 @@ object PromptBuilder {
         Naturalness.VERY_RELAXED to "sehr lockerer, umgangssprachlicher Stil",
     )
 
-    // Templates are verbatim copies of docs/PROMPTS.md. They contain no '$' characters, so
-    // they are safe inside Kotlin raw strings.
+    // Templates follow docs/PROMPTS.md. The reply template uses a {{conversation_context_section}}
+    // placeholder so the optional pasted-dialog block (Issue #19) is injected only when present;
+    // the wording otherwise matches the doc. Templates contain no '$' characters, so they are
+    // safe inside Kotlin raw strings.
 
     private val TEMPLATE_REPLY: String = """
 Du bist ein Formulierungsassistent für private Chatnachrichten.
@@ -135,29 +149,30 @@ Schreibstil (Nutzervorgabe):
 {{style_rules}}
 
 Aufgabe:
-Formuliere passende Antwortvorschläge auf die kopierte Nachricht.
+Formuliere passende Antwortvorschläge auf die aktuelle Nachricht.
 
 Regeln:
 - Schreibe wie eine WhatsApp-Nachricht, nicht wie eine E-Mail oder ein Brief.
 - Standard: 1–2 kurze Sätze pro Vorschlag.
 - Nur wenn der Änderungswunsch ausdrücklich „ausführlicher" enthält: 2–4 kurze WhatsApp-Sätze, weiterhin natürlich und direkt kopierbar, kein Roman.
 - Antworte in natürlichem, alltäglichem Deutsch.
-- Reagiere direkt auf die kopierte Nachricht, rede nicht drumherum.
-- Keine Floskeln wie „Vielen Dank für deine Nachricht“.
-- Keine Sätze wie „Ich verstehe, dass…“.
+- Reagiere direkt auf die aktuelle Nachricht, rede nicht drumherum.
+- Nutze den bisherigen Chatverlauf nur als Kontext, falls vorhanden.
+- Antworte nicht auf jede alte Nachricht einzeln.
+- Wenn im Verlauf ein Themenwechsel vorkommt, reagiere auf die aktuelle Nachricht.
+- Keine Floskeln wie „Vielen Dank für deine Nachricht".
+- Keine Sätze wie „Ich verstehe, dass…".
 - Keine künstliche Therapie- oder Coachingsprache.
 - Keine übertriebene oder formelle Höflichkeit.
 - Keine Analyse, keine Erklärung, kein Meta-Kommentar.
 - Nicht künstlich oder zu perfekt klingen, lieber normal als glatt.
 - Keine Nachricht automatisch senden oder vorgeben, gesendet zu haben.
 - Erzeuge genau 3 Varianten, jede direkt kopierbar.
-- Die Antwort soll zur kopierten Nachricht passen.
 - Berücksichtige, was der Nutzer ausdrücken will.
 - Wenn Informationen fehlen, formuliere neutral statt Dinge zu erfinden.
 - Wenn ein Änderungswunsch für einen neuen Versuch vorhanden ist, berücksichtige ihn still.
 - Erkläre nicht, was geändert wurde.
-
-Kopierte Nachricht:
+{{conversation_context_section}}Aktuelle Nachricht, auf die geantwortet werden soll:
 {{copied_message}}
 
 Was der Nutzer ausdrücken will:
